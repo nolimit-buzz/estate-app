@@ -1,0 +1,48 @@
+# ----------------------------------------------------------------------
+# 1. Server Options
+# ----------------------------------------------------------------------
+# Disable MultiViews so mod_negotiation does not conflict with mod_rewrite
+<IfModule mod_negotiation.c>
+    Options -MultiViews
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    Options +FollowSymLinks
+    RewriteEngine On
+
+    # ----------------------------------------------------------------------
+    # 2. Stop rewriting if already an internal rewrite
+    # ----------------------------------------------------------------------
+    RewriteCond %{ENV:REDIRECT_STATUS} 200
+    RewriteRule ^ - [L]
+
+    # ----------------------------------------------------------------------
+    # 3. Direct access to existing files and directories
+    # ----------------------------------------------------------------------
+    RewriteCond %{REQUEST_FILENAME} -d [OR]
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^ - [L]
+
+    # ----------------------------------------------------------------------
+    # 4. Sign-in & Authentication Aliases
+    # ----------------------------------------------------------------------
+    RewriteRule ^signin/?$ login.php [L,QSA]
+    RewriteRule ^sign-in/?$ login.php [L,QSA]
+    RewriteRule ^admin/login/?$ login.php [L,QSA]
+    RewriteRule ^resident/maintenance/?$ resident/report_issue.php [L,QSA]
+
+    # ----------------------------------------------------------------------
+    # 5. Extensionless PHP Routing (handles with or without trailing slash)
+    # ----------------------------------------------------------------------
+    # If the requested URI without trailing slash + .php exists as a file:
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME}.php -f
+    RewriteRule ^(.+?)/?$ $1.php [L,QSA]
+
+    # Fallback check relative to DOCUMENT_ROOT (vital for cPanel / FastCGI / PHP-FPM)
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{DOCUMENT_ROOT}/$1.php -f
+    RewriteRule ^(.+?)/?$ $1.php [L,QSA]
+</IfModule>
