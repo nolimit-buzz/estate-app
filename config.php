@@ -6,11 +6,10 @@ define('DB_PASSWORD', '');
 define('DB_NAME', 'estate');
 
 // Attempt to connect to MySQL database
-$conn = new mysqli(DB_SERVER, DB_USERNAME, DB_PASSWORD, DB_NAME);
-
-// Check connection
-if ($conn->connect_error) {
-    die("ERROR: Could not connect. " . $conn->connect_error);
+try {
+    $conn = new mysqli(DB_SERVER, DB_USERNAME, DB_PASSWORD, DB_NAME);
+} catch (mysqli_sql_exception $e) {
+    die("<h3>Database Connection Error</h3><p>Could not connect to MySQL. Please ensure the <strong>MySQL</strong> service is started in your XAMPP Control Panel.</p><small>(" . htmlspecialchars($e->getMessage()) . ")</small>");
 }
 
 // Set charset to UTF-8
