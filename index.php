@@ -27,6 +27,21 @@ $estate_conduct = $sys['estate_code_of_conduct'] ?? '';
 $office_phone = $sys['office_phone'] ?? 'Contact Office';
 $office_email = $sys['office_email'] ?? 'admin@estate.com';
 $theme_color = $sys['theme_color'] ?? '#3b82f6';
+
+// Fetch Active Central Policies for Public Showcase
+$public_policies = [];
+$pol_q = $conn->query("
+    SELECT p.*, c.name as category_name, c.icon as category_icon, c.color as category_color 
+    FROM estate_policies p
+    LEFT JOIN estate_policy_categories c ON p.category_slug = c.slug AND c.estate_id = p.estate_id
+    WHERE p.estate_id = $estate_id AND p.scope = 'central' AND p.status = 'active'
+    ORDER BY p.display_order ASC, p.id ASC LIMIT 6
+");
+if ($pol_q) {
+    while ($pr = $pol_q->fetch_assoc()) {
+        $public_policies[] = $pr;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -48,6 +63,8 @@ $theme_color = $sys['theme_color'] ?? '#3b82f6';
     
     <!-- Landing CSS -->
     <link rel="stylesheet" href="css/landing.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="css/estate_notifications.css?v=<?php echo time(); ?>">
+    <script src="js/estate_notifications.js?v=<?php echo time(); ?>"></script>
     
     <style>
         :root {
@@ -84,6 +101,7 @@ $theme_color = $sys['theme_color'] ?? '#3b82f6';
                     <a href="<?php 
                         if ($user_role === 'superadmin') echo 'superadmin/index';
                         elseif (in_array($user_role, ['admin', 'manager'])) echo 'admin/index';
+                        elseif ($user_role === 'zone_admin') echo 'zone/index';
                         elseif ($user_role === 'resident') echo 'resident/index';
                         else echo 'staff/index';
                     ?>" class="nav-cta">
@@ -154,7 +172,7 @@ $theme_color = $sys['theme_color'] ?? '#3b82f6';
             </div>
             <h2 class="section-title">Select Your Estate Portal</h2>
             <p class="section-subtitle">
-                Access dedicated dashboards tailored specifically for homeowners, security personnel, and estate administration.
+                Access dedicated dashboards tailored specifically for homeowners, security personnel, zonal supervisors, and central estate administration.
             </p>
         </div>
 
@@ -203,24 +221,46 @@ $theme_color = $sys['theme_color'] ?? '#3b82f6';
                 </a>
             </div>
 
-            <!-- 3. Estate Administration Hub -->
+            <!-- 3. Zonal Admin Portal -->
+            <div class="portal-card zone-card">
+                <div class="portal-icon-wrapper">
+                    <i class="fa-solid fa-layer-group"></i>
+                </div>
+                <span class="portal-tag">Zonal Management</span>
+                <h3 class="portal-title">Zonal Admin Portal</h3>
+                <p class="portal-desc">
+                    Dedicated command center for Zone Administrators to manage streets, onboard local residents, configure zonal levies, and generate bills.
+                </p>
+                <ul class="portal-features">
+                    <li><i class="fa-solid fa-circle-check"></i> Scoped Street & Property Registry</li>
+                    <li><i class="fa-solid fa-circle-check"></i> Resident & Owner Onboarding</li>
+                    <li><i class="fa-solid fa-circle-check"></i> Local Levies & Automated Billing</li>
+                    <li><i class="fa-solid fa-circle-check"></i> Zone Financial & Occupancy Analytics</li>
+                </ul>
+                <a href="zone/login" class="portal-btn">
+                    <span>Zone Admin Sign In</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </a>
+            </div>
+
+            <!-- 4. Central Administration Hub -->
             <div class="portal-card admin-card">
                 <div class="portal-icon-wrapper">
                     <i class="fa-solid fa-building-columns"></i>
                 </div>
-                <span class="portal-tag">Executive & Finance</span>
-                <h3 class="portal-title">Administration Hub</h3>
+                <span class="portal-tag">Central & Executive</span>
+                <h3 class="portal-title">Central Admin Hub</h3>
                 <p class="portal-desc">
-                    Executive management command center for property registers, automated levy invoicing, staff roles, and audit governance.
+                    Executive management command center for estate-wide zone creation, guardhouse security oversight, automated finance, and global governance.
                 </p>
                 <ul class="portal-features">
-                    <li><i class="fa-solid fa-circle-check"></i> Property, Street & Flat Registry</li>
-                    <li><i class="fa-solid fa-circle-check"></i> Finance Hub & Automated Invoicing</li>
-                    <li><i class="fa-solid fa-circle-check"></i> Granular Roles & Access Controls</li>
-                    <li><i class="fa-solid fa-circle-check"></i> Real-time System Audit Logging</li>
+                    <li><i class="fa-solid fa-circle-check"></i> Multi-Zone Creation & Admin Assignment</li>
+                    <li><i class="fa-solid fa-circle-check"></i> Exclusive Gate & Guardhouse Security</li>
+                    <li><i class="fa-solid fa-circle-check"></i> Estate-Wide Consolidated Financials</li>
+                    <li><i class="fa-solid fa-circle-check"></i> Global Roles, Staff & System Audit</li>
                 </ul>
                 <a href="login" class="portal-btn">
-                    <span>Admin Sign In</span>
+                    <span>Central Sign In</span>
                     <i class="fa-solid fa-arrow-right"></i>
                 </a>
             </div>
@@ -282,23 +322,49 @@ $theme_color = $sys['theme_color'] ?? '#3b82f6';
         </div>
     </section>
 
-    <!-- Governance, Rules & Conduct (If defined) -->
-    <?php if ($estate_rules || $estate_conduct): ?>
+    <!-- Governance, Rules & Conduct -->
+    <?php if (!empty($public_policies) || $estate_rules || $estate_conduct): ?>
     <section class="rules-section" id="governance">
         <div class="section-header" style="margin-bottom: 2.5rem;">
             <div class="section-badge">
-                <i class="fa-solid fa-scale-balanced"></i> Governance
+                <i class="fa-solid fa-scale-balanced"></i> Estate Governance
             </div>
-            <h2 class="section-title">Community Standards & Rules</h2>
+            <h2 class="section-title">Community Standards &amp; Policies</h2>
             <p class="section-subtitle">
-                Guidelines that keep <?php echo htmlspecialchars($estate_name); ?> safe, clean, and peaceful for everyone.
+                Central governing guidelines that ensure <?php echo htmlspecialchars($estate_name); ?> remains safe, harmonious, and orderly.
             </p>
         </div>
 
+        <?php if (!empty($public_policies)): ?>
+        <div class="row g-4 mb-4">
+            <?php foreach ($public_policies as $pp): ?>
+                <div class="col-12 col-md-6 col-lg-4 text-start">
+                    <div class="p-4 rounded-4 h-100 shadow-sm bg-white" style="border: 1px solid rgba(226, 232, 240, 0.8);">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="badge px-2.5 py-1 rounded-pill" style="background: <?php echo htmlspecialchars($pp['category_color'] ?: '#3b82f6'); ?>18; color: <?php echo htmlspecialchars($pp['category_color'] ?: '#3b82f6'); ?>; font-size: 0.75rem;">
+                                <i class="fa-solid <?php echo htmlspecialchars($pp['category_icon'] ?: 'fa-gavel'); ?> me-1"></i>
+                                <?php echo htmlspecialchars($pp['category_name'] ?: ucfirst($pp['category_slug'])); ?>
+                            </span>
+                            <?php if ($pp['fine_amount'] > 0): ?>
+                                <span class="badge bg-danger bg-opacity-10 text-danger font-monospace" style="font-size: 0.75rem;">Fine: ₦<?php echo number_format($pp['fine_amount']); ?></span>
+                            <?php endif; ?>
+                        </div>
+                        <h5 class="fw-bold text-slate-800 mb-2" style="font-size: 1.05rem;"><?php echo htmlspecialchars($pp['title']); ?></h5>
+                        <p class="text-secondary small mb-0" style="line-height: 1.5;"><?php echo htmlspecialchars(substr($pp['description'], 0, 160)) . (strlen($pp['description']) > 160 ? '...' : ''); ?></p>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
+        <div class="text-center mt-3">
+            <a href="resident/policies" class="btn btn-outline-primary px-4 py-2 rounded-pill fw-semibold">
+                <i class="fa-solid fa-book-bookmark me-1.5"></i> View Full Handbook in Resident Portal
+            </a>
+        </div>
+        <?php elseif ($estate_rules || $estate_conduct): ?>
         <div class="rules-card">
             <?php if ($estate_rules): ?>
             <div class="rules-col">
-                <h4><i class="fa-solid fa-book-bookmark text-primary"></i> Estate Bylaws & Rules</h4>
+                <h4><i class="fa-solid fa-book-bookmark text-primary"></i> Estate Bylaws &amp; Rules</h4>
                 <div class="rules-content"><?php echo htmlspecialchars($estate_rules); ?></div>
             </div>
             <?php endif; ?>
@@ -310,6 +376,7 @@ $theme_color = $sys['theme_color'] ?? '#3b82f6';
             </div>
             <?php endif; ?>
         </div>
+        <?php endif; ?>
     </section>
     <?php endif; ?>
 

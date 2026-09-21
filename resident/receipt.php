@@ -95,7 +95,7 @@ $channel_clean = strtoupper(str_replace(['paystack_', '_'], ['', ' '], $receipt[
     <title>Receipt <?= htmlspecialchars($receipt_number) ?> - <?= htmlspecialchars($estate_name) ?></title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * { box-sizing: border-box; }
@@ -163,7 +163,7 @@ $channel_clean = strtoupper(str_replace(['paystack_', '_'], ['', ' '], $receipt[
             top: 52%;
             left: 50%;
             transform: translate(-50%, -50%) rotate(-25deg);
-            font-family: 'Space Grotesk', sans-serif;
+            font-family: 'Outfit', sans-serif;
             font-size: 9rem;
             font-weight: 900;
             color: rgba(16, 185, 129, 0.045);
@@ -211,7 +211,7 @@ $channel_clean = strtoupper(str_replace(['paystack_', '_'], ['', ' '], $receipt[
             font-size: 1.75rem;
         }
         .estate-info h2 {
-            font-family: 'Space Grotesk', sans-serif;
+            font-family: 'Outfit', sans-serif;
             font-size: 1.45rem;
             font-weight: 700;
             color: #0f172a;
@@ -227,7 +227,7 @@ $channel_clean = strtoupper(str_replace(['paystack_', '_'], ['', ' '], $receipt[
             text-align: right;
         }
         .doc-tag {
-            font-family: 'Space Grotesk', sans-serif;
+            font-family: 'Outfit', sans-serif;
             font-size: 2rem;
             font-weight: 800;
             letter-spacing: 0.03em;
@@ -357,7 +357,7 @@ $channel_clean = strtoupper(str_replace(['paystack_', '_'], ['', ' '], $receipt[
             color: #0f172a;
         }
         .grand-total .amount-text {
-            font-family: 'Space Grotesk', sans-serif;
+            font-family: 'Outfit', sans-serif;
             font-size: 1.65rem;
             font-weight: 800;
             color: #10b981;
@@ -390,7 +390,7 @@ $channel_clean = strtoupper(str_replace(['paystack_', '_'], ['', ' '], $receipt[
             color: #10b981;
             padding: 0.35rem 0.85rem;
             border-radius: 0.5rem;
-            font-family: 'Space Grotesk', sans-serif;
+            font-family: 'Outfit', sans-serif;
             font-size: 0.82rem;
             font-weight: 700;
             text-transform: uppercase;

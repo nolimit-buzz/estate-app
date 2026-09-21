@@ -11,6 +11,8 @@ if (isset($_SESSION['user_id'])) {
         header("Location: superadmin/index");
     } elseif (in_array($role, ['admin', 'manager'])) {
         header("Location: admin/index");
+    } elseif ($role === 'zone_admin') {
+        header("Location: zone/index");
     } elseif ($role === 'resident') {
         header("Location: resident/index");
     } else {
@@ -65,42 +67,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     <!-- Landing & Auth Styles -->
     <link rel="stylesheet" href="css/landing.css?v=<?php echo time(); ?>">
-    <style>
-        .role-pills {
-            display: flex;
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 0.75rem;
-            padding: 0.35rem;
-            margin-bottom: 2rem;
-            gap: 0.25rem;
-        }
-        .role-pill {
-            flex: 1;
-            text-align: center;
-            padding: 0.55rem 0.5rem;
-            border-radius: 0.5rem;
-            color: #94a3b8;
-            font-size: 0.85rem;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.2s ease;
-            cursor: pointer;
-            border: none;
-            background: transparent;
-        }
-        .role-pill:hover {
-            color: #ffffff;
-        }
-        .role-pill.active {
-            background: rgba(255, 255, 255, 0.12);
-            color: #ffffff;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-        }
-        .role-pill.active.pill-resident { color: #38bdf8; }
-        .role-pill.active.pill-staff { color: #10b981; }
-        .role-pill.active.pill-admin { color: #f59e0b; }
-    </style>
+    <link rel="stylesheet" href="css/estate_notifications.css?v=<?php echo time(); ?>">
+    <script src="js/estate_notifications.js?v=<?php echo time(); ?>"></script>
 </head>
 <body class="landing-page">
     <div class="auth-page" style="background-image: url('images/hero_estate.jpg');">
@@ -129,7 +97,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <!-- Role Selector Pills -->
             <div class="role-pills">
                 <a href="?role=admin" class="role-pill pill-admin <?php echo ($active_role === 'admin') ? 'active' : ''; ?>">
-                    <i class="fa-solid fa-shield-halved me-1"></i> Admin
+                    <i class="fa-solid fa-shield-halved me-1"></i> Central
+                </a>
+                <a href="zone/login" class="role-pill pill-zone <?php echo ($active_role === 'zone') ? 'active' : ''; ?>">
+                    <i class="fa-solid fa-layer-group me-1"></i> Zone
                 </a>
                 <a href="resident/login" class="role-pill pill-resident <?php echo ($active_role === 'resident') ? 'active' : ''; ?>">
                     <i class="fa-solid fa-house-user me-1"></i> Resident
@@ -171,14 +142,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </button>
             </form>
 
-            <div class="auth-switcher">
-                Looking for another portal? 
-                <a href="resident/login">Resident Portal</a> &bull; 
-                <a href="staff/login" style="color: #10b981;">Staff Console</a>
-            </div>
-            
-            <div style="margin-top: 1rem; text-align: center; font-size: 0.8rem; color: #64748b;">
-                Default Admin: admin@admin.com / admin123
+            <div style="margin-top: 1.5rem; text-align: center;">
+                <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.76rem; color: #64748b; background: #f8fafc; border: 1px solid #e2e8f0; padding: 0.35rem 0.75rem; border-radius: 9999px; cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('email').value='admin@admin.com'; document.getElementById('password').value='admin123';" title="Click to auto-fill demo credentials">
+                    <i class="fa-solid fa-key" style="color: #6366f1; font-size: 0.7rem;"></i> Demo Admin: <strong style="color: #334155;">admin@admin.com</strong>
+                </span>
             </div>
         </div>
     </div>

@@ -65,6 +65,40 @@ function isStaffRole() {
     return false;
 }
 
+function isZoneAdminRole() {
+    $role = $_SESSION['role'] ?? '';
+    return $role === 'zone_admin';
+}
+
+function get_current_zone_id() {
+    global $conn;
+    $role = $_SESSION['role'] ?? '';
+    if (isset($_GET['switch_zone_id']) && (in_array($role, ['superadmin', 'admin', 'manager']))) {
+        $sw_id = intval($_GET['switch_zone_id']);
+        if ($conn) {
+            $z_res = $conn->query("SELECT id, name, code FROM zones WHERE id = $sw_id LIMIT 1");
+            if ($z_res && $z_row = $z_res->fetch_assoc()) {
+                $_SESSION['zone_id'] = intval($z_row['id']);
+                $_SESSION['zone_name'] = $z_row['name'];
+                $_SESSION['zone_code'] = $z_row['code'];
+            }
+        }
+    }
+    if (isset($_SESSION['zone_id']) && !empty($_SESSION['zone_id'])) {
+        return intval($_SESSION['zone_id']);
+    }
+    if (in_array($role, ['superadmin', 'admin', 'manager']) && $conn) {
+        $z_res = $conn->query("SELECT id, name, code FROM zones ORDER BY id ASC LIMIT 1");
+        if ($z_res && $z_row = $z_res->fetch_assoc()) {
+            $_SESSION['zone_id'] = intval($z_row['id']);
+            $_SESSION['zone_name'] = $z_row['name'];
+            $_SESSION['zone_code'] = $z_row['code'];
+            return intval($z_row['id']);
+        }
+    }
+    return 0;
+}
+
 function isResidentRole() {
     $role = $_SESSION['role'] ?? '';
     return $role === 'resident';
@@ -73,6 +107,7 @@ function isResidentRole() {
 function getRoleRedirectPath($role) {
     if ($role === 'superadmin') return '../superadmin/index';
     if (in_array($role, ['admin', 'manager'])) return '../admin/index';
+    if ($role === 'zone_admin') return '../zone/index';
     if ($role === 'resident') return '../resident/index';
     return '../staff/index';
 }
@@ -80,9 +115,27 @@ function getRoleRedirectPath($role) {
 // Enforce Admin Access (For /admin pages)
 function requireAdminAccess() {
     requireLogin();
+    if (isZoneAdminRole()) {
+        header("Location: ../zone/index");
+        exit;
+    }
     if (!isAdminRole()) {
         $redirect = getRoleRedirectPath($_SESSION['role'] ?? '');
         header("Location: $redirect");
+        exit;
+    }
+}
+
+// Enforce Zone Admin Access (For /zone pages)
+function requireZoneAccess() {
+    requireLogin();
+    $role = $_SESSION['role'] ?? '';
+    if ($role !== 'zone_admin' && !in_array($role, ['superadmin', 'admin'])) {
+        header("Location: ../zone/login?error=unauthorized");
+        exit;
+    }
+    if ($role === 'zone_admin' && empty($_SESSION['zone_id'])) {
+        header("Location: ../zone/login?error=no_zone_assigned");
         exit;
     }
 }

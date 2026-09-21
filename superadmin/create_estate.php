@@ -47,8 +47,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             // 3. Seed default system settings for this estate
             $default_settings = [
                 ['currency', 'NGN'],
+                ['currency_symbol', '₦'],
                 ['estate_name', $name],
+                ['estate_logo', ''],
+                ['app_company_name', 'NoLimitBuzz'],
                 ['primary_color', '#3b82f6'],
+                ['theme_color', '#3b82f6'],
                 ['system_email', $admin_email],
                 ['grace_period_days', '7']
             ];
@@ -82,6 +86,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/estate_notifications.css">
+    <script src="../js/estate_notifications.js"></script>
     <style>
         .container { max-width: 800px; margin: 0 auto; padding: 2rem; }
         .glass-panel { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); padding: 2rem; border-radius: 1rem; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }

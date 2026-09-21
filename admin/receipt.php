@@ -1,6 +1,10 @@
 <?php
 // admin/receipt.php
 require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../includes/auth_guard.php';
+
+// Enforce Active Session
+requireLogin();
 
 $estate_id = get_estate_id();
 $invoice_id = isset($_GET['id']) ? intval($_GET['id']) : (isset($_GET['invoice_id']) ? intval($_GET['invoice_id']) : null);
@@ -43,6 +47,15 @@ if ($receipt_no) {
 
 if (!$data) {
     die("<div style='font-family:sans-serif; text-align:center; padding:4rem;'><h3>Document Not Found</h3><p>The requested invoice/receipt could not be found.</p><a href='finance' style='color:#2563eb;'>Return to Finance</a></div>");
+}
+
+// Access Control: Non-admin/non-staff residents can only view their own receipts
+if (!isAdminRole() && !isStaffRole() && !isZoneAdminRole()) {
+    $current_uid = intval($_SESSION['user_id'] ?? 0);
+    if ($current_uid !== intval($data['user_id'])) {
+        http_response_code(403);
+        die("<div style='font-family:sans-serif; text-align:center; padding:4rem;'><h3>Access Denied (403)</h3><p>You are only authorized to view your own financial documents.</p><a href='../resident/receipts' style='color:#2563eb;'>Return to Receipts</a></div>");
+    }
 }
 
 $is_receipt = ($data['status'] === 'paid' || !empty($data['receipt_number']));
@@ -90,7 +103,7 @@ $channel_clean = strtoupper(str_replace(['paystack_', '_'], ['', ' '], $data['pa
     <title><?= $is_receipt ? 'Receipt ' . htmlspecialchars($rec_display) : 'Invoice ' . htmlspecialchars($inv_display) ?> - <?= htmlspecialchars($estate_name) ?></title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * { box-sizing: border-box; }
@@ -159,7 +172,7 @@ $channel_clean = strtoupper(str_replace(['paystack_', '_'], ['', ' '], $data['pa
             top: 52%;
             left: 50%;
             transform: translate(-50%, -50%) rotate(-25deg);
-            font-family: 'Space Grotesk', sans-serif;
+            font-family: 'Outfit', sans-serif;
             font-size: 9rem;
             font-weight: 900;
             color: <?= $is_receipt ? 'rgba(16, 185, 129, 0.045)' : 'rgba(239, 68, 68, 0.045)' ?>;
@@ -207,7 +220,7 @@ $channel_clean = strtoupper(str_replace(['paystack_', '_'], ['', ' '], $data['pa
             font-size: 1.75rem;
         }
         .estate-info h2 {
-            font-family: 'Space Grotesk', sans-serif;
+            font-family: 'Outfit', sans-serif;
             font-size: 1.45rem;
             font-weight: 700;
             color: #0f172a;
@@ -223,7 +236,7 @@ $channel_clean = strtoupper(str_replace(['paystack_', '_'], ['', ' '], $data['pa
             text-align: right;
         }
         .doc-tag {
-            font-family: 'Space Grotesk', sans-serif;
+            font-family: 'Outfit', sans-serif;
             font-size: 2rem;
             font-weight: 800;
             letter-spacing: 0.03em;
@@ -367,7 +380,7 @@ $channel_clean = strtoupper(str_replace(['paystack_', '_'], ['', ' '], $data['pa
             color: #0f172a;
         }
         .grand-total .amount-text {
-            font-family: 'Space Grotesk', sans-serif;
+            font-family: 'Outfit', sans-serif;
             font-size: 1.65rem;
             font-weight: 800;
             color: <?= $is_receipt ? '#10b981' : '#dc2626' ?>;
@@ -400,7 +413,7 @@ $channel_clean = strtoupper(str_replace(['paystack_', '_'], ['', ' '], $data['pa
             color: <?= $is_receipt ? '#10b981' : '#b45309' ?>;
             padding: 0.35rem 0.85rem;
             border-radius: 0.5rem;
-            font-family: 'Space Grotesk', sans-serif;
+            font-family: 'Outfit', sans-serif;
             font-size: 0.82rem;
             font-weight: 700;
             text-transform: uppercase;

@@ -2,6 +2,7 @@
 // staff/finance.php
 require_once '../config.php';
 require_once '../includes/auth_guard.php';
+require_once '../includes/Mailer.php';
 
 requireLogin();
 if (!isStaffRole() && !isAdminRole()) {
@@ -61,13 +62,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['record_payment'])) {
             $conn->query("INSERT INTO receipts (estate_id, receipt_number, payment_id, resident_id, property_id, amount, issued_by, issued_at) 
                           VALUES ($estate_id, '$receipt_no', $payment_id, $res_user_id, $prop_id, $amount, $user_id, NOW())");
             
+            // Dispatch receipt email
+            EstateMailer::sendReceiptEmail($conn, $receipt_no);
+
             $staff_info = $conn->query("SELECT name, role FROM users WHERE id = $user_id LIMIT 1")->fetch_assoc();
             $staff_name = $staff_info['name'] ?? 'Staff';
             $staff_role = ucfirst($staff_info['role'] ?? 'staff');
 
             $inv_num = $inv['invoice_number'] ?: ('INV-' . $invoice_id);
             logAudit($conn, "Staff Payment Recorded", "Staff Finance", "Staff $staff_name ($staff_role) recorded payment for invoice #$inv_num. Receipt: $receipt_no via $payment_method");
-            $message = "Payment recorded successfully! Receipt #<strong>$receipt_no</strong> generated for Invoice #<strong>$inv_num</strong>.";
+            $message = "Payment recorded successfully! Receipt #<strong>$receipt_no</strong> generated and emailed for Invoice #<strong>$inv_num</strong>.";
         }
     }
 }
@@ -93,8 +97,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_invoice'])) {
                 VALUES ($estate_id, '$inv_no', $charge_id, $target_user_id, $flat_id, '$title', $amount, $amount, $amount, 'unpaid', '$due_date', NOW())";
         if ($conn->query($sql)) {
             $inv_id = $conn->insert_id;
+            // Dispatch invoice email
+            EstateMailer::sendInvoiceEmail($conn, $inv_id);
             logAudit($conn, "Staff Invoice Created", "Staff Finance", "Staff created invoice #$inv_no (ID $inv_id) for user #$target_user_id");
-            $message = "Bill / Invoice $inv_no created successfully!";
+            $message = "Bill / Invoice $inv_no created and emailed successfully!";
         } else {
             $message = "Error generating invoice: " . $conn->error;
             $message_type = "danger";

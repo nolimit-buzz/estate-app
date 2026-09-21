@@ -1,10 +1,25 @@
 <?php
 // admin/generate_id.php
 require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../includes/auth_guard.php';
+
+// Enforce Active Session
+requireLogin();
+
+$auth_user_id = intval($_SESSION['user_id'] ?? 0);
+$auth_role = $_SESSION['role'] ?? 'resident';
+$is_admin = isAdminRole();
+$is_staff = isStaffRole();
+$is_zone_admin = isZoneAdminRole();
+$user_zone_id = get_current_zone_id();
 
 $estate_id = get_estate_id();
 $type = $_GET['type'] ?? (isset($_GET['user_id']) ? 'user' : 'resident');
-$id = isset($_GET['id']) ? intval($_GET['id']) : (isset($_SESSION['user_id']) ? intval($_SESSION['user_id']) : 1);
+$id = isset($_GET['id']) ? intval($_GET['id']) : (isset($_SESSION['user_id']) ? intval($_SESSION['user_id']) : 0);
+
+if ($id <= 0) {
+    die("<div style='font-family:sans-serif;text-align:center;padding:4rem;'><h2>Invalid ID Request</h2><p>Please specify a valid record ID.</p></div>");
+}
 
 // Fetch System Settings
 $settings_res = $conn->query("SELECT * FROM system_settings WHERE estate_id = $estate_id");
@@ -165,6 +180,20 @@ if (!$person) {
         $person['join_date'] = $issue_date;
     } else {
         die("<div style='font-family: sans-serif; text-align: center; padding: 4rem;'><h2>Person Record Not Found</h2><p>Unable to locate the identity profile for ID #$id ($type).</p><a href='javascript:history.back()' style='color: #2563eb;'>Return to Dashboard</a></div>");
+    }
+}
+
+// -------------------------------------------------------------
+// ACCESS CONTROL / AUTHORIZATION CHECK
+// -------------------------------------------------------------
+if (!$is_admin && !$is_staff) {
+    if ($auth_role === 'resident') {
+        $person_uid = intval($person['user_id'] ?? $person['id'] ?? 0);
+        $employer_uid = intval($person['resident_user_id'] ?? 0);
+        if ($person_uid !== $auth_user_id && $employer_uid !== $auth_user_id) {
+            http_response_code(403);
+            die("<div style='font-family: sans-serif; text-align: center; padding: 4rem;'><h2>Access Denied (403)</h2><p>You are only authorized to view your own identity card.</p><a href='../resident/index' style='color: #2563eb;'>Return to Resident Portal</a></div>");
+        }
     }
 }
 

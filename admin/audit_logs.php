@@ -73,97 +73,153 @@ $kpi_receipts = $conn->query("SELECT COUNT(*) as total FROM audit_logs WHERE est
 $kpi_maintenance = $conn->query("SELECT COUNT(*) as total FROM audit_logs WHERE estate_id = $estate_id AND (LOWER(module) LIKE '%maintenance%' OR LOWER(action) LIKE '%maintenance%' OR LOWER(action) LIKE '%need%') AND DATE(timestamp) = CURRENT_DATE()")->fetch_assoc()['total'] ?? 0;
 ?>
 
-<div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem;">
+<div class="page-header-futuristic mb-4">
     <div>
-        <h1 style="display: flex; align-items: center; gap: 10px; margin: 0; font-size: 1.6rem; color: #0f172a;">
-            <i class="fa-solid fa-user-shield" style="color: #2563eb;"></i> Staff Action & Security Audit Console
-        </h1>
-        <p style="color: #64748b; margin: 0.35rem 0 0; font-size: 0.92rem;">
-            Real-time tracking of staff actions: visitor admittance, receipt generation, payment method creation, and resident needs resolution.
-        </p>
+        <div class="header-breadcrumbs">
+            <a href="index">Dashboard</a>
+            <i class="fa-solid fa-chevron-right separator"></i>
+            <span>Governance</span>
+            <i class="fa-solid fa-chevron-right separator"></i>
+            <span class="active">System Audit Logs</span>
+        </div>
+        <h1 class="page-title">Staff Action &amp; Security Audit Console</h1>
+        <p class="page-subtitle">Real-time immutable audit trail: gate access decisions, receipt generation, privilege changes, and work orders.</p>
     </div>
-    <div>
-        <a href="audit_logs" class="btn btn-secondary" style="background: #f1f5f9; color: #475569; padding: 0.6rem 1.1rem; border-radius: 0.5rem; text-decoration: none; font-weight: 600; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px;">
-            <i class="fa-solid fa-rotate-left"></i> Reset Filters
+    <div class="header-actions">
+        <a href="audit_logs" class="btn btn-sm btn-outline-secondary">
+            <i class="fa-solid fa-rotate-left me-1"></i> Reset Filters
         </a>
+        <button class="btn btn-sm text-white" style="background: #0f172a;" onclick="window.print()">
+            <i class="fa-solid fa-print me-1"></i> Print Audit Trail
+        </button>
     </div>
 </div>
 
-<!-- KPI Cards -->
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
-    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: space-between;">
-        <div>
-            <div style="font-size: 0.78rem; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.04em;">Today's Staff Actions</div>
-            <div style="font-size: 1.75rem; font-weight: 800; color: #0f172a; margin-top: 0.2rem;"><?= number_format($kpi_today_actions) ?></div>
-            <div style="font-size: 0.75rem; color: #10b981; font-weight: 600; margin-top: 0.2rem;"><i class="fa-solid fa-bolt"></i> Total audit events recorded</div>
-        </div>
-        <div style="width: 46px; height: 46px; border-radius: 50%; background: #eff6ff; display: flex; align-items: center; justify-content: center; color: #2563eb; font-size: 1.25rem;">
-            <i class="fa-solid fa-list-check"></i>
-        </div>
-    </div>
-
-    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: space-between;">
-        <div>
-            <div style="font-size: 0.78rem; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.04em;">Gate Passes Handled</div>
-            <div style="font-size: 1.75rem; font-weight: 800; color: #0284c7; margin-top: 0.2rem;"><?= number_format($kpi_visitors) ?></div>
-            <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.2rem;">Admitted & checked out today</div>
-        </div>
-        <div style="width: 46px; height: 46px; border-radius: 50%; background: #e0f2fe; display: flex; align-items: center; justify-content: center; color: #0284c7; font-size: 1.25rem;">
-            <i class="fa-solid fa-shield-halved"></i>
-        </div>
-    </div>
-
-    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: space-between;">
-        <div>
-            <div style="font-size: 0.78rem; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.04em;">Receipts & Collections</div>
-            <div style="font-size: 1.75rem; font-weight: 800; color: #16a34a; margin-top: 0.2rem;"><?= number_format($kpi_receipts) ?></div>
-            <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.2rem;">Receipts generated today</div>
-        </div>
-        <div style="width: 46px; height: 46px; border-radius: 50%; background: #dcfce7; display: flex; align-items: center; justify-content: center; color: #16a34a; font-size: 1.25rem;">
-            <i class="fa-solid fa-receipt"></i>
+<!-- ==========================================
+     EXECUTIVE KPI METRICS RIBBON (4 PILLARS)
+     ========================================== -->
+<div class="row g-3 mb-4">
+    <!-- Pillar 1: Today's Total Events -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="kpi-card h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <span class="kpi-title">Today's Staff Actions</span>
+                    <div class="kpi-value"><?= number_format($kpi_today_actions) ?></div>
+                </div>
+                <div class="kpi-icon-wrap">
+                    <i class="fa-solid fa-bolt"></i>
+                </div>
+            </div>
+            <div class="kpi-meta justify-content-between mt-2">
+                <span>Recorded Today</span>
+                <span class="mature-badge mature-badge-emerald">Live Telemetry</span>
+            </div>
+            <div class="kpi-progress-bar">
+                <div class="kpi-progress-fill" style="width: <?= min(100, max(20, $kpi_today_actions * 10)) ?>%;"></div>
+            </div>
         </div>
     </div>
 
-    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: space-between;">
-        <div>
-            <div style="font-size: 0.78rem; text-transform: uppercase; font-weight: 700; color: #64748b; letter-spacing: 0.04em;">Needs & Issues Attended</div>
-            <div style="font-size: 1.75rem; font-weight: 800; color: #d97706; margin-top: 0.2rem;"><?= number_format($kpi_maintenance) ?></div>
-            <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.2rem;">Maintenance actions today</div>
+    <!-- Pillar 2: Gate Passes Handled -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="kpi-card h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <span class="kpi-title">Gate Passes Handled</span>
+                    <div class="kpi-value"><?= number_format($kpi_visitors) ?></div>
+                </div>
+                <div class="kpi-icon-wrap">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+            </div>
+            <div class="kpi-meta justify-content-between mt-2">
+                <span>Access Clearances</span>
+                <span class="mature-badge mature-badge-sky">Perimeter</span>
+            </div>
+            <div class="kpi-progress-bar">
+                <div class="kpi-progress-fill" style="width: <?= min(100, max(15, $kpi_visitors * 12)) ?>%;"></div>
+            </div>
         </div>
-        <div style="width: 46px; height: 46px; border-radius: 50%; background: #fef3c7; display: flex; align-items: center; justify-content: center; color: #d97706; font-size: 1.25rem;">
-            <i class="fa-solid fa-wrench"></i>
+    </div>
+
+    <!-- Pillar 3: Receipts & Collections -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="kpi-card h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <span class="kpi-title">Receipts Generated</span>
+                    <div class="kpi-value"><?= number_format($kpi_receipts) ?></div>
+                </div>
+                <div class="kpi-icon-wrap">
+                    <i class="fa-solid fa-receipt"></i>
+                </div>
+            </div>
+            <div class="kpi-meta justify-content-between mt-2">
+                <span>Financial Ledger</span>
+                <span class="mature-badge mature-badge-primary">Receipts</span>
+            </div>
+            <div class="kpi-progress-bar">
+                <div class="kpi-progress-fill" style="width: <?= min(100, max(15, $kpi_receipts * 15)) ?>%;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pillar 4: Maintenance Actions -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="kpi-card h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <span class="kpi-title">Needs Attended</span>
+                    <div class="kpi-value"><?= number_format($kpi_maintenance) ?></div>
+                </div>
+                <div class="kpi-icon-wrap">
+                    <i class="fa-solid fa-wrench"></i>
+                </div>
+            </div>
+            <div class="kpi-meta justify-content-between mt-2">
+                <span>Work Orders</span>
+                <span class="mature-badge mature-badge-amber">Facilities</span>
+            </div>
+            <div class="kpi-progress-bar">
+                <div class="kpi-progress-fill" style="width: <?= min(100, max(15, $kpi_maintenance * 20)) ?>%;"></div>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Quick Module Tabs -->
-<div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; overflow-x: auto; padding-bottom: 4px;">
+<!-- ==========================================
+     QUICK MODULE FILTER PILLS
+     ========================================== -->
+<div class="d-flex gap-2 mb-3 overflow-x-auto pb-1">
     <?php
     $nav_tabs = [
-        'all' => ['label' => 'All Staff Operations', 'icon' => 'fa-border-all'],
-        'security' => ['label' => 'Gate & Visitors In/Out', 'icon' => 'fa-door-open'],
+        'all' => ['label' => 'All Operations', 'icon' => 'fa-border-all'],
+        'security' => ['label' => 'Gate & Perimeter', 'icon' => 'fa-door-open'],
         'finance' => ['label' => 'Receipts & Payments', 'icon' => 'fa-receipt'],
-        'payment_methods' => ['label' => 'Payment Modes Created', 'icon' => 'fa-credit-card'],
-        'maintenance' => ['label' => 'Resident Needs Attended', 'icon' => 'fa-wrench'],
+        'payment_methods' => ['label' => 'Payment Modes', 'icon' => 'fa-credit-card'],
+        'maintenance' => ['label' => 'Maintenance & Needs', 'icon' => 'fa-wrench'],
     ];
     foreach ($nav_tabs as $tab_key => $tab_val):
         $is_curr = ($filter_module === $tab_key);
         $tab_url = "audit_logs?module_type=" . urlencode($tab_key) . ($filter_staff > 0 ? "&staff_id=$filter_staff" : "");
     ?>
-        <a href="<?= $tab_url ?>" style="text-decoration: none; padding: 0.55rem 1rem; border-radius: 9999px; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; <?= $is_curr ? 'background: #2563eb; color: #ffffff;' : 'background: #ffffff; color: #64748b; border: 1px solid #e2e8f0;' ?>">
+        <a href="<?= $tab_url ?>" class="filter-btn-pill <?= $is_curr ? 'active' : '' ?>">
             <i class="fa-solid <?= $tab_val['icon'] ?>"></i> <?= $tab_val['label'] ?>
         </a>
     <?php endforeach; ?>
 </div>
 
-<!-- Filter Bar -->
-<div style="background: white; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-    <form method="GET" action="audit_logs" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; align-items: flex-end;">
+<!-- ==========================================
+     MULTI-CRITERIA FILTER BAR
+     ========================================== -->
+<div class="futuristic-filter-bar mb-4">
+    <form method="GET" action="audit_logs" class="row g-3 align-items-end">
         <input type="hidden" name="module_type" value="<?= htmlspecialchars($filter_module) ?>">
 
-        <div>
-            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #475569; margin-bottom: 0.35rem;">Staff Member</label>
-            <select name="staff_id" style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.88rem; outline: none;">
+        <div class="col-12 col-md-3">
+            <label class="form-label small fw-semibold text-secondary mb-1">Attending Staff</label>
+            <select name="staff_id" class="form-select form-select-sm">
                 <option value="0">All Staff Members</option>
                 <?php if ($staff_members): ?>
                     <?php while ($sm = $staff_members->fetch_assoc()): ?>
@@ -175,118 +231,126 @@ $kpi_maintenance = $conn->query("SELECT COUNT(*) as total FROM audit_logs WHERE 
             </select>
         </div>
 
-        <div>
-            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #475569; margin-bottom: 0.35rem;">Search Details / Code</label>
-            <input type="text" name="q" value="<?= htmlspecialchars($search_query) ?>" placeholder="Receipt #, Visitor Code, keyword..." style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.88rem; outline: none;">
+        <div class="col-12 col-md-3">
+            <label class="form-label small fw-semibold text-secondary mb-1">Search Details / Keyword</label>
+            <input type="text" name="q" class="form-control form-control-sm" value="<?= htmlspecialchars($search_query) ?>" placeholder="Receipt #, visitor code, action...">
         </div>
 
-        <div>
-            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #475569; margin-bottom: 0.35rem;">Date From</label>
-            <input type="date" name="date_from" value="<?= htmlspecialchars($filter_date_from) ?>" style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.88rem; outline: none;">
+        <div class="col-6 col-md-2">
+            <label class="form-label small fw-semibold text-secondary mb-1">Date From</label>
+            <input type="date" name="date_from" class="form-control form-control-sm" value="<?= htmlspecialchars($filter_date_from) ?>">
         </div>
 
-        <div>
-            <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #475569; margin-bottom: 0.35rem;">Date To</label>
-            <input type="date" name="date_to" value="<?= htmlspecialchars($filter_date_to) ?>" style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.88rem; outline: none;">
+        <div class="col-6 col-md-2">
+            <label class="form-label small fw-semibold text-secondary mb-1">Date To</label>
+            <input type="date" name="date_to" class="form-control form-control-sm" value="<?= htmlspecialchars($filter_date_to) ?>">
         </div>
 
-        <div style="display: flex; gap: 0.5rem;">
-            <button type="submit" style="flex: 1; padding: 0.65rem 1rem; background: #2563eb; color: white; border: none; border-radius: 0.5rem; font-weight: 700; font-size: 0.88rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 5px;">
-                <i class="fa-solid fa-filter"></i> Apply Filter
+        <div class="col-12 col-md-2 d-flex gap-1">
+            <button type="submit" class="btn btn-sm btn-primary w-100 fw-semibold" title="Apply Filter">
+                <i class="fa-solid fa-filter me-1"></i> Filter
             </button>
-            <a href="audit_logs" style="padding: 0.65rem 0.9rem; background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; border-radius: 0.5rem; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
-                <i class="fa-solid fa-xmark"></i>
-            </a>
+            <a href="audit_logs" class="btn btn-sm btn-outline-secondary" title="Reset Filters"><i class="fa-solid fa-rotate-left"></i></a>
         </div>
     </form>
 </div>
 
-<!-- Logs Table Container -->
-<div style="background: white; border: 1px solid #e2e8f0; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden;">
-    <div style="padding: 1rem 1.5rem; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
-        <div style="font-weight: 700; color: #1e293b; font-size: 0.95rem;">
-            <i class="fa-solid fa-list-ul text-primary me-1"></i> Audit Activity Records 
-            <span style="font-weight: 500; font-size: 0.82rem; color: #64748b; margin-left: 6px;">(Showing up to <?= $logs ? $logs->num_rows : 0 ?> results)</span>
+<!-- ==========================================
+     AUDIT ACTIVITY DATA TABLE PANEL
+     ========================================== -->
+<div class="mature-card mb-4">
+    <div class="mature-card-header">
+        <div>
+            <h3 class="mature-card-title">
+                <i class="fa-solid fa-clipboard-check text-secondary"></i> Staff Audit Activity Records
+            </h3>
+            <p class="text-secondary small mb-0">Immutable tracking of operator dispatches, clearances, and administrative events</p>
         </div>
+        <span class="mature-badge mature-badge-slate">
+            <i class="fa-solid fa-database me-1"></i><?= $logs ? $logs->num_rows : 0 ?> Events Loaded
+        </span>
     </div>
 
-    <div style="overflow-x: auto;">
-        <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-                <tr style="text-align: left; background: #f8fafc; color: #64748b; border-bottom: 1px solid #e2e8f0; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">
-                    <th style="padding: 0.9rem 1.25rem;">Timestamp</th>
-                    <th style="padding: 0.9rem 1.25rem;">Attending Staff</th>
-                    <th style="padding: 0.9rem 1.25rem;">Module / Area</th>
-                    <th style="padding: 0.9rem 1.25rem;">Action Executed</th>
-                    <th style="padding: 0.9rem 1.25rem;">Activity Details & Context</th>
-                    <th style="padding: 0.9rem 1.25rem; text-align: right;">Terminal IP</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if (!$logs || $logs->num_rows == 0): ?>
+    <div class="mature-card-body p-0">
+        <div class="table-responsive">
+            <table class="table dashboard-table align-middle">
+                <thead>
                     <tr>
-                        <td colspan="6" style="text-align: center; padding: 4rem 1rem; color: #94a3b8;">
-                            <i class="fa-solid fa-shield-halved" style="font-size: 2.5rem; margin-bottom: 0.75rem; opacity: 0.5; display: block;"></i>
-                            <div style="font-weight: 600; font-size: 1rem; color: #475569;">No staff activity records found</div>
-                            <div style="font-size: 0.85rem; margin-top: 0.25rem;">Try adjusting the staff member filter, module tab, or date range.</div>
-                        </td>
+                        <th class="ps-4">Timestamp</th>
+                        <th>Attending Staff</th>
+                        <th>Module / Area</th>
+                        <th>Action Executed</th>
+                        <th>Activity Details &amp; Context</th>
+                        <th class="text-end pe-4">Terminal IP</th>
                     </tr>
-                <?php else: ?>
-                    <?php while ($l = $logs->fetch_assoc()): ?>
-                        <?php
-                        $role = strtolower($l['staff_role'] ?? 'system');
-                        $role_bg = '#f1f5f9';
-                        $role_color = '#475569';
-                        if ($role === 'admin') { $role_bg = '#ede9fe'; $role_color = '#6d28d9'; }
-                        elseif ($role === 'manager') { $role_bg = '#e0e7ff'; $role_color = '#4338ca'; }
-                        elseif ($role === 'security') { $role_bg = '#e0f2fe'; $role_color = '#0369a1'; }
-                        elseif ($role === 'staff') { $role_bg = '#ccfbf1'; $role_color = '#0f766e'; }
-
-                        $mod = strtolower($l['module'] ?? '');
-                        $mod_badge_bg = '#f1f5f9';
-                        $mod_badge_color = '#475569';
-                        if (strpos($mod, 'security') !== false) { $mod_badge_bg = '#e0f2fe'; $mod_badge_color = '#0284c7'; }
-                        elseif (strpos($mod, 'finance') !== false) { $mod_badge_bg = '#dcfce7'; $mod_badge_color = '#15803d'; }
-                        elseif (strpos($mod, 'maintenance') !== false) { $mod_badge_bg = '#fef3c7'; $mod_badge_color = '#b45309'; }
-                        ?>
-                        <tr style="border-bottom: 1px solid #f1f5f9;">
-                            <td style="padding: 1rem 1.25rem; font-size: 0.85rem; white-space: nowrap;">
-                                <div style="font-weight: 600; color: #1e293b;"><?= date('M d, Y', strtotime($l['timestamp'])) ?></div>
-                                <div style="color: #64748b; font-size: 0.78rem;"><?= date('h:i:s A', strtotime($l['timestamp'])) ?></div>
-                            </td>
-                            <td style="padding: 1rem 1.25rem;">
-                                <div style="font-weight: 600; color: #0f172a; font-size: 0.92rem;">
-                                    <?php if (!empty($l['staff_name'])): ?>
-                                        <i class="fa-solid fa-user-check text-primary me-1"></i><?= htmlspecialchars($l['staff_name']) ?>
-                                    <?php else: ?>
-                                        <span style="color: #64748b;"><i class="fa-solid fa-robot me-1"></i>Automated / System</span>
-                                    <?php endif; ?>
-                                </div>
-                                <div style="margin-top: 3px;">
-                                    <span style="display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; background: <?= $role_bg ?>; color: <?= $role_color ?>;">
-                                        <?= htmlspecialchars(ucfirst($l['staff_role'] ?? 'System')) ?>
-                                    </span>
-                                </div>
-                            </td>
-                            <td style="padding: 1rem 1.25rem;">
-                                <span style="display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; background: <?= $mod_badge_bg ?>; color: <?= $mod_badge_color ?>;">
-                                    <?= htmlspecialchars($l['module'] ?: 'General') ?>
-                                </span>
-                            </td>
-                            <td style="padding: 1rem 1.25rem; font-weight: 600; color: #1e293b; font-size: 0.88rem;">
-                                <?= htmlspecialchars($l['action']) ?>
-                            </td>
-                            <td style="padding: 1rem 1.25rem; font-size: 0.85rem; color: #334155; line-height: 1.45; max-width: 380px;">
-                                <?= htmlspecialchars($l['details']) ?>
-                            </td>
-                            <td style="padding: 1rem 1.25rem; text-align: right; font-family: monospace; font-size: 0.78rem; color: #64748b;">
-                                <?= htmlspecialchars($l['ip_address'] ?? '127.0.0.1') ?>
+                </thead>
+                <tbody>
+                    <?php if (!$logs || $logs->num_rows == 0): ?>
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-secondary">
+                                <i class="fa-solid fa-shield-halved fs-1 text-muted mb-2 d-block"></i>
+                                <div class="fw-semibold text-slate-800">No staff activity records found</div>
+                                <div class="small text-muted mt-1">Try adjusting the staff member filter, module tab, or date range.</div>
                             </td>
                         </tr>
-                    <?php endwhile; ?>
-                <?php endif; ?>
-            </tbody>
-        </table>
+                    <?php else: ?>
+                        <?php while ($l = $logs->fetch_assoc()): ?>
+                            <?php
+                            $role = strtolower($l['staff_role'] ?? 'system');
+                            $role_badge = 'mature-badge-slate';
+                            if ($role === 'admin') $role_badge = 'mature-badge-primary';
+                            elseif ($role === 'manager') $role_badge = 'mature-badge-sky';
+                            elseif ($role === 'security') $role_badge = 'mature-badge-emerald';
+                            elseif ($role === 'staff') $role_badge = 'mature-badge-amber';
+
+                            $mod = strtolower($l['module'] ?? '');
+                            $mod_badge = 'mature-badge-slate';
+                            if (strpos($mod, 'security') !== false) $mod_badge = 'mature-badge-sky';
+                            elseif (strpos($mod, 'finance') !== false || strpos($mod, 'payment') !== false) $mod_badge = 'mature-badge-emerald';
+                            elseif (strpos($mod, 'maintenance') !== false) $mod_badge = 'mature-badge-amber';
+                            elseif (strpos($mod, 'zones') !== false) $mod_badge = 'mature-badge-primary';
+                            ?>
+                            <tr>
+                                <td class="ps-4 text-nowrap">
+                                    <div class="fw-bold text-slate-900"><?= date('M d, Y', strtotime($l['timestamp'])) ?></div>
+                                    <div class="small text-secondary"><i class="fa-regular fa-clock me-1"></i><?= date('h:i:s A', strtotime($l['timestamp'])) ?></div>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold text-slate-900">
+                                        <?php if (!empty($l['staff_name'])): ?>
+                                            <i class="fa-solid fa-user-check text-primary me-1"></i><?= htmlspecialchars($l['staff_name']) ?>
+                                        <?php else: ?>
+                                            <span class="text-secondary"><i class="fa-solid fa-robot me-1"></i>Automated / System</span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="mt-0.5">
+                                        <span class="mature-badge <?= $role_badge ?>">
+                                            <?= htmlspecialchars(ucfirst($l['staff_role'] ?? 'System')) ?>
+                                        </span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="mature-badge <?= $mod_badge ?>">
+                                        <?= htmlspecialchars($l['module'] ?: 'General') ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="fw-semibold text-slate-900"><?= htmlspecialchars($l['action']) ?></span>
+                                </td>
+                                <td style="max-width: 380px;">
+                                    <div class="text-secondary small" style="line-height: 1.45;">
+                                        <?= htmlspecialchars($l['details']) ?>
+                                    </div>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <span class="tech-chip"><?= htmlspecialchars($l['ip_address'] ?? '127.0.0.1') ?></span>
+                                </td>
+                            </tr>
+                        <?php endwhile; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 

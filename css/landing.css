@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+
 /* css/landing.css - Luxury Estate Landing & Authentication Styles */
 
 :root {
@@ -13,8 +15,22 @@
     --brand-admin: #f59e0b;
 }
 
-body.landing-page, button, input, select, textarea {
-    font-family: 'Outfit', sans-serif;
+body.landing-page, 
+body.landing-page h1, body.landing-page h2, body.landing-page h3, body.landing-page h4, body.landing-page h5, body.landing-page h6,
+body.landing-page p, body.landing-page a, body.landing-page span, body.landing-page div, body.landing-page label,
+button, input, select, textarea {
+    font-family: 'Outfit', sans-serif !important;
+}
+
+body.landing-page .fa, body.landing-page .fas, body.landing-page .far, body.landing-page .fa-solid, body.landing-page .fa-regular, body.landing-page .fa-brands,
+body.landing-page [class^="fa-"], body.landing-page [class*=" fa-"],
+body.landing-page .fa::before, body.landing-page .fas::before, body.landing-page .far::before, body.landing-page .fa-solid::before, body.landing-page .fa-regular::before, body.landing-page .fa-brands::before,
+body.landing-page [class^="fa-"]::before, body.landing-page [class*=" fa-"]::before {
+    font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands", "FontAwesome" !important;
+    font-style: normal;
+}
+
+body.landing-page {
     background-color: var(--brand-dark);
     color: #f8fafc;
     overflow-x: hidden;
@@ -253,7 +269,7 @@ body.landing-page, button, input, select, textarea {
 /* Portal Selection Section */
 .portals-section {
     padding: 6rem 2rem;
-    max-width: 1280px;
+    max-width: 1480px;
     margin: 0 auto;
     position: relative;
 }
@@ -293,15 +309,15 @@ body.landing-page, button, input, select, textarea {
 
 .portals-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 2rem;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.25rem;
 }
 
 .portal-card {
     background: var(--brand-dark-surface);
     border: 1px solid var(--brand-border);
     border-radius: 1.25rem;
-    padding: 2.5rem 2rem;
+    padding: 2.25rem 1.4rem;
     display: flex;
     flex-direction: column;
     position: relative;
@@ -329,21 +345,23 @@ body.landing-page, button, input, select, textarea {
 /* Card Role Theming */
 .portal-card.resident-card::before { background: linear-gradient(90deg, #38bdf8, #2563eb); }
 .portal-card.staff-card::before { background: linear-gradient(90deg, #10b981, #059669); }
+.portal-card.zone-card::before { background: linear-gradient(90deg, #c084fc, #9333ea); }
 .portal-card.admin-card::before { background: linear-gradient(90deg, #f59e0b, #d97706); }
 
 .portal-card.resident-card:hover { border-color: rgba(56, 189, 248, 0.4); }
 .portal-card.staff-card:hover { border-color: rgba(16, 185, 129, 0.4); }
+.portal-card.zone-card:hover { border-color: rgba(192, 132, 252, 0.4); }
 .portal-card.admin-card:hover { border-color: rgba(245, 158, 11, 0.4); }
 
 .portal-icon-wrapper {
-    width: 64px;
-    height: 64px;
-    border-radius: 1rem;
+    width: 56px;
+    height: 56px;
+    border-radius: 0.85rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.75rem;
-    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+    margin-bottom: 1.25rem;
 }
 
 .portal-card.resident-card .portal-icon-wrapper {
@@ -356,6 +374,12 @@ body.landing-page, button, input, select, textarea {
     background: rgba(16, 185, 129, 0.12);
     color: #10b981;
     border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.portal-card.zone-card .portal-icon-wrapper {
+    background: rgba(168, 85, 247, 0.12);
+    color: #c084fc;
+    border: 1px solid rgba(168, 85, 247, 0.25);
 }
 
 .portal-card.admin-card .portal-icon-wrapper {
@@ -378,45 +402,51 @@ body.landing-page, button, input, select, textarea {
 
 .portal-card.resident-card .portal-tag { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
 .portal-card.staff-card .portal-tag { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+.portal-card.zone-card .portal-tag { background: rgba(168, 85, 247, 0.15); color: #c084fc; }
 .portal-card.admin-card .portal-tag { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
 
 .portal-title {
     font-family: 'Outfit', sans-serif;
-    font-size: 1.5rem;
+    font-size: 1.35rem;
     font-weight: 700;
     color: #ffffff;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.65rem;
 }
 
 .portal-desc {
     color: #94a3b8;
-    font-size: 0.95rem;
+    font-size: 0.88rem;
     line-height: 1.5;
-    margin-bottom: 1.75rem;
+    margin-bottom: 1.5rem;
+    min-height: 4.8rem;
 }
 
 .portal-features {
     list-style: none;
     padding: 0;
-    margin: 0 0 2rem;
+    margin: 0 0 1.75rem;
     flex-grow: 1;
 }
 
 .portal-features li {
     display: flex;
-    align-items: center;
-    gap: 0.6rem;
+    align-items: flex-start;
+    gap: 0.55rem;
     color: #cbd5e1;
-    font-size: 0.9rem;
-    margin-bottom: 0.75rem;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    margin-bottom: 0.65rem;
 }
 
 .portal-features li i {
-    font-size: 0.85rem;
+    font-size: 0.82rem;
+    margin-top: 0.2rem;
+    flex-shrink: 0;
 }
 
 .portal-card.resident-card .portal-features li i { color: #38bdf8; }
 .portal-card.staff-card .portal-features li i { color: #10b981; }
+.portal-card.zone-card .portal-features li i { color: #c084fc; }
 .portal-card.admin-card .portal-features li i { color: #f59e0b; }
 
 .portal-btn {
@@ -424,12 +454,13 @@ body.landing-page, button, input, select, textarea {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    padding: 0.85rem 1.5rem;
+    padding: 0.8rem 1.25rem;
     border-radius: 0.75rem;
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     text-decoration: none;
     transition: all 0.25s ease;
+    white-space: nowrap;
 }
 
 .portal-card.resident-card .portal-btn {
@@ -450,6 +481,16 @@ body.landing-page, button, input, select, textarea {
 .portal-card.staff-card .portal-btn:hover {
     background: #10b981;
     color: #0b0f19;
+}
+
+.portal-card.zone-card .portal-btn {
+    background: rgba(168, 85, 247, 0.15);
+    color: #c084fc;
+    border: 1px solid rgba(168, 85, 247, 0.3);
+}
+.portal-card.zone-card .portal-btn:hover {
+    background: #9333ea;
+    color: #ffffff;
 }
 
 .portal-card.admin-card .portal-btn {
@@ -690,6 +731,7 @@ body.landing-page, button, input, select, textarea {
 .auth-badge.badge-resident { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
 .auth-badge.badge-staff { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
 .auth-badge.badge-admin { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+.auth-badge.badge-zone { background: rgba(192, 132, 252, 0.15); color: #c084fc; border: 1px solid rgba(192, 132, 252, 0.3); }
 
 .auth-title {
     font-family: 'Outfit', sans-serif;
@@ -702,6 +744,72 @@ body.landing-page, button, input, select, textarea {
 .auth-subtitle {
     color: #94a3b8;
     font-size: 0.95rem;
+}
+
+/* Auth Role Pills Switcher */
+.role-pills {
+    display: flex;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    padding: 0.35rem;
+    margin-top: 1.5rem;
+    margin-bottom: 1.75rem;
+    gap: 0.25rem;
+}
+
+.role-pill {
+    flex: 1;
+    text-align: center;
+    padding: 0.55rem 0.35rem;
+    border-radius: 0.5rem;
+    color: #94a3b8;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: 1px solid transparent;
+    background: transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+.role-pill:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.role-pill.active {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.role-pill.active.pill-admin {
+    background: rgba(245, 158, 11, 0.18);
+    color: #f59e0b;
+    border-color: rgba(245, 158, 11, 0.35);
+}
+
+.role-pill.active.pill-zone {
+    background: rgba(192, 132, 252, 0.18);
+    color: #c084fc;
+    border-color: rgba(192, 132, 252, 0.35);
+}
+
+.role-pill.active.pill-resident {
+    background: rgba(56, 189, 248, 0.18);
+    color: #38bdf8;
+    border-color: rgba(56, 189, 248, 0.35);
+}
+
+.role-pill.active.pill-staff {
+    background: rgba(16, 185, 129, 0.18);
+    color: #10b981;
+    border-color: rgba(16, 185, 129, 0.35);
 }
 
 .auth-input-group {
@@ -794,6 +902,16 @@ body.landing-page, button, input, select, textarea {
     transform: translateY(-1px);
 }
 
+.auth-btn-zone {
+    background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%);
+    color: #ffffff;
+    box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);
+}
+.auth-btn-zone:hover {
+    background: linear-gradient(135deg, #9333ea 0%, #6b21a8 100%);
+    transform: translateY(-1px);
+}
+
 .auth-switcher {
     margin-top: 1.75rem;
     padding-top: 1.5rem;
@@ -842,6 +960,10 @@ body.landing-page, button, input, select, textarea {
 }
 
 /* Responsive Rules */
+@media (max-width: 1080px) {
+    .portals-grid { grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
+}
+
 @media (max-width: 992px) {
     .hero-title { font-size: 2.75rem; }
     .rules-card { grid-template-columns: 1fr; gap: 1.5rem; }

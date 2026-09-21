@@ -53,164 +53,213 @@ $domestic_staff_res = $conn->query("SELECT * FROM household_staff WHERE flat_id 
 include 'header.php';
 include 'sidebar.php';
 ?>
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
     <div>
-        <h2 class="h4 font-bold text-slate-800 m-0"><i class="fa-solid fa-building-user text-primary me-2"></i> My Property & Tenancy</h2>
-        <p class="text-secondary small mb-0">View flat details, landlord information, household members, and registered vehicles.</p>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <h1 class="h4 font-bold text-slate-900 m-0" style="letter-spacing: -0.02em;">
+                <i class="fa-solid fa-building-user text-primary me-2"></i> Property & Tenancy Profile
+            </h1>
+            <span class="mature-badge mature-badge-emerald"><i class="fa-solid fa-circle-check me-1"></i>Active Tenancy</span>
+        </div>
+        <p class="text-secondary small mb-0">Detailed flat architectural specifications, landlord contacts, registered household members, and vehicles.</p>
     </div>
 </div>
 
-<style>
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
-    @media (max-width: 850px) { .grid-2 { grid-template-columns: 1fr; } }
-
-    .card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 1rem; padding: 1.5rem; }
-    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 1rem; }
-    .card-title { font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 700; }
-
-    .prop-detail-row { display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem; }
-    .prop-detail-row:last-child { border-bottom: none; }
-    .prop-label { color: #64748b; font-weight: 500; }
-    .prop-value { font-weight: 600; color: #0f172a; }
-
-    table { width: 100%; border-collapse: collapse; text-align: left; margin-top: 0.5rem; }
-    th { padding: 0.75rem 1rem; border-bottom: 2px solid #e2e8f0; font-size: 0.85rem; text-transform: uppercase; color: #64748b; }
-    td { padding: 0.85rem 1rem; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; }
-</style>
-
 <div class="d-flex flex-column gap-4">
-
-
-        <div class="grid-2">
-            <!-- Property Details Card -->
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title"><i class="fa-solid fa-building" style="color: var(--primary); margin-right: 8px;"></i> Property Information</div>
+    <!-- ==========================================
+         TOP ROW: PROPERTY & TENANCY CARDS (2 COLS)
+         ========================================== -->
+    <div class="row g-4">
+        <!-- Property Details Card -->
+        <div class="col-12 col-lg-6">
+            <div class="resident-glass-panel h-100">
+                <div class="resident-card-header">
+                    <div class="resident-card-title">
+                        <i class="fa-solid fa-building text-primary"></i> Architectural Unit Details
+                    </div>
+                    <span class="mature-badge mature-badge-sky">
+                        <?= htmlspecialchars($resident['flat_type'] ?? 'Standard Unit') ?>
+                    </span>
                 </div>
-                <div>
-                    <div class="prop-detail-row">
-                        <span class="prop-label">Street / Block</span>
-                        <span class="prop-value"><?= htmlspecialchars($resident['street_name'] ?? 'Main Street') ?></span>
-                    </div>
-                    <div class="prop-detail-row">
-                        <span class="prop-label">Building Name / #</span>
-                        <span class="prop-value"><?= htmlspecialchars(($resident['building_name'] ?? 'Building') . ' (' . ($resident['property_number'] ?? 'N/A') . ')') ?></span>
-                    </div>
-                    <div class="prop-detail-row">
-                        <span class="prop-label">Flat / House Number</span>
-                        <span class="prop-value">Flat <?= htmlspecialchars($resident['flat_number'] ?? 'N/A') ?> (Floor <?= htmlspecialchars($resident['floor'] ?? '1') ?>)</span>
-                    </div>
-                    <div class="prop-detail-row">
-                        <span class="prop-label">Flat Type</span>
-                        <span class="prop-value"><?= htmlspecialchars($resident['flat_type'] ?? '2BHK') ?></span>
-                    </div>
-                    <div class="prop-detail-row">
-                        <span class="prop-label">Occupancy Status</span>
-                        <span class="prop-value" style="color: #10b981;"><i class="fa-solid fa-circle-check"></i> Occupied (<?= htmlspecialchars(ucfirst($tenancy['status'] ?? 'Active')) ?>)</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tenancy & Owner Details Card -->
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title"><i class="fa-solid fa-key" style="color: #8b5cf6; margin-right: 8px;"></i> Tenancy & Ownership</div>
-                </div>
-                <div>
-                    <div class="prop-detail-row">
-                        <span class="prop-label">Resident Role</span>
-                        <span class="prop-value" style="text-transform: uppercase; color: #2563eb;"><?= htmlspecialchars($resident['relationship'] ?? 'Head / Tenant') ?></span>
-                    </div>
-                    <div class="prop-detail-row">
-                        <span class="prop-label">Move-In Date</span>
-                        <span class="prop-value"><?= !empty($tenancy['move_in_date']) ? date('M j, Y', strtotime($tenancy['move_in_date'])) : (!empty($resident['lease_start']) ? date('M j, Y', strtotime($resident['lease_start'])) : 'N/A') ?></span>
-                    </div>
-                    <div class="prop-detail-row">
-                        <span class="prop-label">Expected Lease End</span>
-                        <span class="prop-value"><?= !empty($tenancy['expected_move_out_date']) ? date('M j, Y', strtotime($tenancy['expected_move_out_date'])) : (!empty($resident['lease_end']) ? date('M j, Y', strtotime($resident['lease_end'])) : 'Ongoing') ?></span>
-                    </div>
-                    <div class="prop-detail-row">
-                        <span class="prop-label">Property Landlord / Owner</span>
-                        <span class="prop-value"><?= htmlspecialchars($owner['full_name'] ?? 'Estate Direct / Private Owner') ?></span>
-                    </div>
-                    <?php if ($owner && !empty($owner['phone'])): ?>
-                        <div class="prop-detail-row">
-                            <span class="prop-label">Landlord Phone</span>
-                            <span class="prop-value"><?= htmlspecialchars($owner['phone']) ?></span>
+                <div class="resident-card-body">
+                    <div class="d-flex flex-column gap-3">
+                        <div class="d-flex justify-content-between align-items-center pb-2 border-bottom border-light-subtle">
+                            <span class="text-secondary small fw-medium">Street / Sector Location</span>
+                            <span class="fw-semibold text-slate-900"><?= htmlspecialchars($resident['street_name'] ?? 'Main Street') ?></span>
                         </div>
-                    <?php endif; ?>
+                        <div class="d-flex justify-content-between align-items-center pb-2 border-bottom border-light-subtle">
+                            <span class="text-secondary small fw-medium">Building Name & Number</span>
+                            <span class="fw-semibold text-slate-900"><?= htmlspecialchars(($resident['building_name'] ?? 'Building') . ' (' . ($resident['property_number'] ?? 'N/A') . ')') ?></span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center pb-2 border-bottom border-light-subtle">
+                            <span class="text-secondary small fw-medium">Flat / Unit Number</span>
+                            <span class="fw-bold text-primary font-monospace fs-6">Unit <?= htmlspecialchars($resident['flat_number'] ?? 'N/A') ?> (Floor <?= htmlspecialchars($resident['floor'] ?? '1') ?>)</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center pb-2 border-bottom border-light-subtle">
+                            <span class="text-secondary small fw-medium">Unit Typology</span>
+                            <span class="mature-badge mature-badge-slate"><?= htmlspecialchars($resident['flat_type'] ?? '2BHK') ?></span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-secondary small fw-medium">Occupancy Verification</span>
+                            <span class="mature-badge mature-badge-emerald">
+                                <i class="fa-solid fa-circle-check me-1"></i> Occupied (<?= htmlspecialchars(ucfirst($tenancy['status'] ?? 'Active')) ?>)
+                            </span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Household Members & Vehicles -->
-        <div class="grid-2">
-            <!-- Household Members -->
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title"><i class="fa-solid fa-users" style="color: #3b82f6; margin-right: 8px;"></i> Co-Residents / Family</div>
+        <!-- Tenancy & Owner Details Card -->
+        <div class="col-12 col-lg-6">
+            <div class="resident-glass-panel h-100">
+                <div class="resident-card-header">
+                    <div class="resident-card-title">
+                        <i class="fa-solid fa-key text-primary"></i> Tenancy & Ownership Contract
+                    </div>
+                    <span class="mature-badge mature-badge-purple">
+                        <?= htmlspecialchars(strtoupper($resident['relationship'] ?? 'TENANT')) ?>
+                    </span>
                 </div>
-                <div style="overflow-x: auto;">
-                    <table>
+                <div class="resident-card-body">
+                    <div class="d-flex flex-column gap-3">
+                        <div class="d-flex justify-content-between align-items-center pb-2 border-bottom border-light-subtle">
+                            <span class="text-secondary small fw-medium">Resident Identity Role</span>
+                            <span class="fw-semibold text-primary"><?= htmlspecialchars(ucfirst($resident['relationship'] ?? 'Head / Tenant')) ?></span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center pb-2 border-bottom border-light-subtle">
+                            <span class="text-secondary small fw-medium">Lease Move-In Date</span>
+                            <span class="fw-semibold text-slate-900"><?= !empty($tenancy['move_in_date']) ? date('M j, Y', strtotime($tenancy['move_in_date'])) : (!empty($resident['lease_start']) ? date('M j, Y', strtotime($resident['lease_start'])) : 'N/A') ?></span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center pb-2 border-bottom border-light-subtle">
+                            <span class="text-secondary small fw-medium">Expected Lease Expiration</span>
+                            <span class="fw-semibold text-slate-900"><?= !empty($tenancy['expected_move_out_date']) ? date('M j, Y', strtotime($tenancy['expected_move_out_date'])) : (!empty($resident['lease_end']) ? date('M j, Y', strtotime($resident['lease_end'])) : 'Ongoing') ?></span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center pb-2 border-bottom border-light-subtle">
+                            <span class="text-secondary small fw-medium">Property Landlord / Owner</span>
+                            <span class="fw-semibold text-slate-900"><?= htmlspecialchars($owner['full_name'] ?? 'Estate Direct / Private Owner') ?></span>
+                        </div>
+                        <?php if ($owner && !empty($owner['phone'])): ?>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-secondary small fw-medium">Landlord Phone</span>
+                                <a href="tel:<?= htmlspecialchars($owner['phone']) ?>" class="text-decoration-none fw-semibold font-monospace small">
+                                    <i class="fa-solid fa-phone me-1"></i><?= htmlspecialchars($owner['phone']) ?>
+                                </a>
+                            </div>
+                        <?php else: ?>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-secondary small fw-medium">Management Handling</span>
+                                <span class="mature-badge mature-badge-slate">Estate Central Office</span>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         BOTTOM ROW: CO-RESIDENTS & VEHICLES (2 COLS)
+         ========================================== -->
+    <div class="row g-4">
+        <!-- Household Members -->
+        <div class="col-12 col-lg-6">
+            <div class="resident-glass-panel h-100">
+                <div class="resident-card-header">
+                    <div class="resident-card-title">
+                        <i class="fa-solid fa-users text-primary"></i> Co-Residents & Family Dependents
+                    </div>
+                    <span class="mature-badge mature-badge-slate"><?= ($occupants_res) ? $occupants_res->num_rows : 0 ?> Registered</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table dashboard-table align-middle mb-0">
                         <thead>
                             <tr>
                                 <th>Name</th>
                                 <th>Relationship</th>
-                                <th>Phone</th>
+                                <th>Contact</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if ($occupants_res && $occupants_res->num_rows > 0): ?>
                                 <?php while ($occ = $occupants_res->fetch_assoc()): ?>
                                     <tr>
-                                        <td style="font-weight: 600; color: #1e293b;"><?= htmlspecialchars($occ['name']) ?></td>
-                                        <td><span style="background: #f1f5f9; padding: 2px 8px; border-radius: 4px; font-weight: 600; font-size: 0.8rem;"><?= htmlspecialchars(ucfirst($occ['relationship'])) ?></span></td>
-                                        <td><?= htmlspecialchars($occ['phone'] ?? 'N/A') ?></td>
+                                        <td>
+                                            <div class="fw-semibold text-slate-900"><?= htmlspecialchars($occ['name']) ?></div>
+                                        </td>
+                                        <td>
+                                            <span class="mature-badge mature-badge-slate">
+                                                <?= htmlspecialchars(ucfirst($occ['relationship'])) ?>
+                                            </span>
+                                        </td>
+                                        <td class="small text-secondary font-monospace"><?= htmlspecialchars($occ['phone'] ?? 'N/A') ?></td>
                                     </tr>
                                 <?php endwhile; ?>
                             <?php else: ?>
-                                <tr><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">No co-residents registered for this flat.</td></tr>
+                                <tr><td colspan="3" class="text-center py-4 text-secondary small">No co-residents registered for this flat.</td></tr>
                             <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
             </div>
+        </div>
 
-            <!-- Vehicles & Household Staff -->
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title"><i class="fa-solid fa-car" style="color: #10b981; margin-right: 8px;"></i> Registered Vehicles & Staff</div>
+        <!-- Vehicles & Domestic Staff -->
+        <div class="col-12 col-lg-6">
+            <div class="resident-glass-panel h-100">
+                <div class="resident-card-header">
+                    <div class="resident-card-title">
+                        <i class="fa-solid fa-car text-primary"></i> Registered Vehicles & Domestic Staff
+                    </div>
                 </div>
-                <div>
-                    <h4 style="font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 0.05em;">Vehicles</h4>
+                <div class="resident-card-body">
+                    <div class="small fw-bold text-uppercase text-secondary mb-2" style="font-size: 0.72rem; letter-spacing: 0.05em;">
+                        <i class="fa-solid fa-car me-1 text-primary"></i> Registered Vehicles
+                    </div>
                     <?php if ($vehicles_res && $vehicles_res->num_rows > 0): ?>
-                        <ul style="list-style: none; padding: 0; margin-bottom: 1.5rem;">
+                        <div class="d-flex flex-column gap-2 mb-4">
                             <?php while ($v = $vehicles_res->fetch_assoc()): ?>
-                                <li style="padding: 0.5rem 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 0.9rem;">
-                                    <span style="font-weight: 600; font-family: monospace; color: #2563eb;"><?= htmlspecialchars($v['reg_number']) ?></span>
-                                    <span style="color: var(--text-muted);"><?= htmlspecialchars($v['model'] ?? 'Vehicle') ?> (<?= htmlspecialchars(ucfirst($v['type'])) ?>)</span>
-                                </li>
+                                <div class="p-2 px-3 rounded-3 d-flex justify-content-between align-items-center border" style="background: rgba(59, 130, 246, 0.04); border-color: rgba(59, 130, 246, 0.15) !important;">
+                                    <div>
+                                        <span class="fw-bold font-monospace text-primary me-2"><?= htmlspecialchars($v['reg_number']) ?></span>
+                                        <span class="small text-secondary"><?= htmlspecialchars($v['model'] ?? 'Vehicle') ?> (<?= htmlspecialchars(ucfirst($v['type'])) ?>)</span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <?php if (!empty($v['particulars_path'])): ?>
+                                            <a href="<?= htmlspecialchars($v['particulars_path']) ?>" target="_blank" class="mature-badge mature-badge-primary text-decoration-none">
+                                                <i class="fa-solid fa-file-lines me-1"></i> Particulars
+                                            </a>
+                                        <?php endif; ?>
+                                        <a href="../car_sticker.php?id=<?= $v['id'] ?>" target="_blank" class="mature-badge text-decoration-none" style="background: rgba(245, 158, 11, 0.12); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.3);">
+                                            <i class="fa-solid fa-id-card me-1"></i> Car Sticker
+                                        </a>
+                                    </div>
+                                </div>
                             <?php endwhile; ?>
-                        </ul>
+                        </div>
                     <?php else: ?>
-                        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">No registered vehicles for this flat.</p>
+                        <p class="small text-secondary mb-4">No registered vehicles on record for this unit.</p>
                     <?php endif; ?>
 
-                    <h4 style="font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 0.05em;">Domestic Staff</h4>
+                    <div class="small fw-bold text-uppercase text-secondary mb-2" style="font-size: 0.72rem; letter-spacing: 0.05em;">
+                        <i class="fa-solid fa-user-shield me-1 text-success"></i> Domestic Staff
+                    </div>
                     <?php if ($domestic_staff_res && $domestic_staff_res->num_rows > 0): ?>
-                        <ul style="list-style: none; padding: 0;">
+                        <div class="d-flex flex-column gap-2">
                             <?php while ($st = $domestic_staff_res->fetch_assoc()): ?>
-                                <li style="padding: 0.5rem 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 0.9rem;">
-                                    <span style="font-weight: 600; color: #1e293b;"><?= htmlspecialchars($st['name']) ?></span>
-                                    <span style="color: var(--text-muted);"><?= htmlspecialchars($st['role']) ?> (<?= htmlspecialchars($st['phone'] ?? 'N/A') ?>)</span>
-                                </li>
+                                <div class="p-2 px-3 rounded-3 d-flex justify-content-between align-items-center border" style="background: rgba(16, 185, 129, 0.04); border-color: rgba(16, 185, 129, 0.15) !important;">
+                                    <span class="fw-semibold text-slate-900"><?= htmlspecialchars($st['name']) ?></span>
+                                    <span class="small text-secondary"><?= htmlspecialchars($st['role']) ?> &bull; <span class="font-monospace"><?= htmlspecialchars($st['phone'] ?? 'N/A') ?></span></span>
+                                </div>
                             <?php endwhile; ?>
-                        </ul>
+                        </div>
                     <?php else: ?>
-                        <p style="color: var(--text-muted); font-size: 0.85rem;">No domestic staff registered for this flat.</p>
+                        <p class="small text-secondary m-0">No domestic staff registered for this unit.</p>
                     <?php endif; ?>
                 </div>
+            </div>
         </div>
     </div>
 </div>
+
 <?php include 'footer.php'; ?>

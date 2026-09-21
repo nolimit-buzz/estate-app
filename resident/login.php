@@ -69,12 +69,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </a>
             
             <div class="auth-header">
-                <div class="auth-badge badge-resident">
-                    <i class="fa-solid fa-house-user"></i> Resident Portal
+                <div class="d-flex justify-content-center mb-3">
+                    <?php if ($estate_logo): ?>
+                        <img src="../<?php echo htmlspecialchars($estate_logo); ?>" alt="Logo" style="height: 48px; border-radius: 8px;">
+                    <?php else: ?>
+                        <div style="width: 52px; height: 52px; border-radius: 12px; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #38bdf8; margin: 0 auto;">
+                            <i class="fa-solid fa-house-user"></i>
+                        </div>
+                    <?php endif; ?>
                 </div>
                 
-                <h2 class="auth-title">Resident Sign In</h2>
-                <p class="auth-subtitle">Access your bills, visitor passes, and maintenance requests</p>
+                <h2 class="auth-title">Welcome Back</h2>
+                <p class="auth-subtitle">Select your portal and sign in to <?php echo htmlspecialchars($estate_name); ?></p>
+            </div>
+
+            <!-- Role Selector Pills -->
+            <div class="role-pills">
+                <a href="../login?role=admin" class="role-pill pill-admin">
+                    <i class="fa-solid fa-shield-halved me-1"></i> Central
+                </a>
+                <a href="../zone/login" class="role-pill pill-zone">
+                    <i class="fa-solid fa-layer-group me-1"></i> Zone
+                </a>
+                <a href="login" class="role-pill pill-resident active">
+                    <i class="fa-solid fa-house-user me-1"></i> Resident
+                </a>
+                <a href="../staff/login" class="role-pill pill-staff">
+                    <i class="fa-solid fa-user-shield me-1"></i> Staff
+                </a>
             </div>
 
             <?php if ($error): ?>
@@ -102,17 +124,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <button type="submit" class="auth-btn auth-btn-resident">
-                    <span>Enter Resident Portal</span>
+                    <span>Sign In to Resident Portal</span>
                     <i class="fa-solid fa-arrow-right"></i>
                 </button>
             </form>
 
-            <div class="auth-switcher">
-                Estate Staff or Gate Security? <a href="../staff/login" style="color: #10b981;">Staff Console</a><br>
-                Estate Administrator? <a href="../login" style="color: #f59e0b;">Admin Login</a>
-            </div>
-
-            <div style="margin-top: 1.25rem; text-align: center; font-size: 0.8rem; color: #64748b;">
+            <div style="margin-top: 1.5rem; text-align: center; font-size: 0.8rem; color: #64748b;">
                 Demo Resident: john@example.com / admin123
             </div>
         </div>

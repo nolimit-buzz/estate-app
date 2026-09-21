@@ -117,6 +117,15 @@
             this.buildOptions();
             this.updateTrigger();
 
+            // Initial hidden / disabled state check
+            if (this.select.style.display === 'none' || this.select.hidden) {
+                this.wrapper.style.display = 'none';
+            }
+            if (this.select.disabled) {
+                this.trigger.classList.add('is-disabled');
+                this.trigger.setAttribute('tabindex', '-1');
+            }
+
             // Bind events
             this.bindEvents();
 
@@ -126,6 +135,21 @@
                 this.updateTrigger();
             });
             this.observer.observe(this.select, { childList: true, subtree: true });
+
+            // Observe select style/hidden/disabled mutations
+            this.attrObserver = new MutationObserver(() => {
+                const isHidden = (this.select.style.display === 'none' || this.select.hidden);
+                this.wrapper.style.display = isHidden ? 'none' : '';
+                if (this.select.disabled) {
+                    this.trigger.classList.add('is-disabled');
+                    this.trigger.setAttribute('tabindex', '-1');
+                    this.close();
+                } else {
+                    this.trigger.classList.remove('is-disabled');
+                    this.trigger.setAttribute('tabindex', '0');
+                }
+            });
+            this.attrObserver.observe(this.select, { attributes: true, attributeFilter: ['style', 'hidden', 'disabled'] });
 
             // Hook programmatic select.value assignment
             this.hookValueSetter();
@@ -216,7 +240,7 @@
         }
 
         open() {
-            if (this.isOpen) return;
+            if (this.isOpen || this.select.disabled || this.wrapper.style.display === 'none' || this.select.hidden) return;
 
             // Close any other open dropdowns
             document.querySelectorAll('.searchable-select-dropdown').forEach(d => {

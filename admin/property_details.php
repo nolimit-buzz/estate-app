@@ -1,6 +1,9 @@
 <?php
 // admin/property_details.php
 require_once '../config.php';
+require_once '../includes/auth_guard.php';
+requireAdminAccess();
+
 include '../includes/header.php';
 include '../includes/sidebar.php';
 
@@ -56,226 +59,273 @@ if (!$prop) {
 $display_name = $prop['name'] ?? ('Flat ' . $prop['number']);
 ?>
 
-<div class="page-header">
-    <h1><i class="fa-solid fa-timeline"></i> History & Ownership: <?php echo htmlspecialchars($display_name); ?></h1>
-    <a href="properties" class="btn" style="background: #f1f5f9; color: #475569;"><i class="fa-solid fa-arrow-left"></i> Back</a>
+<div class="page-header-futuristic">
+    <div>
+        <h1 class="h4 font-bold text-slate-900 m-0"><i class="fa-solid fa-timeline me-2 text-secondary"></i> History & Ownership: <?php echo htmlspecialchars($display_name); ?></h1>
+        <p class="text-secondary small">Comprehensive asset dossier, ownership transfer log, and tenancy activity records</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="properties" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-arrow-left me-1"></i> Back to Properties</a>
+    </div>
 </div>
 
 <?php if ($message): ?>
-    <div class="alert" style="background: #dcfce7; color: #166534; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
-        <?php echo $message; ?>
+    <div class="alert mature-card p-3 mb-4 border-0" style="background: rgba(34, 197, 94, 0.1); border-left: 4px solid #16a34a !important; color: #15803d;">
+        <i class="fa-solid fa-circle-check me-2"></i> <?php echo $message; ?>
     </div>
 <?php endif; ?>
 
-<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem;">
-    <!-- LEFT: Details & Transfer -->
-    <div>
-        <div class="glass" style="padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 2rem;">
-            <h4 style="margin-top:0;">Property Details</h4>
-            <div style="font-size: 0.9rem; line-height: 1.6;">
-                <p><strong>ID:</strong> <?php echo $prop['custom_id']; ?></p>
-                <?php if ($type == 'flat'): ?>
-                    <p><strong>Building:</strong> <?php echo $prop['building_name']; ?></p>
-                    <p><strong>Floor:</strong> <?php echo $prop['floor']; ?></p>
-                <?php endif; ?>
+<div class="row g-4">
+    <!-- LEFT: Property Dossier & Transfer Action -->
+    <div class="col-12 col-lg-4">
+        <div class="mature-card mb-4">
+            <div class="mature-card-header">
+                <h3 class="mature-card-title"><i class="fa-solid fa-circle-info text-secondary"></i> Asset Dossier</h3>
+                <span class="id-chip"><?php echo htmlspecialchars($prop['custom_id'] ?? ''); ?></span>
+            </div>
+            <div class="mature-card-body">
+                <div class="d-flex flex-column gap-2 small">
+                    <div class="d-flex justify-content-between py-1 border-bottom border-light-subtle">
+                        <span class="text-secondary">Custom ID</span>
+                        <span class="font-monospace fw-semibold"><?php echo htmlspecialchars($prop['custom_id'] ?? '-'); ?></span>
+                    </div>
+                    <?php if ($type == 'flat'): ?>
+                        <div class="d-flex justify-content-between py-1 border-bottom border-light-subtle">
+                            <span class="text-secondary">Building</span>
+                            <span class="fw-semibold text-slate-900"><?php echo htmlspecialchars($prop['building_name'] ?? '-'); ?></span>
+                        </div>
+                        <div class="d-flex justify-content-between py-1 border-bottom border-light-subtle">
+                            <span class="text-secondary">Floor</span>
+                            <span class="fw-semibold"><?php echo htmlspecialchars($prop['floor'] ?? '-'); ?></span>
+                        </div>
+                    <?php endif; ?>
+                    <?php if ($type != 'street'): ?>
+                        <div class="d-flex justify-content-between py-1 border-bottom border-light-subtle">
+                            <span class="text-secondary">Street</span>
+                            <span class="fw-semibold"><?php echo htmlspecialchars($prop['street_name'] ?? '-'); ?></span>
+                        </div>
+                    <?php endif; ?>
+                    <div class="d-flex justify-content-between py-1 border-bottom border-light-subtle">
+                        <span class="text-secondary">Operational Status</span>
+                        <?php 
+                        $pst = strtolower($prop['status'] ?? 'active');
+                        $p_badge = ($pst === 'active' || $pst === 'occupied') ? 'mature-badge-emerald' : (($pst === 'maintenance') ? 'mature-badge-amber' : 'mature-badge-slate');
+                        ?>
+                        <span class="mature-badge <?php echo $p_badge; ?>">
+                            <?php echo htmlspecialchars(ucfirst($prop['status'] ?? 'Active')); ?>
+                        </span>
+                    </div>
+                    <?php if (!empty($prop['registration_date'])): ?>
+                        <div class="d-flex justify-content-between py-1">
+                            <span class="text-secondary">Registration Date</span>
+                            <span class="text-slate-900"><?php echo date('M d, Y', strtotime($prop['registration_date'])); ?></span>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
                 <?php if ($type != 'street'): ?>
-                    <p><strong>Street:</strong> <?php echo $prop['street_name']; ?></p>
-                <?php endif; ?>
-                <p><strong>Status:</strong> <?php echo $prop['status']; ?></p>
-                <?php if ($prop['registration_date']): ?>
-                    <p><strong>Registration Date:</strong> <?php echo date('M d, Y', strtotime($prop['registration_date'])); ?></p>
+                <hr class="my-4">
+                <h6 class="fw-bold text-slate-900 mb-3" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em;">
+                    <i class="fa-solid fa-file-signature text-secondary me-1"></i> Transfer Ownership
+                </h6>
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Designated Owner</label>
+                        <select name="owner_id" required class="form-select">
+                            <?php 
+                            $owners = $conn->query("SELECT id, full_name, custom_id, owner_type FROM property_owners WHERE estate_id=$estate_id ORDER BY full_name");
+                            while($o = $owners->fetch_assoc()): 
+                                $scope_label = (($o['owner_type'] ?? '') === 'flat') ? 'Flat Owner' : 'Building Owner';
+                            ?>
+                                <option value="<?php echo $o['id']; ?>"><?php echo htmlspecialchars($o['full_name'] . ' [' . $scope_label . '] (' . $o['custom_id'] . ')'); ?></option>
+                            <?php endwhile; ?>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Effective Date</label>
+                        <input type="date" name="transfer_date" required value="<?php echo date('Y-m-d'); ?>" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Acquisition Type</label>
+                        <select name="acq_type" class="form-select">
+                            <?php 
+                            $acq_types = $conn->query("SELECT * FROM property_acquisition_types ORDER BY name ASC");
+                            while($at = $acq_types->fetch_assoc()): ?>
+                                <option value="<?php echo htmlspecialchars($at['name']); ?>"><?php echo htmlspecialchars($at['name']); ?></option>
+                            <?php endwhile; ?>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Supporting Legal Reference / Notes</label>
+                        <textarea name="notes" placeholder="e.g. Title deed reference, Deed of Assignment..." class="form-control" rows="3"></textarea>
+                    </div>
+                    <button type="submit" name="transfer_ownership" class="btn btn-sm text-white w-100" style="background: #0f172a;" onclick="return confirm('Ensure legal supporting documents are verified. Proceed with transfer?')">
+                        <i class="fa-solid fa-arrow-right-arrow-left me-1"></i> Execute Transfer
+                    </button>
+                </form>
                 <?php endif; ?>
             </div>
-            
-            <?php if ($type != 'street'): ?>
-            <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid #e2e8f0;">
-            <h4 style="margin-top:0;">Transfer Ownership</h4>
-            <form method="POST">
-                <div style="margin-bottom: 1rem;">
-                    <label>New Owner</label>
-                    <select name="owner_id" required style="width:100%; padding:0.5rem; border:1px solid #cbd5e1; border-radius:0.375rem;">
-                        <?php 
-                        $owners = $conn->query("SELECT id, full_name, custom_id, owner_type FROM property_owners WHERE estate_id=$estate_id ORDER BY full_name");
-                        while($o = $owners->fetch_assoc()): 
-                            $scope_label = (($o['owner_type'] ?? '') === 'flat') ? 'Flat Owner' : 'Building Owner';
-                        ?>
-                            <option value="<?php echo $o['id']; ?>"><?php echo htmlspecialchars($o['full_name'] . ' [' . $scope_label . '] (' . $o['custom_id'] . ')'); ?></option>
-                        <?php endwhile; ?>
-                    </select>
-                </div>
-                <div style="margin-bottom: 1rem;">
-                    <label>Transfer Date</label>
-                    <input type="date" name="transfer_date" required value="<?php echo date('Y-m-d'); ?>" style="width:100%; padding:0.5rem; border:1px solid #cbd5e1; border-radius:0.375rem;">
-                </div>
-                <div style="margin-bottom: 1rem;">
-                    <label>Transfer Type</label>
-                    <select name="acq_type" style="width:100%; padding:0.5rem; border:1px solid #cbd5e1; border-radius:0.375rem;">
-                        <?php 
-                        $acq_types = $conn->query("SELECT * FROM property_acquisition_types ORDER BY name ASC");
-                        while($at = $acq_types->fetch_assoc()): ?>
-                            <option value="<?php echo htmlspecialchars($at['name']); ?>"><?php echo htmlspecialchars($at['name']); ?></option>
-                        <?php endwhile; ?>
-                    </select>
-                </div>
-                <div style="margin-bottom: 1rem;">
-                    <label>Supporting Documents / Notes</label>
-                    <textarea name="notes" placeholder="e.g. Sale agreement reference..." style="width:100%; padding:0.5rem; border:1px solid #cbd5e1; border-radius:0.375rem;"></textarea>
-                </div>
-                <button type="submit" name="transfer_ownership" class="btn btn-primary" style="width:100%;" onclick="return confirm('Ensure you have verified legal documents. Proceed?')">Execute Transfer</button>
-            </form>
-            <?php endif; ?>
         </div>
     </div>
     
-    <!-- RIGHT: Timeline & History -->
-    <div>
-        <div class="tabs" style="display: flex; gap: 1rem; border-bottom: 2px solid #e2e8f0; margin-bottom: 1.5rem;">
-            <button class="tab-btn active" onclick="openPropTab(event, 'ownership')">Ownership History</button>
+    <!-- RIGHT: Timeline & Records -->
+    <div class="col-12 col-lg-8">
+        <div class="futuristic-tabs mb-3">
+            <button class="futuristic-tab-btn tab-btn active" onclick="openPropTab(event, 'ownership')">
+                <i class="fa-solid fa-user-shield"></i> Ownership History
+            </button>
             <?php if($type == 'flat'): ?>
-                <button class="tab-btn" onclick="openPropTab(event, 'residents')">Resident Timeline</button>
+                <button class="futuristic-tab-btn tab-btn" onclick="openPropTab(event, 'residents')">
+                    <i class="fa-solid fa-users"></i> Resident Movement
+                </button>
             <?php endif; ?>
-            <button class="tab-btn" onclick="openPropTab(event, 'updates')">Property Changes</button>
+            <button class="futuristic-tab-btn tab-btn" onclick="openPropTab(event, 'updates')">
+                <i class="fa-solid fa-clock-rotate-left"></i> System Modifications
+            </button>
         </div>
 
+        <!-- Ownership Tab -->
         <div id="ownership" class="prop-tab-content">
-            <div class="glass" style="padding: 1.5rem; border-radius: 0.5rem;">
-                <table style="width: 100%; border-collapse: collapse;">
-                    <thead>
-                        <tr style="text-align: left; color: #64748b; font-size: 0.85rem;">
-                            <th style="padding: 0.75rem;">Owner</th>
-                            <th style="padding: 0.75rem;">Period</th>
-                            <th style="padding: 0.75rem;">Type</th>
-                            <th style="padding: 0.75rem;">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php 
-                        $own_hist = $conn->query("SELECT po.*, o.full_name, o.custom_id as o_cid FROM property_ownership po JOIN property_owners o ON po.owner_id = o.id WHERE po.property_id=$id AND po.property_type='$type' AND po.estate_id=$estate_id ORDER BY po.start_date DESC");
-                        if($own_hist->num_rows == 0): ?>
-                            <tr><td colspan="4" style="text-align:center; padding: 2rem; color: #94a3b8;">No ownership records found.</td></tr>
-                        <?php else: 
-                            while($o = $own_hist->fetch_assoc()): ?>
-                            <tr style="border-bottom: 1px solid #f1f5f9;">
-                                <td style="padding: 0.75rem;">
-                                    <div style="font-weight: 500;"><?php echo htmlspecialchars($o['full_name']); ?></div>
-                                    <div style="font-size: 0.75rem; color: #94a3b8;"><?php echo $o['o_cid']; ?></div>
-                                </td>
-                                <td style="padding: 0.75rem;">
-                                    <span style="font-size: 0.85rem;"><?php echo date('M d, Y', strtotime($o['start_date'])); ?></span>
-                                    <i class="fa-solid fa-arrow-right" style="font-size: 0.7rem; margin: 0 5px; color: #cbd5e1;"></i>
-                                    <span style="font-size: 0.85rem;"><?php echo $o['end_date'] ? date('M d, Y', strtotime($o['end_date'])) : 'Present'; ?></span>
-                                </td>
-                                <td style="padding: 0.75rem; font-size: 0.85rem;"><?php echo $o['acquisition_type']; ?></td>
-                                <td style="padding: 0.75rem;">
-                                    <?php if(!$o['end_date']): ?>
-                                        <span style="background: #dcfce7; color: #166534; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 600;">CURRENT</span>
-                                    <?php else: ?>
-                                        <span style="background: #f1f5f9; color: #64748b; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 600;">PAST</span>
-                                    <?php endif; ?>
-                                </td>
+            <div class="futuristic-table-card">
+                <div class="futuristic-table-card-header">
+                    <h3 class="m-0 fw-bold fs-6 text-slate-900"><i class="fa-solid fa-user-shield text-secondary me-2"></i> Ownership Records</h3>
+                </div>
+                <div class="table-responsive">
+                    <table class="table dashboard-table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Owner</th>
+                                <th>Tenancy Period</th>
+                                <th>Acquisition</th>
+                                <th>Status</th>
                             </tr>
-                            <?php endwhile; 
-                        endif; ?>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            <?php 
+                            $own_hist = $conn->query("SELECT po.*, o.full_name, o.custom_id as o_cid FROM property_ownership po JOIN property_owners o ON po.owner_id = o.id WHERE po.property_id=$id AND po.property_type='$type' AND po.estate_id=$estate_id ORDER BY po.start_date DESC");
+                            if(!$own_hist || $own_hist->num_rows == 0): ?>
+                                <tr><td colspan="4" class="text-center py-4 text-secondary">No ownership records registered yet.</td></tr>
+                            <?php else: 
+                                while($o = $own_hist->fetch_assoc()): ?>
+                                <tr>
+                                    <td>
+                                        <div class="fw-semibold text-slate-900"><?php echo htmlspecialchars($o['full_name']); ?></div>
+                                        <span class="id-chip"><?php echo htmlspecialchars($o['o_cid']); ?></span>
+                                    </td>
+                                    <td>
+                                        <span class="small"><?php echo date('M d, Y', strtotime($o['start_date'])); ?></span>
+                                        <i class="fa-solid fa-arrow-right mx-1 text-secondary" style="font-size: 0.65rem;"></i>
+                                        <span class="small"><?php echo $o['end_date'] ? date('M d, Y', strtotime($o['end_date'])) : 'Present'; ?></span>
+                                    </td>
+                                    <td><small class="text-secondary"><?php echo htmlspecialchars($o['acquisition_type'] ?: 'Direct Purchase'); ?></small></td>
+                                    <td>
+                                        <?php if(!$o['end_date']): ?>
+                                            <span class="mature-badge mature-badge-emerald">Current</span>
+                                        <?php else: ?>
+                                            <span class="mature-badge mature-badge-slate">Past</span>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                                <?php endwhile; 
+                            endif; ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
+        <!-- Residents Tab -->
+        <?php if($type == 'flat'): ?>
         <div id="residents" class="prop-tab-content" style="display: none;">
-            <div class="glass" style="padding: 1.5rem; border-radius: 0.5rem;">
-                <table style="width: 100%; border-collapse: collapse;">
-                    <thead>
-                        <tr style="text-align: left; color: #64748b; font-size: 0.85rem;">
-                            <th style="padding: 0.75rem;">Resident</th>
-                            <th style="padding: 0.75rem;">Action</th>
-                            <th style="padding: 0.75rem;">Date</th>
-                            <th style="padding: 0.75rem;">Notes</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php 
-                        $res_hist = $conn->query("SELECT rh.*, u.name FROM resident_history rh JOIN residents r ON rh.resident_id = r.id JOIN users u ON r.user_id = u.id WHERE rh.flat_id=$id AND rh.estate_id=$estate_id ORDER BY rh.timestamp DESC");
-                        if($res_hist->num_rows == 0): ?>
-                            <tr><td colspan="4" style="text-align:center; padding: 2rem; color: #94a3b8;">No movement history found.</td></tr>
-                        <?php else: 
-                            while($r = $res_hist->fetch_assoc()): ?>
-                            <tr style="border-bottom: 1px solid #f1f5f9;">
-                                <td style="padding: 0.75rem; font-weight: 500; font-size: 0.85rem;"><?php echo htmlspecialchars($r['name']); ?></td>
-                                <td style="padding: 0.75rem;">
-                                    <span style="background: <?php echo $r['action_type'] == 'Moved In' ? '#dcfce7' : '#fee2e2'; ?>; color: <?php echo $r['action_type'] == 'Moved In' ? '#166534' : '#991b1b'; ?>; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase;">
-                                        <?php echo $r['action_type']; ?>
-                                    </span>
-                                </td>
-                                <td style="padding: 0.75rem; font-size: 0.85rem;"><?php echo date('M d, Y', strtotime($r['start_date'])); ?></td>
-                                <td style="padding: 0.75rem; font-size: 0.8rem; color: #64748b;"><?php echo htmlspecialchars($r['reason_for_exit']); ?></td>
+            <div class="futuristic-table-card">
+                <div class="futuristic-table-card-header">
+                    <h3 class="m-0 fw-bold fs-6 text-slate-900"><i class="fa-solid fa-users text-secondary me-2"></i> Resident Movement Timeline</h3>
+                </div>
+                <div class="table-responsive">
+                    <table class="table dashboard-table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Resident</th>
+                                <th>Action</th>
+                                <th>Date</th>
+                                <th>Notes</th>
                             </tr>
-                            <?php endwhile; 
-                        endif; ?>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            <?php 
+                            $res_hist = $conn->query("SELECT rh.*, u.name FROM resident_history rh JOIN residents r ON rh.resident_id = r.id JOIN users u ON r.user_id = u.id WHERE rh.flat_id=$id AND rh.estate_id=$estate_id ORDER BY rh.timestamp DESC");
+                            if(!$res_hist || $res_hist->num_rows == 0): ?>
+                                <tr><td colspan="4" class="text-center py-4 text-secondary">No resident movement history recorded.</td></tr>
+                            <?php else: 
+                                while($r = $res_hist->fetch_assoc()): ?>
+                                <tr>
+                                    <td><span class="fw-semibold text-slate-900"><?php echo htmlspecialchars($r['name']); ?></span></td>
+                                    <td>
+                                        <?php 
+                                        $act = $r['action_type'];
+                                        $act_badge = ($act == 'Moved In') ? 'mature-badge-emerald' : 'mature-badge-crimson';
+                                        ?>
+                                        <span class="mature-badge <?php echo $act_badge; ?>">
+                                            <?php echo htmlspecialchars($act); ?>
+                                        </span>
+                                    </td>
+                                    <td><span class="small text-secondary"><?php echo date('M d, Y', strtotime($r['start_date'])); ?></span></td>
+                                    <td><small class="text-secondary"><?php echo htmlspecialchars($r['reason_for_exit'] ?: '-'); ?></small></td>
+                                </tr>
+                                <?php endwhile; 
+                            endif; ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
+        <?php endif; ?>
 
+        <!-- Updates Tab -->
         <div id="updates" class="prop-tab-content" style="display: none;">
-            <div class="glass" style="padding: 1.5rem; border-radius: 0.5rem;">
-                <table style="width: 100%; border-collapse: collapse;">
-                    <thead>
-                        <tr style="text-align: left; color: #64748b; font-size: 0.85rem;">
-                            <th style="padding: 0.75rem;">Action</th>
-                            <th style="padding: 0.75rem;">Changes</th>
-                            <th style="padding: 0.75rem;">By</th>
-                            <th style="padding: 0.75rem;">Date</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php 
-                        $prop_hist = $conn->query("SELECT ph.*, u.name as admin_name FROM property_history ph LEFT JOIN users u ON ph.changed_by = u.id WHERE ph.property_id=$id AND ph.property_type='$type' AND ph.estate_id=$estate_id ORDER BY ph.change_date DESC");
-                        if($prop_hist->num_rows == 0): ?>
-                            <tr><td colspan="4" style="text-align:center; padding: 2rem; color: #94a3b8;">No update history found.</td></tr>
-                        <?php else: 
-                            while($p = $prop_hist->fetch_assoc()): ?>
-                            <tr style="border-bottom: 1px solid #f1f5f9;">
-                                <td style="padding: 0.75rem; font-weight: 500; font-size: 0.85rem;"><?php echo $p['action_type']; ?></td>
-                                <td style="padding: 0.75rem; font-size: 0.8rem;">
-                                    <?php if($p['old_value']): ?>
-                                        <del style="color: #94a3b8;"><?php echo htmlspecialchars($p['old_value']); ?></del>
-                                        <i class="fa-solid fa-arrow-right" style="margin: 0 5px; font-size: 0.7rem;"></i>
-                                    <?php endif; ?>
-                                    <strong><?php echo htmlspecialchars($p['new_value']); ?></strong>
-                                    <?php if($p['notes']): ?><div style="font-size: 0.7rem; color: #64748b; margin-top:2px;"><?php echo htmlspecialchars($p['notes']); ?></div><?php endif; ?>
-                                </td>
-                                <td style="padding: 0.75rem; font-size: 0.8rem;"><?php echo htmlspecialchars($p['admin_name'] ?? 'System'); ?></td>
-                                <td style="padding: 0.75rem; font-size: 0.8rem;"><?php echo date('M d, h:i A', strtotime($p['change_date'])); ?></td>
+            <div class="futuristic-table-card">
+                <div class="futuristic-table-card-header">
+                    <h3 class="m-0 fw-bold fs-6 text-slate-900"><i class="fa-solid fa-clock-rotate-left text-secondary me-2"></i> Modification Trail</h3>
+                </div>
+                <div class="table-responsive">
+                    <table class="table dashboard-table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Action</th>
+                                <th>Values</th>
+                                <th>Admin</th>
+                                <th>Timestamp</th>
                             </tr>
-                            <?php endwhile; 
-                        endif; ?>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            <?php 
+                            $prop_hist = $conn->query("SELECT ph.*, u.name as admin_name FROM property_history ph LEFT JOIN users u ON ph.changed_by = u.id WHERE ph.property_id=$id AND ph.property_type='$type' AND ph.estate_id=$estate_id ORDER BY ph.change_date DESC");
+                            if(!$prop_hist || $prop_hist->num_rows == 0): ?>
+                                <tr><td colspan="4" class="text-center py-4 text-secondary">No property update events registered.</td></tr>
+                            <?php else: 
+                                while($p = $prop_hist->fetch_assoc()): ?>
+                                <tr>
+                                    <td><span class="fw-semibold text-slate-900"><?php echo htmlspecialchars($p['action_type']); ?></span></td>
+                                    <td>
+                                        <?php if($p['old_value']): ?>
+                                            <del class="text-secondary small"><?php echo htmlspecialchars($p['old_value']); ?></del>
+                                            <i class="fa-solid fa-arrow-right mx-1 text-secondary" style="font-size: 0.65rem;"></i>
+                                        <?php endif; ?>
+                                        <span class="fw-semibold"><?php echo htmlspecialchars($p['new_value']); ?></span>
+                                        <?php if($p['notes']): ?><div class="small text-secondary"><?php echo htmlspecialchars($p['notes']); ?></div><?php endif; ?>
+                                    </td>
+                                    <td><span class="id-chip"><?php echo htmlspecialchars($p['admin_name'] ?? 'System'); ?></span></td>
+                                    <td><span class="small text-secondary"><?php echo date('M d, H:i', strtotime($p['change_date'])); ?></span></td>
+                                </tr>
+                                <?php endwhile; 
+                            endif; ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 </div>
-
-<style>
-.tab-btn {
-    padding: 0.75rem 1rem;
-    background: none;
-    border: none;
-    border-bottom: 2px solid transparent;
-    color: #64748b;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-.tab-btn.active {
-    color: var(--primary-color);
-    border-bottom-color: var(--primary-color);
-}
-.tab-btn:hover:not(.active) {
-    color: #334155;
-    background: #f8fafc;
-}
-</style>
 
 <script>
 function openPropTab(evt, tabName) {
@@ -284,12 +334,13 @@ function openPropTab(evt, tabName) {
     for (i = 0; i < tabcontent.length; i++) {
         tabcontent[i].style.display = "none";
     }
-    tablinks = document.getElementsByClassName("tab-btn");
+    tablinks = document.querySelectorAll(".futuristic-tab-btn");
     for (i = 0; i < tablinks.length; i++) {
-        tablinks[i].className = tablinks[i].className.replace(" active", "");
+        tablinks[i].classList.remove("active");
     }
-    document.getElementById(tabName).style.display = "block";
-    evt.currentTarget.className += " active";
+    const target = document.getElementById(tabName);
+    if (target) target.style.display = "block";
+    evt.currentTarget.classList.add("active");
 }
 </script>
 

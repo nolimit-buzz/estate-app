@@ -2,6 +2,8 @@
 // resident/index.php
 require_once '../config.php';
 
+require_once '../includes/NoticeManager.php';
+
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../index");
     exit;
@@ -17,12 +19,14 @@ if ($user_res->num_rows == 0) {
 }
 $user = $user_res->fetch_assoc();
 
-// Fetch Resident Property & Tenancy Link
-$res_query = "SELECT r.*, f.number as flat_number, f.floor, b.name as building_name, b.property_number, s.name as street_name 
+// Fetch Resident Property & Tenancy Link with Zone Context
+$res_query = "SELECT r.*, f.number as flat_number, f.floor, b.name as building_name, b.property_number, 
+                     s.name as street_name, s.zone_id, z.name as zone_name, z.code as zone_code 
               FROM residents r 
               LEFT JOIN flats f ON r.flat_id = f.id 
               LEFT JOIN buildings b ON f.building_id = b.id 
               LEFT JOIN streets s ON b.street_id = s.id 
+              LEFT JOIN zones z ON s.zone_id = z.id
               WHERE r.user_id = $user_id AND r.estate_id = $estate_id 
               ORDER BY r.id DESC LIMIT 1";
 $resident_info = $conn->query($res_query)->fetch_assoc();
@@ -72,73 +76,23 @@ if ($flat_id) {
     $co_residents_count = $conn->query("SELECT COUNT(id) as cnt FROM residents WHERE flat_id = $flat_id AND status = 'active'")->fetch_assoc()['cnt'] ?? 0;
 }
 
-// Announcements
-$announcements = $conn->query("SELECT * FROM estate_announcements WHERE estate_id = $estate_id ORDER BY created_at DESC LIMIT 5");
+// Announcements & Zonal Notices
+$notice_data = NoticeManager::getNoticesForResident($conn, $user_id, $estate_id, 5);
+$announcements = $notice_data['results'];
+$resident_zone_name = $notice_data['resident_zone_name'] ?? ($resident_info['zone_name'] ?? null);
 
 // Outstanding Invoices count
 $unpaid_invoices_cnt = $conn->query("SELECT COUNT(id) as cnt FROM invoices WHERE user_id = $user_id AND status != 'paid'")->fetch_assoc()['cnt'] ?? 0;
 include 'header.php';
 include 'sidebar.php';
 ?>
-<style>
-    /* Banner Card */
-    .profile-banner {
-        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-        color: white;
-        border-radius: 1.25rem;
-        padding: 2rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 1.5rem;
-        box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.2);
-    }
-    .profile-info { display: flex; align-items: center; gap: 1.5rem; }
-    .profile-img { width: 80px; height: 80px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.2); object-fit: cover; background: #334155; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: white; }
-    .profile-details h1 { font-family: 'Outfit', sans-serif; font-size: 1.75rem; font-weight: 700; margin-bottom: 0.25rem; }
-    .tags { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
-    .tag { font-size: 0.75rem; padding: 0.25rem 0.75rem; border-radius: 9999px; font-weight: 600; text-transform: uppercase; }
-    .tag-owner { background: #dcfce7; color: #15803d; }
-    .tag-tenant { background: #e0f2fe; color: #0369a1; }
-    .tag-id { background: rgba(255,255,255,0.15); color: white; font-family: monospace; }
-
-    /* KPI Grid */
-    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; }
-    .kpi-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 1rem; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    .kpi-title { font-size: 0.85rem; font-weight: 600; color: #64748b; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
-    .kpi-value { font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 700; color: #0f172a; }
-    .kpi-sub { font-size: 0.8rem; color: #64748b; margin-top: 0.5rem; }
-
-    /* Section Layout */
-    .grid-2 { display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; }
-    @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
-
-    .card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 1rem; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 1rem; }
-    .card-title { font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 700; }
-
-    /* Monthly Payment Bar Chart */
-    .chart-container { display: flex; align-items: flex-end; justify-content: space-between; height: 180px; padding-top: 1rem; gap: 0.5rem; }
-    .bar-group { display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end; }
-    .bar { width: 100%; max-width: 28px; background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%); border-radius: 4px 4px 0 0; transition: height 0.5s ease; position: relative; }
-    .bar-label { font-size: 0.7rem; color: #64748b; margin-top: 0.5rem; font-weight: 600; }
-    .bar:hover::after { content: attr(data-val); position: absolute; top: -25px; left: 50%; transform: translateX(-50%); background: #0f172a; color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
-
-    /* Announcements List */
-    .announcement-item { padding: 1rem 0; border-bottom: 1px solid #e2e8f0; }
-    .announcement-item:last-child { border-bottom: none; }
-    .announcement-meta { font-size: 0.75rem; color: #64748b; margin-bottom: 0.25rem; display: flex; gap: 0.5rem; }
-    .badge-urgent { background: #fee2e2; color: #991b1b; padding: 2px 6px; border-radius: 4px; font-weight: 700; }
-
-    .btn-pay { background: #10b981; color: white; padding: 0.75rem 1.5rem; border-radius: 0.5rem; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 0.5rem; transition: background 0.2s; }
-    .btn-pay:hover { background: #059669; }
-</style>
 
 <div class="d-flex flex-column gap-4">
-    <!-- Resident Profile Banner -->
-    <div class="profile-banner">
-        <div class="profile-info">
+    <!-- ==========================================
+         FUTURISTIC RESIDENT HERO IDENTITY BANNER
+         ========================================== -->
+    <div class="resident-hero-banner">
+        <div class="resident-hero-content">
             <?php 
             $profile_img = '';
             $raw_img = $resident_info['image_path'] ?? '';
@@ -150,146 +104,353 @@ include 'sidebar.php';
                 }
             }
             ?>
-            <?php if (!empty($profile_img)): ?>
-                <img src="<?= htmlspecialchars($profile_img) ?>" class="profile-img" alt="Profile">
-            <?php else: ?>
-                <div class="profile-img"><i class="fa-solid fa-user"></i></div>
-            <?php endif; ?>
-            <div class="profile-details">
-                    <h1><?= htmlspecialchars($user['name']) ?></h1>
-                    <p style="opacity: 0.8; font-size: 0.95rem;">
-                        <i class="fa-solid fa-location-dot" style="margin-right: 4px;"></i>
-                        <?= htmlspecialchars(($resident_info['street_name'] ?? 'Main Street') . ' - ' . ($resident_info['building_name'] ?? 'Block A') . ' Flat ' . ($resident_info['flat_number'] ?? 'N/A')) ?>
-                    </p>
-                    <div class="tags">
-                        <span class="tag tag-id">ID: <?= htmlspecialchars($resident_info['custom_id'] ?? ('RES-' . str_pad($user_id, 5, '0', STR_PAD_LEFT))) ?></span>
-                        <span class="tag tag-tenant"><?= htmlspecialchars(ucfirst($resident_info['relationship'] ?? 'Tenant')) ?></span>
-                        <span class="tag" style="background: #dcfce7; color: #166534;"><?= htmlspecialchars(ucfirst($tenancy['status'] ?? 'Active')) ?> Occupancy</span>
-                    </div>
-                </div>
+            <div class="resident-avatar-glow">
+                <?php if (!empty($profile_img)): ?>
+                    <img src="<?= htmlspecialchars($profile_img) ?>" alt="Resident Avatar">
+                <?php else: ?>
+                    <div class="resident-avatar-placeholder"><i class="fa-solid fa-user"></i></div>
+                <?php endif; ?>
             </div>
             <div>
-                <a href="finance" class="btn-pay"><i class="fa-solid fa-credit-card"></i> Pay Bills / Invoices</a>
-            </div>
-        </div>
-
-        <!-- Financial KPI Cards -->
-        <div class="kpi-grid">
-            <div class="kpi-card" style="border-left: 4px solid #ef4444;">
-                <div class="kpi-title">Outstanding Balance</div>
-                <div class="kpi-value" style="color: #dc2626;">₦<?= number_format($finance_stats['outstanding_balance'], 2) ?></div>
-                <div class="kpi-sub"><?= $unpaid_invoices_cnt ?> Pending Invoices</div>
-            </div>
-            <div class="kpi-card" style="border-left: 4px solid #10b981;">
-                <div class="kpi-title">Total Payments Made</div>
-                <div class="kpi-value" style="color: #059669;">₦<?= number_format($total_paid_payments, 2) ?></div>
-                <div class="kpi-sub">Verified Gateway Receipts</div>
-            </div>
-            <div class="kpi-card" style="border-left: 4px solid #3b82f6;">
-                <div class="kpi-title">Next Payment Due</div>
-                <div class="kpi-value" style="font-size: 1.5rem; color: #2563eb;">
-                    <?= $finance_stats['next_due_date'] ? date('M j, Y', strtotime($finance_stats['next_due_date'])) : 'No Due Invoices' ?>
+                <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                    <h1 class="h3 font-bold m-0 text-white" style="letter-spacing: -0.02em;">
+                        <?= htmlspecialchars($user['name']) ?>
+                    </h1>
+                    <span class="mature-badge mature-badge-sky" style="font-size: 0.7rem;">
+                        <i class="fa-solid fa-shield-halved me-1"></i> Verified Resident
+                    </span>
                 </div>
-                <div class="kpi-sub">Auto-generated Estate Charges</div>
+                <div class="d-flex align-items-center gap-2 text-slate-300 small mb-2" style="font-size: 0.9rem;">
+                    <i class="fa-solid fa-location-dot text-info"></i>
+                    <span><?= htmlspecialchars(($resident_info['street_name'] ?? 'Main Street') . ' &bull; ' . ($resident_info['building_name'] ?? 'Block A') . ' &bull; Flat ' . ($resident_info['flat_number'] ?? 'N/A')) ?></span>
+                </div>
+                <div class="hero-tags">
+                    <span class="hero-tag hero-tag-id">
+                        <i class="fa-solid fa-fingerprint me-1"></i> <?= htmlspecialchars($resident_info['custom_id'] ?? ('RES-' . str_pad($user_id, 5, '0', STR_PAD_LEFT))) ?>
+                    </span>
+                    <span class="hero-tag hero-tag-role">
+                        <i class="fa-solid fa-user-tag me-1"></i> <?= htmlspecialchars(ucfirst($resident_info['relationship'] ?? 'Tenant')) ?>
+                    </span>
+                    <span class="hero-tag hero-tag-status">
+                        <i class="fa-solid fa-circle-check me-1"></i> <?= htmlspecialchars(ucfirst($tenancy['status'] ?? 'Active')) ?> Occupancy
+                    </span>
+                </div>
             </div>
-            <div class="kpi-card" style="border-left: 4px solid #8b5cf6;">
-                <div class="kpi-title">Visitor Statistics</div>
-                <div class="kpi-value" style="color: #7c3aed;"><?= number_format($visitor_stats['visitors_this_month'] ?? 0) ?></div>
-                <div class="kpi-sub">Visitors This Month (<?= $visitor_stats['total_visitors'] ?? 0 ?> Total)</div>
+        </div>
+        <div>
+            <a href="finance" class="hero-btn-action">
+                <i class="fa-solid fa-credit-card"></i>
+                <span>Pay Bills & Invoices</span>
+                <i class="fa-solid fa-arrow-right small ms-1"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         FUTURISTIC KPI CARDS (4 PILLARS)
+         ========================================== -->
+    <div class="row g-3">
+        <!-- Pillar 1: Outstanding Balance -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="resident-kpi-card kpi-accent-danger h-100">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="kpi-title">Outstanding Balance</span>
+                    <div class="kpi-icon-wrap" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border-color: rgba(239, 68, 68, 0.25);">
+                        <i class="fa-solid fa-file-invoice-dollar"></i>
+                    </div>
+                </div>
+                <div class="kpi-value text-danger" style="font-size: 1.85rem; font-weight: 800; letter-spacing: -0.02em;">
+                    ₦<?= number_format($finance_stats['outstanding_balance'], 2) ?>
+                </div>
+                <div class="kpi-meta justify-content-between mt-2 pt-2 border-top border-light-subtle">
+                    <span>Pending: <strong><?= $unpaid_invoices_cnt ?> Invoices</strong></span>
+                    <a href="finance" class="text-decoration-none text-danger small fw-semibold">Pay Now &rarr;</a>
+                </div>
             </div>
         </div>
 
-        <!-- Main Content Area -->
-        <div class="grid-2">
-            <!-- Left: Payment History Chart & Household -->
-            <div style="display: flex; flex-direction: column; gap: 2rem;">
-                <!-- Payment Summary Chart -->
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title"><i class="fa-solid fa-chart-simple" style="color: var(--primary); margin-right: 8px;"></i> <?= $current_year ?> Payment Summary</div>
-                        <span style="font-size: 0.85rem; color: var(--text-muted);">Monthly Collection</span>
+        <!-- Pillar 2: Total Settled -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="resident-kpi-card kpi-accent-success h-100">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="kpi-title">Total Payments Settled</span>
+                    <div class="kpi-icon-wrap" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border-color: rgba(16, 185, 129, 0.25);">
+                        <i class="fa-solid fa-circle-check"></i>
                     </div>
-                    <div class="chart-container">
+                </div>
+                <div class="kpi-value text-success" style="font-size: 1.85rem; font-weight: 800; letter-spacing: -0.02em;">
+                    ₦<?= number_format($total_paid_payments, 2) ?>
+                </div>
+                <div class="kpi-meta justify-content-between mt-2 pt-2 border-top border-light-subtle">
+                    <span>Verified Receipts</span>
+                    <a href="receipts" class="text-decoration-none text-success small fw-semibold">View Proof &rarr;</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pillar 3: Next Schedule -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="resident-kpi-card kpi-accent-primary h-100">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="kpi-title">Next Payment Schedule</span>
+                    <div class="kpi-icon-wrap" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border-color: rgba(59, 130, 246, 0.25);">
+                        <i class="fa-regular fa-calendar-check"></i>
+                    </div>
+                </div>
+                <div class="kpi-value text-primary" style="font-size: 1.45rem; font-weight: 700; margin: 0.4rem 0;">
+                    <?= $finance_stats['next_due_date'] ? date('M j, Y', strtotime($finance_stats['next_due_date'])) : 'All Clear' ?>
+                </div>
+                <div class="kpi-meta justify-content-between mt-2 pt-2 border-top border-light-subtle">
+                    <span>Auto Estate Assessment</span>
+                    <span class="mature-badge mature-badge-sky"><i class="fa-solid fa-clock me-1"></i>Scheduled</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pillar 4: Visitor Flow Radar -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="resident-kpi-card kpi-accent-purple h-100">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="kpi-title">Visitor Passes Radar</span>
+                    <div class="kpi-icon-wrap" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6; border-color: rgba(139, 92, 246, 0.25);">
+                        <i class="fa-solid fa-id-badge"></i>
+                    </div>
+                </div>
+                <div class="kpi-value" style="color: #7c3aed; font-size: 1.85rem; font-weight: 800; letter-spacing: -0.02em;">
+                    <?= number_format($visitor_stats['visitors_this_month'] ?? 0) ?> <span style="font-size: 0.95rem; font-weight: 500; color: #64748b;">This Month</span>
+                </div>
+                <div class="kpi-meta justify-content-between mt-2 pt-2 border-top border-light-subtle">
+                    <span>Total: <strong><?= number_format($visitor_stats['total_visitors'] ?? 0) ?> Passes</strong></span>
+                    <a href="visitors" class="text-decoration-none small fw-semibold" style="color: #7c3aed;">Manage &rarr;</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         MAIN CONTENT & ANALYTICS SECTION (2 COLUMNS)
+         ========================================== -->
+    <div class="row g-4">
+        <!-- Left Column: Visual Payment Velocity & Household -->
+        <div class="col-12 col-lg-8 d-flex flex-column gap-4">
+            <!-- Payment Velocity Chart -->
+            <div class="resident-glass-panel">
+                <div class="resident-card-header">
+                    <div class="resident-card-title">
+                        <i class="fa-solid fa-chart-column text-primary"></i> <?= $current_year ?> Payment Collection Velocity
+                    </div>
+                    <span class="mature-badge mature-badge-slate"><i class="fa-regular fa-calendar me-1"></i> Monthly Realized</span>
+                </div>
+                <div class="resident-card-body">
+                    <div class="resident-chart-container">
                         <?php 
                         $months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
                         for($i=1; $i<=12; $i++): 
                             $val = $monthly_payments[$i];
                             $height_pct = ($val / $max_monthly) * 100;
-                            if ($height_pct < 5 && $val > 0) $height_pct = 5;
+                            if ($height_pct < 6 && $val > 0) $height_pct = 6;
                         ?>
-                            <div class="bar-group">
-                                <div class="bar" style="height: <?= $height_pct ?>%;" data-val="₦<?= number_format($val) ?>"></div>
-                                <div class="bar-label"><?= $months[$i-1] ?></div>
+                            <div class="resident-bar-group">
+                                <div class="resident-bar" style="height: <?= max(4, $height_pct) ?>%;" data-val="₦<?= number_format($val) ?>"></div>
+                                <div class="resident-bar-label"><?= $months[$i-1] ?></div>
                             </div>
                         <?php endfor; ?>
                     </div>
                 </div>
+            </div>
 
-                <!-- Property Occupants & Vehicles Summary -->
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title"><i class="fa-solid fa-house-user" style="color: var(--primary); margin-right: 8px;"></i> Household Overview</div>
-                        <a href="property" style="color: var(--primary); font-size: 0.85rem; font-weight: 600; text-decoration: none;">View Details</a>
+            <!-- Household Overview -->
+            <div class="resident-glass-panel">
+                <div class="resident-card-header">
+                    <div class="resident-card-title">
+                        <i class="fa-solid fa-house-user text-primary"></i> Household & Unit Occupancy Overview
                     </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                        <div style="background: #f8fafc; padding: 1.25rem; border-radius: 0.75rem; text-align: center; border: 1px solid var(--border);">
-                            <i class="fa-solid fa-users" style="font-size: 1.75rem; color: #3b82f6; margin-bottom: 0.5rem;"></i>
-                            <div style="font-weight: 700; font-size: 1.5rem;"><?= $co_residents_count ?></div>
-                            <div style="font-size: 0.85rem; color: var(--text-muted);">Occupants</div>
+                    <a href="property" class="btn btn-sm btn-outline-primary rounded-pill px-3" style="font-size: 0.8rem;">
+                        View Property File <i class="fa-solid fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+                <div class="resident-card-body">
+                    <div class="row g-3">
+                        <div class="col-12 col-sm-6">
+                            <div class="p-3 rounded-3 d-flex align-items-center gap-3 border" style="background: rgba(59, 130, 246, 0.05); border-color: rgba(59, 130, 246, 0.2) !important;">
+                                <div class="kpi-icon-wrap" style="background: rgba(59, 130, 246, 0.15); color: #2563eb; width: 50px; height: 50px; font-size: 1.35rem;">
+                                    <i class="fa-solid fa-users"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold fs-4 m-0 text-slate-900"><?= $co_residents_count ?></div>
+                                    <div class="small text-secondary fw-semibold">Active Unit Occupants</div>
+                                </div>
+                            </div>
                         </div>
-                        <div style="background: #f8fafc; padding: 1.25rem; border-radius: 0.75rem; text-align: center; border: 1px solid var(--border);">
-                            <i class="fa-solid fa-car" style="font-size: 1.75rem; color: #10b981; margin-bottom: 0.5rem;"></i>
-                            <div style="font-weight: 700; font-size: 1.5rem;"><?= $vehicles_count ?></div>
-                            <div style="font-size: 0.85rem; color: var(--text-muted);">Registered Vehicles</div>
+                        <div class="col-12 col-sm-6">
+                            <div class="p-3 rounded-3 d-flex align-items-center gap-3 border" style="background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.2) !important;">
+                                <div class="kpi-icon-wrap" style="background: rgba(16, 185, 129, 0.15); color: #059669; width: 50px; height: 50px; font-size: 1.35rem;">
+                                    <i class="fa-solid fa-car"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold fs-4 m-0 text-slate-900"><?= $vehicles_count ?></div>
+                                    <div class="small text-secondary fw-semibold">Registered Vehicles</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Right: Estate Announcements & Quick Actions -->
-            <div style="display: flex; flex-direction: column; gap: 2rem;">
-                <!-- Announcements -->
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title"><i class="fa-solid fa-bullhorn" style="color: #eab308; margin-right: 8px;"></i> Estate Announcements</div>
+        <!-- Right Column: Announcements & Quick Actions -->
+        <div class="col-12 col-lg-4 d-flex flex-column gap            <!-- Estate Announcements & Zonal Notices Feed -->
+            <div class="resident-glass-panel">
+                <div class="resident-card-header d-flex justify-content-between align-items-center">
+                    <div class="resident-card-title">
+                        <i class="fa-solid fa-bullhorn text-warning"></i> Estate Notices &amp; Broadcasts
                     </div>
-                    <div>
-                        <?php if ($announcements && $announcements->num_rows > 0): ?>
+                    <a href="notices" class="mature-badge mature-badge-amber text-decoration-none" style="cursor: pointer;">
+                        View All <i class="fa-solid fa-arrow-right ms-1 small"></i>
+                    </a>
+                </div>
+                <div class="resident-card-body p-3">
+                    <?php if ($announcements && $announcements->num_rows > 0): ?>
+                        <div class="d-flex flex-column gap-3">
                             <?php while ($ann = $announcements->fetch_assoc()): ?>
-                                <div class="announcement-item">
-                                    <div class="announcement-meta">
-                                        <span><i class="fa-regular fa-clock"></i> <?= date('M j, Y', strtotime($ann['created_at'])) ?></span>
-                                        <?php if ($ann['priority'] == 'urgent'): ?>
-                                            <span class="badge-urgent">URGENT</span>
-                                        <?php endif; ?>
+                                <div class="p-3 rounded-3 border bg-white-subtle notice-card-item position-relative" style="border-color: rgba(226, 232, 240, 0.8) !important; cursor: pointer; transition: all 0.2s ease;" onclick='openNoticeModal(<?php echo json_encode($ann); ?>)'>
+                                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-1 mb-1.5">
+                                        <div class="d-flex align-items-center gap-1">
+                                            <?php if (!empty($ann['zone_id'])): ?>
+                                                <span class="mature-badge" style="background: rgba(168, 85, 247, 0.12); color: #7e22ce; font-size: 0.68rem; padding: 0.15rem 0.45rem;">
+                                                    <i class="fa-solid fa-layer-group me-1"></i><?= htmlspecialchars($ann['zone_name'] ?? 'Zonal Notice') ?>
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="mature-badge mature-badge-amber" style="font-size: 0.68rem; padding: 0.15rem 0.45rem;">
+                                                    <i class="fa-solid fa-globe me-1"></i>Estate Broadcast
+                                                </span>
+                                            <?php endif; ?>
+
+                                            <?php if ($ann['priority'] == 'urgent'): ?>
+                                                <span class="mature-badge mature-badge-crimson" style="font-size: 0.68rem; padding: 0.15rem 0.45rem;">
+                                                    <i class="fa-solid fa-triangle-exclamation me-1"></i>URGENT
+                                                </span>
+                                            <?php endif; ?>
+
+                                            <?php if (!empty($ann['pin_to_top'])): ?>
+                                                <i class="fa-solid fa-thumbtack text-primary ms-1" style="font-size: 0.72rem;" title="Pinned Notice"></i>
+                                            <?php endif; ?>
+                                        </div>
+                                        <span class="small text-secondary" style="font-size: 0.72rem;">
+                                            <i class="fa-regular fa-clock me-1"></i> <?= date('M j, Y', strtotime($ann['created_at'])) ?>
+                                        </span>
                                     </div>
-                                    <h4 style="font-size: 0.95rem; margin-bottom: 0.25rem; color: #1e293b;"><?= htmlspecialchars($ann['title']) ?></h4>
-                                    <p style="font-size: 0.85rem; color: #64748b;"><?= htmlspecialchars($ann['content']) ?></p>
+                                    <h6 class="fw-bold mb-1 text-slate-900" style="font-size: 0.92rem;"><?= htmlspecialchars($ann['title']) ?></h6>
+                                    <p class="small text-secondary m-0 text-truncate" style="line-height: 1.4;"><?= htmlspecialchars($ann['content']) ?></p>
                                 </div>
                             <?php endwhile; ?>
-                        <?php else: ?>
-                            <p style="color: var(--text-muted); font-size: 0.9rem; text-align: center; padding: 1rem;">No recent estate announcements.</p>
-                        <?php endif; ?>
+                        </div>
+                    <?php else: ?>
+                        <div class="text-center py-4 text-secondary small">
+                            <i class="fa-regular fa-bell-slash fs-4 d-block mb-2 text-muted"></i>
+                            No recent estate notices or broadcast alerts.
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <!-- Futuristic Quick Actions Dock -->
+            <div class="resident-glass-panel">
+                <div class="resident-card-header">
+                    <div class="resident-card-title">
+                        <i class="fa-solid fa-bolt text-danger"></i> Quick Operations Dock
                     </div>
                 </div>
-
-                <!-- Quick Action Buttons -->
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title"><i class="fa-solid fa-bolt" style="color: #ec4899; margin-right: 8px;"></i> Quick Actions</div>
-                    </div>
-                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                        <a href="visitors?action=new" style="display: flex; align-items: center; justify-content: space-between; padding: 0.85rem 1rem; background: #eff6ff; color: #1e40af; border-radius: 0.5rem; text-decoration: none; font-weight: 600;">
-                            <span><i class="fa-solid fa-user-plus" style="margin-right: 8px;"></i> Pre-register Visitor Access</span>
-                            <i class="fa-solid fa-chevron-right" style="font-size: 0.8rem;"></i>
+                <div class="resident-card-body">
+                    <div class="resident-quick-dock">
+                        <a href="notices" class="resident-dock-item dock-item-purple">
+                            <span class="d-flex align-items-center gap-2">
+                                <i class="fa-solid fa-bullhorn"></i> View All Notices &amp; Broadcasts
+                            </span>
+                            <i class="fa-solid fa-chevron-right small"></i>
                         </a>
-                        <a href="report_issue" style="display: flex; align-items: center; justify-content: space-between; padding: 0.85rem 1rem; background: #fef3c7; color: #92400e; border-radius: 0.5rem; text-decoration: none; font-weight: 600;">
-                            <span><i class="fa-solid fa-triangle-exclamation" style="margin-right: 8px;"></i> Log Maintenance Request</span>
-                            <i class="fa-solid fa-chevron-right" style="font-size: 0.8rem;"></i>
+                        <a href="visitors?action=new" class="resident-dock-item dock-item-primary">
+                            <span class="d-flex align-items-center gap-2">
+                                <i class="fa-solid fa-user-plus"></i> Pre-register Visitor Access
+                            </span>
+                            <i class="fa-solid fa-chevron-right small"></i>
+                        </a>
+                        <a href="report_issue" class="resident-dock-item dock-item-amber">
+                            <span class="d-flex align-items-center gap-2">
+                                <i class="fa-solid fa-screwdriver-wrench"></i> Log Maintenance Ticket
+                            </span>
+                            <i class="fa-solid fa-chevron-right small"></i>
+                        </a>
+                        <a href="community_chat" class="resident-dock-item dock-item-primary">
+                            <span class="d-flex align-items-center gap-2">
+                                <i class="fa-solid fa-comments"></i> Resident Community Forum
+                            </span>
+                            <i class="fa-solid fa-chevron-right small"></i>
                         </a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
+
+<!-- Notice Details Modal -->
+<div id="resNoticeModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.75); z-index: 1050; align-items: center; justify-content: center; backdrop-filter: blur(8px);">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 600px; width: 95%;">
+        <div class="modal-content bg-white rounded-4 shadow-lg border-0 overflow-hidden">
+            <div class="modal-header px-4 py-3 border-bottom d-flex justify-content-between align-items-center" style="background: #f8fafc;">
+                <div class="d-flex align-items-center gap-2">
+                    <span id="resModalScopeBadge"></span>
+                    <span id="resModalPrioBadge"></span>
+                </div>
+                <button type="button" onclick="closeNoticeModal()" class="btn-close" style="font-size: 0.8rem;"></button>
+            </div>
+            <div class="modal-body p-4">
+                <h4 id="resModalTitle" class="fw-bold text-slate-900 mb-2" style="font-size: 1.25rem;"></h4>
+                <div class="d-flex align-items-center gap-3 text-secondary small pb-3 mb-3 border-bottom">
+                    <span><i class="fa-regular fa-user me-1"></i><span id="resModalSender"></span></span>
+                    <span><i class="fa-regular fa-clock me-1"></i><span id="resModalDate"></span></span>
+                </div>
+                <div id="resModalContent" class="text-slate-800" style="line-height: 1.75; font-size: 0.95rem; white-space: pre-wrap;"></div>
+            </div>
+            <div class="modal-footer px-4 py-3 border-top d-flex justify-content-between" style="background: #f8fafc;">
+                <a href="notices" class="btn btn-sm btn-outline-primary">Open Notices Hub</a>
+                <button type="button" onclick="closeNoticeModal()" class="btn btn-sm btn-secondary">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function openNoticeModal(ann) {
+    document.getElementById('resModalTitle').innerText = ann.title;
+    document.getElementById('resModalContent').innerText = ann.content;
+    document.getElementById('resModalSender').innerText = ann.sender_name || ann.author_name || (ann.zone_id ? (ann.zone_name + ' Administration') : 'Central Administration');
+    document.getElementById('resModalDate').innerText = new Date(ann.created_at).toLocaleDateString(undefined, {
+        month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
+    });
+
+    const scopeEl = document.getElementById('resModalScopeBadge');
+    if (ann.zone_id && ann.zone_name) {
+        scopeEl.innerHTML = `<span class="mature-badge" style="background: rgba(168, 85, 247, 0.15); color: #7e22ce;"><i class="fa-solid fa-layer-group me-1"></i>Notice from ${ann.zone_name}</span>`;
+    } else {
+        scopeEl.innerHTML = `<span class="mature-badge mature-badge-amber"><i class="fa-solid fa-globe me-1"></i>Estate Broadcast</span>`;
+    }
+
+    const prioEl = document.getElementById('resModalPrioBadge');
+    if (ann.priority === 'urgent') {
+        prioEl.innerHTML = `<span class="mature-badge mature-badge-crimson"><i class="fa-solid fa-triangle-exclamation me-1"></i>URGENT</span>`;
+    } else if (ann.priority === 'important') {
+        prioEl.innerHTML = `<span class="mature-badge mature-badge-amber"><i class="fa-solid fa-circle-exclamation me-1"></i>Important</span>`;
+    } else {
+        prioEl.innerHTML = ``;
+    }
+
+    document.getElementById('resNoticeModal').style.display = 'flex';
+}
+function closeNoticeModal() {
+    document.getElementById('resNoticeModal').style.display = 'none';
+}
+</script>
+
 <?php include 'footer.php'; ?>

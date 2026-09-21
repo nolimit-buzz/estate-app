@@ -65,6 +65,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $reg_date = $conn->real_escape_string($_POST['registration_date']);
         $name = $conn->real_escape_string($_POST['name']);
         $description = $conn->real_escape_string($_POST['description']);
+        $zone_id = !empty($_POST['zone_id']) ? intval($_POST['zone_id']) : "NULL";
         
         if (!empty($_POST['street_id'])) {
             // Update
@@ -73,7 +74,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             // Get old data for history
             $old = $conn->query("SELECT * FROM streets WHERE id=$id")->fetch_assoc();
             
-            $updates = "name='$name', description='$description', registration_date='$reg_date'";
+            $updates = "name='$name', zone_id=$zone_id, description='$description', registration_date='$reg_date'";
             $image = handleUpload($_FILES['image']);
             if($image) $updates .= ", image_path='$image'";
             
@@ -89,7 +90,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             // Insert
             $custom_id = generateCustomID($conn, 'streets', 'STR');
             $image = handleUpload($_FILES['image']);
-            $sql = "INSERT INTO streets (estate_id, custom_id, name, description, image_path, registration_date) VALUES ($estate_id, '$custom_id', '$name', '$description', '$image', '$reg_date')";
+            $sql = "INSERT INTO streets (estate_id, zone_id, custom_id, name, description, image_path, registration_date) VALUES ($estate_id, $zone_id, '$custom_id', '$name', '$description', '$image', '$reg_date')";
             if ($conn->query($sql)) {
                 $new_id = $conn->insert_id;
                 $_SESSION['success_message'] = "Street added successfully!";
@@ -220,14 +221,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
     
     if ($redirect) {
-        header("Location: " . $_SERVER['PHP_SELF']);
+        $redirect_tab = 'streets';
+        if (isset($_POST['add_street']) || isset($_POST['archive_street'])) {
+            $redirect_tab = 'streets';
+        } elseif (isset($_POST['add_building']) || isset($_POST['archive_building'])) {
+            $redirect_tab = 'buildings';
+        } elseif (isset($_POST['add_flat']) || isset($_POST['archive_flat'])) {
+            $redirect_tab = 'flats';
+        }
+        header("Location: " . $_SERVER['PHP_SELF'] . "?tab=" . $redirect_tab);
         exit;
     }
 }
 
 // Fetch Data
 $estate_id = get_estate_id();
-$streets = $conn->query("SELECT * FROM streets WHERE status != 'archived' AND estate_id = $estate_id ORDER BY name");
+$streets = $conn->query("SELECT s.*, z.name as zone_name, z.code as zone_code FROM streets s LEFT JOIN zones z ON s.zone_id = z.id WHERE s.status != 'archived' AND s.estate_id = $estate_id ORDER BY s.name");
 $buildings = $conn->query("SELECT b.*, s.name as street_name FROM buildings b JOIN streets s ON b.street_id = s.id WHERE b.status != 'archived' AND b.estate_id = $estate_id ORDER BY b.name");
 $flats = $conn->query("SELECT f.*, b.name as building_name, b.street_id, s.name as street_name FROM flats f JOIN buildings b ON f.building_id = b.id JOIN streets s ON b.street_id = s.id WHERE f.status != 'archived' AND f.estate_id = $estate_id ORDER BY s.name, b.name, f.number");
 
@@ -239,30 +248,42 @@ $flat_types = $conn->query("SELECT * FROM flat_types ORDER BY name");
 $flat_statuses = $conn->query("SELECT * FROM flat_statuses ORDER BY name");
 ?>
 
-<div class="page-header">
-    <h1>Property Management</h1>
+<div class="page-header-futuristic">
+    <div>
+        <h1 class="h4 font-bold text-slate-900 m-0"><i class="fa-solid fa-building me-2 text-secondary"></i> Property Portfolio & Assets</h1>
+        <p class="text-secondary small">Comprehensive directory of estate streets, buildings, and residential/commercial flats</p>
+    </div>
+    <div class="d-flex gap-2">
+        <span class="id-chip"><i class="fa-solid fa-database me-1"></i> Inventory Directory</span>
+    </div>
 </div>
 
 <?php if ($message): ?>
-    <div class="alert" style="background: #dcfce7; color: #166534; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
-        <?php echo $message; ?>
+    <div class="alert mature-card p-3 mb-4 border-0" style="background: rgba(34, 197, 94, 0.1); border-left: 4px solid #16a34a !important; color: #15803d;">
+        <i class="fa-solid fa-circle-check me-2"></i> <?php echo $message; ?>
     </div>
 <?php endif; ?>
 
-<!-- Tabs -->
+<!-- Futuristic Tabs -->
 <?php $active_tab = $_GET['tab'] ?? 'streets'; ?>
-<div class="tabs" style="display: flex; gap: 1rem; border-bottom: 2px solid #e2e8f0; margin-bottom: 2rem;">
-    <button class="tab-btn <?php echo $active_tab == 'streets' ? 'active' : ''; ?>" onclick="openTab(event, 'streets')" style="padding: 0.5rem 1rem; background: none; border: none; border-bottom: 2px solid <?php echo $active_tab == 'streets' ? 'var(--primary-color)' : 'transparent'; ?>; color: <?php echo $active_tab == 'streets' ? 'var(--primary-color)' : '#64748b'; ?>; font-weight: 600; cursor: pointer;">Streets</button>
-    <button class="tab-btn <?php echo $active_tab == 'buildings' ? 'active' : ''; ?>" onclick="openTab(event, 'buildings')" style="padding: 0.5rem 1rem; background: none; border: none; border-bottom: 2px solid <?php echo $active_tab == 'buildings' ? 'var(--primary-color)' : 'transparent'; ?>; color: <?php echo $active_tab == 'buildings' ? 'var(--primary-color)' : '#64748b'; ?>; font-weight: 600; cursor: pointer;">Properties</button>
-    <button class="tab-btn <?php echo $active_tab == 'flats' ? 'active' : ''; ?>" onclick="openTab(event, 'flats')" style="padding: 0.5rem 1rem; background: none; border: none; border-bottom: 2px solid <?php echo $active_tab == 'flats' ? 'var(--primary-color)' : 'transparent'; ?>; color: <?php echo $active_tab == 'flats' ? 'var(--primary-color)' : '#64748b'; ?>; font-weight: 600; cursor: pointer;">Flats</button>
+<div class="futuristic-tabs">
+    <button class="futuristic-tab-btn tab-btn <?php echo $active_tab == 'streets' ? 'active' : ''; ?>" onclick="openTab(event, 'streets')">
+        <i class="fa-solid fa-road"></i> Streets
+    </button>
+    <button class="futuristic-tab-btn tab-btn <?php echo $active_tab == 'buildings' ? 'active' : ''; ?>" onclick="openTab(event, 'buildings')">
+        <i class="fa-solid fa-building"></i> Buildings & Properties
+    </button>
+    <button class="futuristic-tab-btn tab-btn <?php echo $active_tab == 'flats' ? 'active' : ''; ?>" onclick="openTab(event, 'flats')">
+        <i class="fa-solid fa-door-open"></i> Flats
+    </button>
 </div>
 
 <!-- Streets Tab -->
 <div id="streets" class="tab-content" style="display: <?php echo $active_tab == 'streets' ? 'block' : 'none'; ?>;">
-    <div class="glass" style="padding: 2rem; border-radius: 0.5rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <h3>All Streets</h3>
-            <button class="btn btn-primary" onclick="openModal('street-modal')"><i class="fa-solid fa-plus"></i> Add Street</button>
+    <div class="futuristic-table-card">
+        <div class="futuristic-table-card-header">
+            <h3 class="m-0 fw-bold fs-6 text-slate-900"><i class="fa-solid fa-road text-secondary me-2"></i> Registered Streets</h3>
+            <button class="btn btn-sm text-white" style="background: #0f172a;" onclick="openModal('street-modal')"><i class="fa-solid fa-plus me-1"></i> Add Street</button>
         </div>
         
         <!-- Street Modal -->
@@ -278,6 +299,20 @@ $flat_statuses = $conn->query("SELECT * FROM flat_statuses ORDER BY name");
                         <div class="form-group">
                             <label>Street Name</label>
                             <input type="text" name="name" id="street_name" required class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Assigned Zone <span class="text-danger">*</span></label>
+                            <select name="zone_id" id="street_zone_id" class="form-control" required>
+                                <option value="">-- Select Zone --</option>
+                                <?php 
+                                $all_z = $conn->query("SELECT id, name, code FROM zones WHERE estate_id = $estate_id AND status = 'active' ORDER BY name ASC");
+                                if ($all_z) {
+                                    while($zr = $all_z->fetch_assoc()) {
+                                        echo '<option value="' . $zr['id'] . '">' . htmlspecialchars($zr['name'] . ' (' . $zr['code'] . ')') . '</option>';
+                                    }
+                                }
+                                ?>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label>Registration Date</label>
@@ -302,50 +337,62 @@ $flat_statuses = $conn->query("SELECT * FROM flat_statuses ORDER BY name");
         </div>
 
 
-        <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-                <tr style="text-align: left; color: #64748b;">
-                    <th style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0;">ID</th>
-                    <th style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0;">Image</th>
-                    <th style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0;">Name</th>
-                    <th style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0;">Description</th>
-                    <th style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0;">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php while($row = $streets->fetch_assoc()): ?>
-                <tr>
-                    <td style="padding: 0.75rem; border-bottom: 1px solid #f1f5f9; font-family: monospace;"><?php echo htmlspecialchars($row['custom_id']); ?></td>
-                    <td style="padding: 0.75rem; border-bottom: 1px solid #f1f5f9;">
-                        <?php if($row['image_path']): ?>
-                            <img src="<?php echo htmlspecialchars($row['image_path']); ?>" style="width: 40px; height: 40px; object-fit: cover; border-radius: 0.25rem;">
-                        <?php else: ?>
-                            <div style="width: 40px; height: 40px; background: #e2e8f0; border-radius: 0.25rem;"></div>
-                        <?php endif; ?>
-                    </td>
-                    <td style="padding: 0.75rem; border-bottom: 1px solid #f1f5f9;"><?php echo htmlspecialchars($row['name']); ?></td>
-                    <td style="padding: 0.75rem; border-bottom: 1px solid #f1f5f9;"><?php echo htmlspecialchars($row['description']); ?></td>
-                    <td style="padding: 0.75rem; border-bottom: 1px solid #f1f5f9;">
-                        <a href="property_details?type=street&id=<?php echo $row['id']; ?>" style="color: #64748b; margin-right: 0.5rem;" title="View History"><i class="fa-solid fa-clock-rotate-left"></i></a>
-                        <button onclick='editStreet(<?php echo json_encode($row); ?>)' style="background: none; border: none; cursor: pointer; color: var(--primary-color); margin-right: 0.5rem;"><i class="fa-solid fa-pen-to-square"></i></button>
-                        <form method="POST" style="display:inline;" onsubmit="return confirm('Are you sure?');">
-                            <input type="hidden" name="archive_id" value="<?php echo $row['id']; ?>">
-                            <button type="submit" name="archive_street" style="background: none; border: none; cursor: pointer; color: #ef4444;"><i class="fa-solid fa-trash"></i></button>
-                        </form>
-                    </td>
-                </tr>
-                <?php endwhile; ?>
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table class="table dashboard-table align-middle">
+                <thead>
+                    <tr>
+                        <th>Custom ID</th>
+                        <th>Image</th>
+                        <th>Name</th>
+                        <th>Zone</th>
+                        <th>Description</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php while($row = $streets->fetch_assoc()): ?>
+                    <tr>
+                        <td><span class="id-chip"><?php echo htmlspecialchars($row['custom_id']); ?></span></td>
+                        <td>
+                            <?php if($row['image_path']): ?>
+                                <img src="<?php echo htmlspecialchars($row['image_path']); ?>" style="width: 38px; height: 38px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <?php else: ?>
+                                <div style="width: 38px; height: 38px; background: #f1f5f9; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #94a3b8;"><i class="fa-solid fa-road"></i></div>
+                            <?php endif; ?>
+                        </td>
+                        <td><span class="fw-semibold text-slate-900"><?php echo htmlspecialchars($row['name']); ?></span></td>
+                        <td>
+                            <?php if(!empty($row['zone_name'])): ?>
+                                <span class="badge" style="background: rgba(168, 85, 247, 0.12); color: #7e22ce; border: 1px solid rgba(168, 85, 247, 0.2);">
+                                    <i class="fa-solid fa-layer-group me-1"></i> <?php echo htmlspecialchars($row['zone_name']); ?>
+                                </span>
+                            <?php else: ?>
+                                <span class="badge bg-light text-muted border">Unassigned</span>
+                            <?php endif; ?>
+                        </td>
+                        <td><small class="text-secondary"><?php echo htmlspecialchars($row['description'] ?: 'No description'); ?></small></td>
+                        <td class="text-end">
+                            <a href="property_details?type=street&id=<?php echo $row['id']; ?>" class="btn btn-sm btn-outline-secondary py-1 px-2 me-1" title="View History"><i class="fa-solid fa-clock-rotate-left"></i></a>
+                            <button onclick='editStreet(<?php echo json_encode($row); ?>)' class="btn btn-sm btn-outline-primary py-1 px-2 me-1" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <form method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to archive this street?');">
+                                <input type="hidden" name="archive_id" value="<?php echo $row['id']; ?>">
+                                <button type="submit" name="archive_street" class="btn btn-sm btn-outline-danger py-1 px-2" title="Archive"><i class="fa-solid fa-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    <?php endwhile; ?>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
 <!-- Buildings Tab -->
 <div id="buildings" class="tab-content" style="display: <?php echo $active_tab == 'buildings' ? 'block' : 'none'; ?>;">
-    <div class="glass" style="padding: 2rem; border-radius: 0.5rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <h3>All Buildings</h3>
-            <button class="btn btn-primary" onclick="openModal('building-modal')"><i class="fa-solid fa-plus"></i> Add Building</button>
+    <div class="futuristic-table-card">
+        <div class="futuristic-table-card-header">
+            <h3 class="m-0 fw-bold fs-6 text-slate-900"><i class="fa-solid fa-building text-secondary me-2"></i> Properties & Buildings</h3>
+            <button class="btn btn-sm text-white" style="background: #0f172a;" onclick="openModal('building-modal')"><i class="fa-solid fa-plus me-1"></i> Add Property</button>
         </div>
 
         <!-- Building Modal -->
@@ -445,63 +492,73 @@ $flat_statuses = $conn->query("SELECT * FROM flat_statuses ORDER BY name");
         </div>
 
 
-        <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-                <tr style="text-align: left; color: #64748b;">
-                    <th style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0;">ID</th>
-                    <th style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0;">Image</th>
-                    <th style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0;">Details</th>
-                    <th style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0;">Street</th>
-                    <th style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0;">Category</th>
-                    <th style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0;">Type</th>
-                    <th style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0;">Status</th>
-                    <th style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0;">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php while($row = $buildings->fetch_assoc()): ?>
-                <tr>
-                    <td style="padding: 0.75rem; border-bottom: 1px solid #f1f5f9; font-family: monospace;"><?php echo htmlspecialchars($row['custom_id']); ?></td>
-                    <td style="padding: 0.75rem; border-bottom: 1px solid #f1f5f9;">
-                        <?php if($row['image_path']): ?>
-                            <img src="<?php echo htmlspecialchars($row['image_path']); ?>" style="width: 40px; height: 40px; object-fit: cover; border-radius: 0.25rem;">
-                        <?php else: ?>
-                            <div style="width: 40px; height: 40px; background: #e2e8f0; border-radius: 0.25rem;"></div>
-                        <?php endif; ?>
-                    </td>
-                    <td style="padding: 0.75rem; border-bottom: 1px solid #f1f5f9;">
-                        <div style="font-weight: 500; color: #0f172a;"><?php echo htmlspecialchars($row['property_number'] ?: 'No #'); ?></div>
-                        <div style="font-size: 0.75rem; color: #64748b;"><?php echo htmlspecialchars($row['name'] ?: ''); ?></div>
-                    </td>
-                    <td style="padding: 0.75rem; border-bottom: 1px solid #f1f5f9;"><?php echo htmlspecialchars($row['street_name']); ?></td>
-                    <td style="padding: 0.75rem; border-bottom: 1px solid #f1f5f9;">
-                        <span style="font-size: 0.85rem; color: <?php echo $row['category'] == 'Commercial' ? '#a855f7' : '#3b82f6'; ?>; font-weight: 600;"><?php echo htmlspecialchars($row['category']); ?></span>
-                    </td>
-                    <td style="padding: 0.75rem; border-bottom: 1px solid #f1f5f9;"><?php echo htmlspecialchars($row['type']); ?></td>
-                    <td style="padding: 0.75rem; border-bottom: 1px solid #f1f5f9;">
-                        <span style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: 500;"><?php echo htmlspecialchars($row['status'] ?? 'Vacant'); ?></span>
-                    </td>
-                    <td style="padding: 0.75rem; border-bottom: 1px solid #f1f5f9;">
-                        <a href="property_details?type=building&id=<?php echo $row['id']; ?>" style="color: #64748b; margin-right: 0.5rem;" title="View History"><i class="fa-solid fa-clock-rotate-left"></i></a>
-                         <button onclick='editBuilding(<?php echo json_encode($row); ?>)' style="background: none; border: none; cursor: pointer; color: var(--primary-color); margin-right: 0.5rem;"><i class="fa-solid fa-pen-to-square"></i></button>
-                        <form method="POST" style="display:inline;" onsubmit="return confirm('Are you sure?');">
-                            <input type="hidden" name="archive_id" value="<?php echo $row['id']; ?>">
-                            <button type="submit" name="archive_building" style="background: none; border: none; cursor: pointer; color: #ef4444;"><i class="fa-solid fa-trash"></i></button>
-                        </form>
-                    </td>
-                </tr>
-                <?php endwhile; ?>
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table class="table dashboard-table align-middle">
+                <thead>
+                    <tr>
+                        <th>Custom ID</th>
+                        <th>Image</th>
+                        <th>Property Details</th>
+                        <th>Street</th>
+                        <th>Category</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php while($row = $buildings->fetch_assoc()): ?>
+                    <tr>
+                        <td><span class="id-chip"><?php echo htmlspecialchars($row['custom_id']); ?></span></td>
+                        <td>
+                            <?php if($row['image_path']): ?>
+                                <img src="<?php echo htmlspecialchars($row['image_path']); ?>" style="width: 38px; height: 38px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <?php else: ?>
+                                <div style="width: 38px; height: 38px; background: #f1f5f9; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #94a3b8;"><i class="fa-solid fa-building"></i></div>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <div class="fw-semibold text-slate-900"><?php echo htmlspecialchars($row['property_number'] ?: 'No #'); ?></div>
+                            <small class="text-secondary"><?php echo htmlspecialchars($row['name'] ?: ''); ?></small>
+                        </td>
+                        <td><span class="small fw-medium"><?php echo htmlspecialchars($row['street_name']); ?></span></td>
+                        <td>
+                            <span class="mature-badge <?php echo $row['category'] == 'Commercial' ? 'mature-badge-primary' : 'mature-badge-slate'; ?>">
+                                <?php echo htmlspecialchars($row['category']); ?>
+                            </span>
+                        </td>
+                        <td><small class="text-secondary"><?php echo htmlspecialchars($row['type']); ?></small></td>
+                        <td>
+                            <?php 
+                            $bst = strtolower($row['status'] ?? 'vacant');
+                            $b_badge = ($bst === 'active' || $bst === 'occupied') ? 'mature-badge-emerald' : 'mature-badge-slate';
+                            ?>
+                            <span class="mature-badge <?php echo $b_badge; ?>">
+                                <?php echo htmlspecialchars($row['status'] ?? 'Vacant'); ?>
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <a href="property_details?type=building&id=<?php echo $row['id']; ?>" class="btn btn-sm btn-outline-secondary py-1 px-2 me-1" title="View History"><i class="fa-solid fa-clock-rotate-left"></i></a>
+                            <button onclick='editBuilding(<?php echo json_encode($row); ?>)' class="btn btn-sm btn-outline-primary py-1 px-2 me-1" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <form method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to archive this building?');">
+                                <input type="hidden" name="archive_id" value="<?php echo $row['id']; ?>">
+                                <button type="submit" name="archive_building" class="btn btn-sm btn-outline-danger py-1 px-2" title="Archive"><i class="fa-solid fa-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    <?php endwhile; ?>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
 <!-- Flats Tab -->
 <div id="flats" class="tab-content" style="display: <?php echo $active_tab == 'flats' ? 'block' : 'none'; ?>;">
-    <div class="glass" style="padding: 2rem; border-radius: 0.5rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <h3>All Flats</h3>
-            <button class="btn btn-primary" onclick="openModal('flat-modal')"><i class="fa-solid fa-plus"></i> Add Flat</button>
+    <div class="futuristic-table-card">
+        <div class="futuristic-table-card-header">
+            <h3 class="m-0 fw-bold fs-6 text-slate-900"><i class="fa-solid fa-door-open text-secondary me-2"></i> Flats</h3>
+            <button class="btn btn-sm text-white" style="background: #0f172a;" onclick="openModal('flat-modal')"><i class="fa-solid fa-plus me-1"></i> Add Flat</button>
         </div>
 
         <!-- Flat Modal -->
@@ -578,51 +635,58 @@ $flat_statuses = $conn->query("SELECT * FROM flat_statuses ORDER BY name");
         </div>
 
 
-        <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-                <tr style="text-align: left; color: #64748b;">
-                    <th style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0;">ID</th>
-                    <th style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0;">Image</th>
-                    <th style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0;">Full Address</th>
-                    <th style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0;">Floor</th>
-                    <th style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0;">Type</th>
-                    <th style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0;">Status</th>
-                    <th style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0;">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php while($row = $flats->fetch_assoc()): ?>
-                <tr>
-                    <td style="padding: 0.75rem; border-bottom: 1px solid #f1f5f9; font-family: monospace;"><?php echo htmlspecialchars($row['custom_id']); ?></td>
-                    <td style="padding: 0.75rem; border-bottom: 1px solid #f1f5f9;">
-                        <?php if($row['image_path']): ?>
-                            <img src="<?php echo htmlspecialchars($row['image_path']); ?>" style="width: 40px; height: 40px; object-fit: cover; border-radius: 0.25rem;">
-                        <?php else: ?>
-                            <div style="width: 40px; height: 40px; background: #e2e8f0; border-radius: 0.25rem;"></div>
-                        <?php endif; ?>
-                    </td>
-                    <td style="padding: 0.75rem; border-bottom: 1px solid #f1f5f9; font-weight: 500;">
-                        <?php echo htmlspecialchars('Flat ' . $row['number'] . ' ' . $row['street_name'] . ' street ' . $row['building_name'] . ' building'); ?>
-                    </td>
-                    <td style="padding: 0.75rem; border-bottom: 1px solid #f1f5f9;"><?php echo htmlspecialchars($row['floor']); ?></td>
-                    <td style="padding: 0.75rem; border-bottom: 1px solid #f1f5f9;"><?php echo htmlspecialchars($row['type']); ?></td>
-                    <td style="padding: 0.75rem; border-bottom: 1px solid #f1f5f9;">
-                        <span style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: 500;">
-                            <?php echo htmlspecialchars($row['status'] ?? 'Vacant'); ?>
-                        </span>
-                    </td>
-                     <td style="padding: 0.75rem; border-bottom: 1px solid #f1f5f9;">
-                        <a href="property_details?type=flat&id=<?php echo $row['id']; ?>" style="color: #64748b; margin-right: 0.5rem;" title="View History"><i class="fa-solid fa-clock-rotate-left"></i></a>
-                        <button onclick='editFlat(<?php echo json_encode($row); ?>)' style="background: none; border: none; cursor: pointer; color: var(--primary-color); margin-right: 0.5rem;"><i class="fa-solid fa-pen-to-square"></i></button>
-                        <form method="POST" style="display:inline;" onsubmit="return confirm('Are you sure?');">
-                            <input type="hidden" name="archive_id" value="<?php echo $row['id']; ?>">
-                            <button type="submit" name="archive_flat" style="background: none; border: none; cursor: pointer; color: #ef4444;"><i class="fa-solid fa-trash"></i></button>
-                        </form>
-                    </td>
-                </tr>
-                <?php endwhile; ?>
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table class="table dashboard-table align-middle">
+                <thead>
+                    <tr>
+                        <th>Custom ID</th>
+                        <th>Image</th>
+                        <th>Flat Location</th>
+                        <th>Floor</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php while($row = $flats->fetch_assoc()): ?>
+                    <tr>
+                        <td><span class="id-chip"><?php echo htmlspecialchars($row['custom_id']); ?></span></td>
+                        <td>
+                            <?php if($row['image_path']): ?>
+                                <img src="<?php echo htmlspecialchars($row['image_path']); ?>" style="width: 38px; height: 38px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <?php else: ?>
+                                <div style="width: 38px; height: 38px; background: #f1f5f9; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #94a3b8;"><i class="fa-solid fa-door-open"></i></div>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <div class="fw-semibold text-slate-900">Flat <?php echo htmlspecialchars($row['number']); ?></div>
+                            <small class="text-secondary"><?php echo htmlspecialchars($row['building_name'] . ' • ' . $row['street_name']); ?></small>
+                        </td>
+                        <td><small class="text-secondary"><?php echo htmlspecialchars($row['floor']); ?></small></td>
+                        <td><small class="text-secondary"><?php echo htmlspecialchars($row['type']); ?></small></td>
+                        <td>
+                            <?php 
+                            $fst = strtolower($row['status'] ?? 'vacant');
+                            $f_badge = ($fst === 'occupied') ? 'mature-badge-emerald' : (($fst === 'maintenance') ? 'mature-badge-amber' : 'mature-badge-slate');
+                            ?>
+                            <span class="mature-badge <?php echo $f_badge; ?>">
+                                <?php echo htmlspecialchars(ucfirst($row['status'] ?? 'Vacant')); ?>
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <a href="property_details?type=flat&id=<?php echo $row['id']; ?>" class="btn btn-sm btn-outline-secondary py-1 px-2 me-1" title="View History"><i class="fa-solid fa-clock-rotate-left"></i></a>
+                            <button onclick='editFlat(<?php echo json_encode($row); ?>)' class="btn btn-sm btn-outline-primary py-1 px-2 me-1" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <form method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to archive this flat?');">
+                                <input type="hidden" name="archive_id" value="<?php echo $row['id']; ?>">
+                                <button type="submit" name="archive_flat" class="btn btn-sm btn-outline-danger py-1 px-2" title="Archive"><i class="fa-solid fa-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    <?php endwhile; ?>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
@@ -636,14 +700,20 @@ function openTab(evt, tabName) {
     }
     tablinks = document.getElementsByClassName("tab-btn");
     for (i = 0; i < tablinks.length; i++) {
-        tablinks[i].className = tablinks[i].className.replace(" active", "");
-        tablinks[i].style.color = "#64748b";
-        tablinks[i].style.borderBottom = "2px solid transparent";
+        tablinks[i].classList.remove("active");
+        tablinks[i].style.color = "";
+        tablinks[i].style.borderBottom = "";
     }
     document.getElementById(tabName).style.display = "block";
-    evt.currentTarget.className += " active";
-    evt.currentTarget.style.color = "var(--primary-color)";
-    evt.currentTarget.style.borderBottom = "2px solid var(--primary-color)";
+    evt.currentTarget.classList.add("active");
+    evt.currentTarget.style.color = "";
+    evt.currentTarget.style.borderBottom = "";
+    
+    if (window.history.replaceState) {
+        const url = new URL(window.location);
+        url.searchParams.set('tab', tabName);
+        window.history.replaceState({}, '', url);
+    }
 }
 
 function previewImage(input, previewId) {
@@ -666,6 +736,9 @@ function openModal(id) {
         document.getElementById('street_id').value = '';
         document.getElementById('street_name').value = '';
         document.getElementById('street_desc').value = '';
+        if (document.getElementById('street_zone_id')) {
+            document.getElementById('street_zone_id').value = '';
+        }
         document.getElementById('street_reg_date').value = '<?php echo date('Y-m-d'); ?>';
         document.getElementById('street_preview').style.display = 'none';
     }
@@ -745,6 +818,24 @@ function renderDynamicFields(target, values = {}) {
     
     if (commercialFieldsDef.length === 0) {
         target.innerHTML = '<div style="grid-column: span 2; color: #94a3b8; font-size: 0.875rem;">No custom fields configured for commercial properties. Edit them in Settings.</div>';
+    }
+}
+
+function editStreet(data) {
+    openModal('street-modal');
+    document.getElementById('street-modal-title').innerText = 'Update Street';
+    document.getElementById('street_id').value = data.id;
+    document.getElementById('street_name').value = data.name;
+    document.getElementById('street_desc').value = data.description || '';
+    document.getElementById('street_reg_date').value = data.registration_date || '<?php echo date('Y-m-d'); ?>';
+    if (document.getElementById('street_zone_id')) {
+        document.getElementById('street_zone_id').value = data.zone_id || '';
+    }
+    if (data.image_path) {
+        document.getElementById('street_preview').src = data.image_path;
+        document.getElementById('street_preview').style.display = 'block';
+    } else {
+        document.getElementById('street_preview').style.display = 'none';
     }
 }
 

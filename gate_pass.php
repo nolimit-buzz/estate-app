@@ -2,6 +2,14 @@
 // gate_pass.php - Official Printable Visitor Gate Pass
 require_once __DIR__ . '/config.php';
 
+if (isset($_SESSION['user_id']) && ($_SESSION['role'] ?? '') === 'zone_admin') {
+    die("<div style='font-family:sans-serif;text-align:center;padding:4rem;'>
+            <h2>Access Denied</h2>
+            <p>Gate pass operations are strictly managed by Central Estate Security.</p>
+            <a href='zone/index' style='color:#2563eb;'>Return to Zone Portal</a>
+         </div>");
+}
+
 $estate_id = get_estate_id();
 
 // Retrieve by ID or Code
@@ -27,13 +35,15 @@ $query = "SELECT v.*,
                  f.number AS flat_number, 
                  b.name AS building_name,
                  s.name AS street_name,
-                 u_entry.name AS entry_staff_name
+                 u_entry.name AS entry_staff_name,
+                 u_exit.name AS exit_staff_name
           FROM visitors v
           LEFT JOIN users u_res ON v.resident_id = u_res.id
           LEFT JOIN flats f ON v.flat_id = f.id
           LEFT JOIN buildings b ON f.building_id = b.id
           LEFT JOIN streets s ON b.street_id = s.id
           LEFT JOIN users u_entry ON v.entry_processed_by = u_entry.id
+          LEFT JOIN users u_exit ON v.exit_processed_by = u_exit.id
           WHERE ($where_clause) AND v.estate_id = $estate_id
           LIMIT 1";
 
@@ -91,8 +101,10 @@ if (!empty($v['street_name'])) $destination_parts[] = $v['street_name'];
 $destination_address = !empty($destination_parts) ? implode(', ', $destination_parts) : 'Resident Residence';
 
 // Verification QR URL
-$verify_url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]" . 
-              rtrim(dirname($_SERVER['SCRIPT_NAME']), '/\\') . "/gate_pass?code=" . urlencode($v['visitor_code']);
+$http_host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+$script_dir = isset($_SERVER['SCRIPT_NAME']) ? rtrim(dirname($_SERVER['SCRIPT_NAME']), '/\\') : '';
+$verify_url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$http_host" . 
+              $script_dir . "/gate_pass?code=" . urlencode($v['visitor_code']);
 $qr_payload = $estate_name . " VISITOR PASS\n" .
               "CODE: " . $v['visitor_code'] . "\n" .
               "GUEST: " . $v['name'] . "\n" .
@@ -123,8 +135,10 @@ $wa_link = "https://api.whatsapp.com/send?text=" . $wa_text . (!empty($v['phone'
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/estate_notifications.css">
+    <script src="js/estate_notifications.js"></script>
 
     <style>
         :root {
@@ -324,7 +338,7 @@ $wa_link = "https://api.whatsapp.com/send?text=" . $wa_text . (!empty($v['phone'
             background: rgba(37, 99, 235, 0.25);
             border: 1px solid rgba(59, 130, 246, 0.5);
             color: #93c5fd;
-            font-family: 'Space Grotesk', monospace;
+            font-family: 'Outfit', monospace;
             font-size: 0.78rem;
             font-weight: 700;
             padding: 0.35rem 0.75rem;
@@ -375,7 +389,7 @@ $wa_link = "https://api.whatsapp.com/send?text=" . $wa_text . (!empty($v['phone'
         }
 
         .code-hero-val {
-            font-family: 'Space Grotesk', monospace;
+            font-family: 'Outfit', monospace;
             font-size: 2.35rem;
             font-weight: 800;
             letter-spacing: 0.14em;
@@ -488,6 +502,63 @@ $wa_link = "https://api.whatsapp.com/send?text=" . $wa_text . (!empty($v['phone'
             grid-template-columns: 1fr 1fr;
             gap: 0.75rem;
             border: 1px solid #e2e8f0;
+        }
+
+        /* Security Chain of Custody & Shift Clearance Box */
+        .custody-box {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 0.85rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+        }
+
+        .custody-title {
+            font-size: 0.72rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px dashed #cbd5e1;
+            padding-bottom: 0.4rem;
+        }
+
+        .custody-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+
+        .custody-col {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            font-size: 0.75rem;
+        }
+
+        .custody-lbl {
+            font-size: 0.65rem;
+            font-weight: 800;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .custody-val {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #0f172a;
+            line-height: 1.25;
+        }
+
+        .custody-sub {
+            font-size: 0.7rem;
+            color: #475569;
         }
 
         /* Security Instructions Box */
@@ -614,6 +685,31 @@ $wa_link = "https://api.whatsapp.com/send?text=" . $wa_text . (!empty($v['phone'
             border: none !important;
             background: transparent !important;
             padding: 0 !important;
+        }
+
+        .thermal-mode .custody-box {
+            background: transparent !important;
+            border: 1px dashed #000000 !important;
+            border-radius: 0 !important;
+            padding: 0.5rem 0.25rem !important;
+        }
+
+        .thermal-mode .custody-title {
+            border-bottom: 1px solid #000000 !important;
+            color: #000000 !important;
+        }
+
+        .thermal-mode .custody-grid {
+            grid-template-columns: 1fr !important;
+            gap: 0.5rem !important;
+        }
+
+        .thermal-mode .custody-lbl {
+            color: #333333 !important;
+        }
+
+        .thermal-mode .custody-val {
+            color: #000000 !important;
         }
 
         .thermal-mode .instructions-box {
@@ -820,6 +916,57 @@ $wa_link = "https://api.whatsapp.com/send?text=" . $wa_text . (!empty($v['phone'
                     </div>
                 </div>
 
+                <!-- Security Duty Shift & Chain of Custody Clearance -->
+                <div class="custody-box">
+                    <div class="custody-title">
+                        <span><i class="fa-solid fa-shield-halved text-primary me-1"></i> Security Duty &amp; Chain of Custody</span>
+                        <span style="font-size: 0.65rem; font-family: monospace; color: #64748b;">PASS AUDIT ID: GP-<?= str_pad($v['id'], 5, '0', STR_PAD_LEFT) ?></span>
+                    </div>
+                    <div class="custody-grid">
+                        <!-- Entry Clearance -->
+                        <div class="custody-col">
+                            <span class="custody-lbl"><i class="fa-solid fa-right-to-bracket text-success me-1"></i> Gate Entry Clearance</span>
+                            <?php if (!empty($v['entry_time'])): ?>
+                                <span class="custody-val text-success"><?= date('D, M j - h:i A', strtotime($v['entry_time'])) ?></span>
+                                <span class="custody-sub"><strong>Officer:</strong> <?= htmlspecialchars($v['entry_staff_name'] ?? 'Gate Officer') ?></span>
+                                <span class="custody-sub"><strong>Duty Shift:</strong> <?= htmlspecialchars($v['entry_shift_name'] ?? 'General Shift') ?></span>
+                                <span class="custody-sub"><strong>Gate:</strong> <?= htmlspecialchars($v['entry_gate'] ?? 'Main Gate') ?></span>
+                                <?php if (!empty($v['vehicle_plate'])): ?>
+                                    <span class="custody-sub"><strong>Vehicle:</strong> <span class="font-monospace fw-bold"><?= htmlspecialchars($v['vehicle_plate']) ?></span></span>
+                                <?php endif; ?>
+                            <?php else: ?>
+                                <span class="custody-val text-secondary">Pending Gate Clearance</span>
+                                <span class="custody-sub">Expected at entrance gate</span>
+                            <?php endif; ?>
+                        </div>
+
+                        <!-- Exit Clearance -->
+                        <div class="custody-col">
+                            <span class="custody-lbl"><i class="fa-solid fa-right-from-bracket text-danger me-1"></i> Gate Exit Clearance</span>
+                            <?php if (!empty($v['exit_time'])): ?>
+                                <span class="custody-val text-slate-800"><?= date('D, M j - h:i A', strtotime($v['exit_time'])) ?></span>
+                                <span class="custody-sub"><strong>Exit Officer:</strong> <?= htmlspecialchars($v['exit_staff_name'] ?? 'Gate Officer') ?></span>
+                                <span class="custody-sub"><strong>Duty Shift:</strong> <?= htmlspecialchars($v['exit_shift_name'] ?? 'General Shift') ?></span>
+                                <span class="custody-sub"><strong>Exit Gate:</strong> <?= htmlspecialchars($v['exit_gate'] ?? 'Main Gate') ?></span>
+                                <?php if (!empty($v['exit_reason'])): ?>
+                                    <span class="custody-sub"><strong>Departure:</strong> <?= htmlspecialchars($v['exit_reason']) ?></span>
+                                <?php endif; ?>
+                            <?php elseif ($v['status'] === 'entered'): ?>
+                                <span class="custody-val text-primary"><i class="fa-solid fa-street-view me-1"></i> Currently Inside Estate</span>
+                                <span class="custody-sub">Active clearance session</span>
+                            <?php else: ?>
+                                <span class="custody-val text-muted">Awaiting Arrival</span>
+                                <span class="custody-sub">Not yet cleared in</span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <?php if (!empty($v['guard_notes'])): ?>
+                        <div style="font-size: 0.68rem; color: #475569; background: #ffffff; padding: 4px 8px; border-radius: 6px; border: 1px solid #e2e8f0; margin-top: 4px;">
+                            <i class="fa-solid fa-note-sticky text-warning me-1"></i> <strong>Inspection / Officer Notes:</strong> <?= htmlspecialchars($v['guard_notes']) ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
                 <!-- Estate Gate Security Instructions -->
                 <div class="instructions-box">
                     <div class="instructions-title">
@@ -871,11 +1018,11 @@ $wa_link = "https://api.whatsapp.com/send?text=" . $wa_text . (!empty($v['phone'
         }
 
         function copyPassCode(code) {
-            navigator.clipboard.writeText(code).then(() => {
-                alert('Gate Pass Code (' + code + ') copied to clipboard!');
-            }).catch(() => {
-                prompt('Copy this Gate Pass Code:', code);
-            });
+            if (window.EstateDialog) {
+                EstateDialog.copy(code, 'Gate Pass Code (' + code + ') copied to clipboard!');
+            } else {
+                navigator.clipboard.writeText(code);
+            }
         }
 
         <?php if ($auto_print): ?>

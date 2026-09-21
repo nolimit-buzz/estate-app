@@ -36,8 +36,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_estate'])) {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/estate_notifications.css">
+    <script src="../js/estate_notifications.js"></script>
     <style>
         .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
         .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
@@ -91,10 +92,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_estate'])) {
                     while($e = $estates->fetch_assoc()): 
                         $e_id = $e['id'];
                         $admin_count = $conn->query("SELECT COUNT(*) as c FROM users WHERE estate_id=$e_id AND role='admin'")->fetch_assoc()['c'];
+                        $e_logo = '';
+                        $l_res = $conn->query("SELECT setting_value FROM system_settings WHERE estate_id = $e_id AND setting_key = 'estate_logo' LIMIT 1");
+                        if ($l_res && $l_row = $l_res->fetch_assoc()) {
+                            $e_logo = get_media_url($l_row['setting_value']);
+                        }
                     ?>
                         <tr>
                             <td>#<?= $e['id'] ?></td>
-                            <td style="font-weight: 600; color: #1e293b;"><?= htmlspecialchars($e['name']) ?></td>
+                            <td style="font-weight: 600; color: #1e293b;">
+                                <div style="display: flex; align-items: center; gap: 0.65rem;">
+                                    <?php if(!empty($e_logo)): ?>
+                                        <img src="<?= htmlspecialchars($e_logo) ?>" alt="Logo" style="width: 30px; height: 30px; border-radius: 6px; object-fit: contain; border: 1px solid #e2e8f0; background: #fff;">
+                                    <?php else: ?>
+                                        <div style="width: 30px; height: 30px; border-radius: 6px; background: #e2e8f0; color: #64748b; display: flex; align-items: center; justify-content: center; font-size: 0.75rem;">
+                                            <i class="fa-solid fa-tree-city"></i>
+                                        </div>
+                                    <?php endif; ?>
+                                    <span><?= htmlspecialchars($e['name']) ?></span>
+                                </div>
+                            </td>
                             <td><span style="background:#f1f5f9; padding:4px 8px; border-radius:4px; font-family:monospace; color: #475569;"><?= htmlspecialchars($e['domain_prefix']) ?></span></td>
                             <td><?= date('M d, Y', strtotime($e['created_at'])) ?></td>
                             <td><span style="background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 999px; font-size: 0.85rem; font-weight: 600;"><?= $admin_count ?> Admin(s)</span></td>

@@ -15,6 +15,19 @@ $estate_id = get_estate_id();
 $user_res = $conn->query("SELECT * FROM users WHERE id = $user_id AND estate_id = $estate_id");
 $user = $user_res->fetch_assoc();
 
+// Fetch Resident's Zone and Dedicated Paystack Virtual Account
+$res_zone = $conn->query("
+    SELECT z.id as zone_id, z.name as zone_name, z.code as zone_code,
+           z.paystack_bank_name, z.paystack_account_number, z.paystack_account_name, z.paystack_subaccount_code 
+    FROM residents r
+    JOIN flats f ON r.flat_id = f.id
+    JOIN buildings b ON f.building_id = b.id
+    JOIN streets s ON b.street_id = s.id
+    JOIN zones z ON s.zone_id = z.id
+    WHERE r.user_id = $user_id AND r.estate_id = $estate_id AND r.status = 'active'
+    LIMIT 1
+")->fetch_assoc();
+
 // Fetch Paystack Public Key
 $paystack = new Paystack($conn);
 $paystack_public = $paystack->getPublicKey();
@@ -35,8 +48,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_bank_transfer']
     $message = "Bank transfer reference submitted successfully! Admin will verify and issue your receipt.";
 }
 
-// Fetch Invoices
-$invoices_res = $conn->query("SELECT * FROM invoices WHERE user_id = $user_id AND estate_id = $estate_id ORDER BY due_date DESC");
+// Fetch Invoices with Zonal Paystack Remittance Account Details and Billing Settings
+$invoices_res = $conn->query("
+    SELECT i.*, 
+           ec.allow_installments as charge_allow_installments,
+           z.id as zone_id, z.name as zone_name, z.code as zone_code,
+           COALESCE(z.paystack_bank_name, '" . ($res_zone['paystack_bank_name'] ?? '') . "') as paystack_bank_name,
+           COALESCE(z.paystack_account_number, '" . ($res_zone['paystack_account_number'] ?? '') . "') as paystack_account_number,
+           COALESCE(z.paystack_account_name, '" . ($res_zone['paystack_account_name'] ?? '') . "') as paystack_account_name,
+           COALESCE(z.paystack_subaccount_code, '" . ($res_zone['paystack_subaccount_code'] ?? '') . "') as paystack_subaccount_code,
+           COALESCE(zs.allow_installments, 1) as zone_allow_installments,
+           COALESCE(zs.min_first_payment_percent, 40) as min_first_payment_percent,
+           COALESCE(zs.max_subsequent_payments, 3) as subsequent_payments_count
+    FROM invoices i 
+    LEFT JOIN estate_charges ec ON i.charge_id = ec.id
+    LEFT JOIN flats f ON i.flat_id = f.id 
+    LEFT JOIN buildings b ON f.building_id = b.id 
+    LEFT JOIN streets s ON b.street_id = s.id 
+    LEFT JOIN zones z ON (i.zone_id = z.id OR s.zone_id = z.id)
+    LEFT JOIN zonal_billing_settings zs ON zs.zone_id = z.id
+    WHERE i.user_id = $user_id AND i.estate_id = $estate_id 
+    ORDER BY i.due_date DESC
+");
 
 // Fetch Completed Payments & Receipts
 $payments_res = $conn->query("SELECT p.*, r.receipt_number, i.invoice_number 
@@ -57,287 +90,520 @@ include 'sidebar.php';
 ?>
 <script src="https://js.paystack.co/v1/inline.js"></script>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
     <div>
-        <h2 class="h4 font-bold text-slate-800 m-0"><i class="fa-solid fa-file-invoice-dollar text-primary me-2"></i> Bills & Invoices</h2>
-        <p class="text-secondary small mb-0">Manage your estate dues, pay invoices, and view payment history.</p>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <h1 class="h4 font-bold text-slate-900 m-0" style="letter-spacing: -0.02em;">
+                <i class="fa-solid fa-file-invoice-dollar text-primary me-2"></i> Bills & Invoices
+            </h1>
+            <span class="mature-badge mature-badge-sky">Financial Portal</span>
+        </div>
+        <p class="text-secondary small mb-0">Manage estate assessments, settle outstanding invoices, and access official verified receipts.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="receipts" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+            <i class="fa-solid fa-receipt me-1"></i> My Receipts
+        </a>
     </div>
 </div>
 
-<style>
-    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
-    .kpi-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 1rem; padding: 1.5rem; }
-
-    .card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 1rem; padding: 1.5rem; }
-    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 1rem; }
-    .card-title { font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 700; }
-
-    .badge-paid { background: #dcfce7; color: #15803d; }
-    .badge-unpaid { background: #fee2e2; color: #b91c1c; }
-    .badge-pending { background: #fef3c7; color: #b45309; }
-
-    .btn-action { padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; transition: all 0.2s; }
-    .btn-pay { background: #10b981; color: white; }
-    .btn-pay:hover { background: #059669; }
-    .btn-receipt { background: #3b82f6; color: white; }
-    .btn-receipt:hover { background: #2563eb; }
-
-    /* Modal */
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.6); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
-    .modal-body { background: white; border-radius: 1rem; padding: 2rem; max-width: 500px; width: 90%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
-</style>
-
 <div class="d-flex flex-column gap-4">
+    <?php if ($message): ?>
+        <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm" role="alert" style="background: rgba(16, 185, 129, 0.12); color: #065f46; border-left: 4px solid #10b981 !important;">
+            <i class="fa-solid fa-circle-check me-2"></i> <?= htmlspecialchars($message) ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <?php endif; ?>
 
-
-        <?php if ($message): ?>
-            <div style="background: #dcfce7; color: #15803d; padding: 1rem; border-radius: 0.5rem; font-weight: 600; border: 1px solid #bbf7d0;">
-                <i class="fa-solid fa-circle-check" style="margin-right: 6px;"></i> <?= $message ?>
+    <!-- ==========================================
+         FINANCIAL METRICS RIBBON & VIRTUAL ACCOUNT
+         ========================================== -->
+    <div class="row g-3">
+        <div class="col-12 col-md-4">
+            <div class="resident-kpi-card kpi-accent-danger h-100">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="kpi-title">Total Outstanding</span>
+                    <div class="kpi-icon-wrap" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border-color: rgba(239, 68, 68, 0.25);">
+                        <i class="fa-solid fa-hourglass-half"></i>
+                    </div>
+                </div>
+                <div class="kpi-value text-danger" style="font-size: 2rem; font-weight: 800; letter-spacing: -0.02em;">
+                    ₦<?= number_format($totals['outstanding'], 2) ?>
+                </div>
+                <div class="kpi-meta justify-content-between mt-2 pt-2 border-top border-light-subtle">
+                    <span>Active Dues Balance</span>
+                    <span class="mature-badge <?= ($totals['outstanding'] > 0) ? 'mature-badge-crimson' : 'mature-badge-emerald' ?>">
+                        <?= ($totals['outstanding'] > 0) ? 'Payment Due' : 'Cleared' ?>
+                    </span>
+                </div>
             </div>
+        </div>
+
+        <div class="col-12 col-md-4">
+            <div class="resident-kpi-card kpi-accent-success h-100">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="kpi-title">Total Settled Dues</span>
+                    <div class="kpi-icon-wrap" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border-color: rgba(16, 185, 129, 0.25);">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                </div>
+                <div class="kpi-value text-success" style="font-size: 2rem; font-weight: 800; letter-spacing: -0.02em;">
+                    ₦<?= number_format($totals['total_paid'], 2) ?>
+                </div>
+                <div class="kpi-meta justify-content-between mt-2 pt-2 border-top border-light-subtle">
+                    <span>Verified Realized Payments</span>
+                    <span class="mature-badge mature-badge-emerald"><i class="fa-solid fa-shield-check me-1"></i>Reconciled</span>
+                </div>
+            </div>
+        </div>
+
+        <?php if (!empty($res_zone['paystack_account_number'])): ?>
+        <div class="col-12 col-md-4">
+            <div class="resident-kpi-card h-100" style="border-left: 4px solid #0284c7; background: linear-gradient(135deg, rgba(2, 132, 199, 0.04) 0%, rgba(56, 189, 248, 0.08) 100%);">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="kpi-title" style="color: #0369a1;"><i class="fa-solid fa-building-columns me-1"></i> Zone Virtual Account</span>
+                    <span class="mature-badge mature-badge-sky"><?= htmlspecialchars($res_zone['zone_name'] ?? 'Zone') ?></span>
+                </div>
+                <div class="d-flex align-items-center justify-content-between mt-1 mb-2">
+                    <div>
+                        <div style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 1.55rem; font-weight: 800; color: #0284c7; letter-spacing: 0.06em;">
+                            <?= htmlspecialchars($res_zone['paystack_account_number']) ?>
+                        </div>
+                        <div class="small text-secondary fw-medium">
+                            <?= htmlspecialchars($res_zone['paystack_bank_name'] ?? 'Wema Bank (Paystack)') ?> &bull; <?= htmlspecialchars($res_zone['paystack_account_name'] ?? 'Zone') ?>
+                        </div>
+                    </div>
+                    <button type="button" onclick="copyAccountText('<?= htmlspecialchars($res_zone['paystack_account_number']) ?>', this)" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold">
+                        <i class="fa-regular fa-copy me-1"></i> Copy
+                    </button>
+                </div>
+                <div class="kpi-meta pt-2 border-top border-light-subtle small text-secondary">
+                    <span>Direct Zone Treasury Remittance</span>
+                </div>
+            </div>
+        </div>
+        <?php else: ?>
+        <div class="col-12 col-md-4">
+            <div class="resident-kpi-card h-100" style="border-left: 4px solid #8b5cf6;">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="kpi-title">Payment Channels</span>
+                    <div class="kpi-icon-wrap" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6; border-color: rgba(139, 92, 246, 0.25);">
+                        <i class="fa-solid fa-bolt"></i>
+                    </div>
+                </div>
+                <div class="fw-bold fs-5 text-slate-900 mt-2 mb-1">Instant Online Gateway</div>
+                <div class="small text-secondary">Pay instantly using Debit Cards, USSD, Bank Transfer, or NQR via Paystack.</div>
+            </div>
+        </div>
         <?php endif; ?>
+    </div>
 
-        <div class="kpi-grid">
-            <div class="kpi-card" style="border-left: 4px solid #ef4444;">
-                <div style="color: var(--text-muted); font-weight: 600; font-size: 0.85rem; text-transform: uppercase;">Total Outstanding</div>
-                <div style="font-family: 'Outfit'; font-size: 2.25rem; font-weight: 700; color: #dc2626; margin-top: 0.25rem;">₦<?= number_format($totals['outstanding'], 2) ?></div>
+    <!-- ==========================================
+         OUTSTANDING & ISSUED INVOICES TABLE
+         ========================================== -->
+    <div class="resident-glass-panel">
+        <div class="resident-card-header">
+            <div class="resident-card-title">
+                <i class="fa-solid fa-file-invoice-dollar text-primary"></i> Outstanding & Issued Invoices
             </div>
-            <div class="kpi-card" style="border-left: 4px solid #10b981;">
-                <div style="color: var(--text-muted); font-weight: 600; font-size: 0.85rem; text-transform: uppercase;">Total Paid</div>
-                <div style="font-family: 'Outfit'; font-size: 2.25rem; font-weight: 700; color: #059669; margin-top: 0.25rem;">₦<?= number_format($totals['total_paid'], 2) ?></div>
-            </div>
+            <span class="mature-badge mature-badge-slate"><?= ($invoices_res) ? $invoices_res->num_rows : 0 ?> Records</span>
         </div>
+        <div class="table-responsive">
+            <table class="table dashboard-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Invoice #</th>
+                        <th>Charge Title</th>
+                        <th>Amount Details</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                        <th style="text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if ($invoices_res && $invoices_res->num_rows > 0): ?>
+                        <?php while ($inv = $invoices_res->fetch_assoc()): ?>
+                            <?php 
+                                $inv_display_no = $inv['invoice_number'] ?: ('INV-' . sprintf("%04d", $inv['id'])); 
+                                $inv_bank = $inv['paystack_bank_name'] ?: ($res_zone['paystack_bank_name'] ?? '');
+                                $inv_acct = $inv['paystack_account_number'] ?: ($res_zone['paystack_account_number'] ?? '');
+                                $inv_acct_name = $inv['paystack_account_name'] ?: ($res_zone['paystack_account_name'] ?? '');
+                                $inv_subacct = $inv['paystack_subaccount_code'] ?: ($res_zone['paystack_subaccount_code'] ?? '');
+                                $inv_zone_name = $inv['zone_name'] ?: ($res_zone['zone_name'] ?? '');
+                                $inv_zone_id = $inv['zone_id'] ?: ($res_zone['zone_id'] ?? 0);
 
-        <!-- Invoices & Bills Table -->
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title"><i class="fa-solid fa-file-invoice-dollar" style="color: var(--primary); margin-right: 8px;"></i> Outstanding & Issued Invoices</div>
-            </div>
-            <div style="overflow-x: auto;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Invoice #</th>
-                            <th>Charge Title</th>
-                            <th>Amount</th>
-                            <th>Due Date</th>
-                            <th>Status</th>
-                            <th style="text-align: right;">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if ($invoices_res && $invoices_res->num_rows > 0): ?>
-                            <?php while ($inv = $invoices_res->fetch_assoc()): ?>
-                                <?php $inv_display_no = $inv['invoice_number'] ?: ('INV-' . sprintf("%04d", $inv['id'])); ?>
-                                <tr>
-                                    <td style="font-family: monospace; font-weight: 600; color: #2563eb;"><?= htmlspecialchars($inv_display_no) ?></td>
-                                    <td style="font-weight: 600; color: #1e293b;"><?= htmlspecialchars($inv['title']) ?></td>
-                                    <td style="font-weight: 700; color: #0f172a;">₦<?= number_format($inv['amount'], 2) ?></td>
-                                    <td><?= $inv['due_date'] ? date('M j, Y', strtotime($inv['due_date'])) : 'N/A' ?></td>
-                                    <td>
-                                        <span class="badge badge-<?= $inv['status'] ?>">
-                                            <?= htmlspecialchars(str_replace('_', ' ', $inv['status'])) ?>
+                                $inv_total = floatval($inv['amount']);
+                                $inv_paid = floatval($inv['amount_paid'] ?? 0);
+                                $inv_balance = floatval($inv['balance'] > 0 ? $inv['balance'] : max(0, $inv_total - $inv_paid));
+                                $charge_allows_inst = isset($inv['charge_allow_installments']) ? intval($inv['charge_allow_installments']) : 1;
+                                $zone_allows_inst = intval($inv['zone_allow_installments'] ?? 1);
+                                $can_installments = ($zone_allows_inst && $charge_allows_inst && $inv_balance > 0 && $inv['status'] !== 'paid');
+                                $first_pct = floatval($inv['min_first_payment_percent'] ?? 40);
+
+                                $status_badge_class = 'mature-badge-slate';
+                                if ($inv['status'] === 'paid') $status_badge_class = 'mature-badge-emerald';
+                                elseif ($inv['status'] === 'unpaid' || $inv['status'] === 'overdue') $status_badge_class = 'mature-badge-crimson';
+                                elseif ($inv['status'] === 'partially_paid' || $inv['status'] === 'pending') $status_badge_class = 'mature-badge-amber';
+                            ?>
+                            <tr>
+                                <td>
+                                    <span class="mature-badge mature-badge-primary font-monospace" style="font-size: 0.78rem;">
+                                        <?= htmlspecialchars($inv_display_no) ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold text-slate-900"><?= htmlspecialchars($inv['title']) ?></div>
+                                    <?php if ($can_installments): ?>
+                                        <span class="mature-badge mature-badge-purple mt-1" style="font-size: 0.68rem;">
+                                            <i class="fa-solid fa-chart-pie me-1"></i> Installments (<?= intval($first_pct) ?>% 1st)
                                         </span>
-                                    </td>
-                                    <td style="text-align: right;">
-                                        <?php if ($inv['status'] != 'paid'): ?>
-                                            <button onclick="payInvoice(<?= $inv['id'] ?>, '<?= htmlspecialchars(addslashes($inv['title'])) ?>', <?= $inv['amount'] ?>, '<?= htmlspecialchars(addslashes($inv_display_no)) ?>')" class="btn-action btn-pay">
-                                                <i class="fa-solid fa-credit-card"></i> Pay Now
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <div class="fw-bold text-slate-900">₦<?= number_format($inv_total, 2) ?></div>
+                                    <?php if ($inv_paid > 0): ?>
+                                        <div class="small text-success fw-semibold">Paid: ₦<?= number_format($inv_paid, 2) ?></div>
+                                        <div class="small text-danger fw-bold">Bal: ₦<?= number_format($inv_balance, 2) ?></div>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="small text-secondary">
+                                    <i class="fa-regular fa-calendar me-1"></i>
+                                    <?= $inv['due_date'] ? date('M j, Y', strtotime($inv['due_date'])) : 'N/A' ?>
+                                </td>
+                                <td>
+                                    <span class="mature-badge <?= $status_badge_class ?>">
+                                        <?= htmlspecialchars(str_replace('_', ' ', strtoupper($inv['status']))) ?>
+                                    </span>
+                                </td>
+                                <td style="text-align: right;">
+                                    <?php if ($inv['status'] != 'paid'): ?>
+                                        <div class="d-inline-flex gap-1 justify-content-end">
+                                            <a href="../pay_invoice?id=<?= $inv['id'] ?>" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold">
+                                                <i class="fa-solid fa-credit-card me-1"></i> <?= $can_installments ? 'Pay / Split' : 'Pay Now' ?>
+                                            </a>
+                                            <button type="button" onclick="payInvoice(<?= $inv['id'] ?>, '<?= htmlspecialchars(addslashes($inv['title'])) ?>', <?= $inv_balance ?>, '<?= htmlspecialchars(addslashes($inv_display_no)) ?>', '<?= htmlspecialchars(addslashes($inv_bank)) ?>', '<?= htmlspecialchars(addslashes($inv_acct)) ?>', '<?= htmlspecialchars(addslashes($inv_acct_name)) ?>', '<?= htmlspecialchars(addslashes($inv_subacct)) ?>', '<?= htmlspecialchars(addslashes($inv_zone_name)) ?>', <?= intval($inv_zone_id) ?>)" class="btn btn-sm btn-light border rounded-circle" style="width: 32px; height: 32px; padding: 0;" title="Quick Pay Channels">
+                                                <i class="fa-solid fa-bolt text-warning"></i>
                                             </button>
-                                        <?php else: ?>
-                                            <a href="receipt?invoice_id=<?= $inv['id'] ?>" class="btn-action btn-receipt">
-                                                <i class="fa-solid fa-receipt"></i> View Receipt
-                                            </a>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
-                            <?php endwhile; ?>
-                        <?php else: ?>
-                            <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">No invoices generated for your account yet.</td></tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Payment History Table -->
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title"><i class="fa-solid fa-clock-rotate-left" style="color: #8b5cf6; margin-right: 8px;"></i> Verified Payment History & Receipts</div>
-            </div>
-            <div style="overflow-x: auto;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Receipt ID</th>
-                            <th>Invoice #</th>
-                            <th>Description</th>
-                            <th>Amount</th>
-                            <th>Method</th>
-                            <th>Paid Date</th>
-                            <th>Status</th>
-                            <th style="text-align: right;">Receipt</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if ($payments_res && $payments_res->num_rows > 0): ?>
-                            <?php while ($pay = $payments_res->fetch_assoc()): ?>
-                                <tr>
-                                    <td style="font-family: monospace; font-weight: 700; color: #0284c7;">
-                                        <?= htmlspecialchars($pay['receipt_number'] ?? 'Pending') ?>
-                                    </td>
-                                    <td style="font-family: monospace; font-weight: 600; color: #64748b;">
-                                        <?= htmlspecialchars($pay['invoice_number'] ?: ($pay['invoice_id'] ? ('INV-' . $pay['invoice_id']) : 'N/A')) ?>
-                                    </td>
-                                    <td><?= htmlspecialchars($pay['type'] . ' - ' . ($pay['description'] ?? '')) ?></td>
-                                    <td style="font-weight: 700; color: #15803d;">₦<?= number_format($pay['amount'], 2) ?></td>
-                                    <td><span style="font-size: 0.8rem; background: #f1f5f9; padding: 2px 8px; border-radius: 4px; font-weight: 600; text-transform: uppercase;"><?= htmlspecialchars(str_replace(['paystack_', '_'], ['', ' '], $pay['payment_method'])) ?></span></td>
-                                    <td><?= date('M j, Y h:i A', strtotime($pay['created_at'])) ?></td>
-                                    <td><span class="badge badge-<?= $pay['status'] ?>"><?= htmlspecialchars(ucfirst($pay['status'])) ?></span></td>
-                                    <td style="text-align: right;">
-                                        <?php if (!empty($pay['receipt_number'])): ?>
-                                            <a href="receipt?receipt_no=<?= urlencode($pay['receipt_number']) ?>" class="btn-action btn-receipt">
-                                                <i class="fa-solid fa-print"></i> View / Print
-                                            </a>
-                                        <?php else: ?>
-                                            <span style="font-size: 0.8rem; color: var(--text-muted);">Awaiting Admin</span>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
-                            <?php endwhile; ?>
-                        <?php else: ?>
-                            <tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2rem;">No payment history recorded yet.</td></tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
+                                        </div>
+                                    <?php else: ?>
+                                        <a href="receipt?invoice_id=<?= $inv['id'] ?>" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-semibold">
+                                            <i class="fa-solid fa-receipt me-1"></i> Receipt
+                                        </a>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                        <?php endwhile; ?>
+                    <?php else: ?>
+                        <tr><td colspan="6" class="text-center py-4 text-secondary small">No invoices generated for your account yet.</td></tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
         </div>
     </div>
 
-    <!-- Modern Interactive Pay Modal -->
-    <div id="payModal" class="modal">
-        <div class="modal-body" style="max-width: 540px; border-radius: 1.25rem; padding: 2rem; position: relative;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem;">
-                <div>
-                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
-                        <span id="modalInvoiceNumber" style="font-family: monospace; font-size: 0.8rem; font-weight: 700; background: #eff6ff; color: #2563eb; padding: 3px 8px; border-radius: 6px;">INV-0000</span>
-                        <span style="font-size: 0.75rem; background: #fee2e2; color: #b91c1c; font-weight: 700; padding: 2px 7px; border-radius: 9999px; text-transform: uppercase;">Unpaid</span>
-                    </div>
-                    <h3 id="modalTitle" style="font-family: 'Outfit', sans-serif; font-size: 1.35rem; font-weight: 700; color: #0f172a; margin: 0;">Pay Invoice</h3>
-                </div>
-                <button onclick="document.getElementById('payModal').style.display='none'" style="background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 1.25rem; line-height: 1; cursor: pointer; color: #64748b; display: flex; align-items: center; justify-content: center;">&times;</button>
+    <!-- ==========================================
+         PAYMENT HISTORY & SETTLED RECEIPTS TABLE
+         ========================================== -->
+    <div class="resident-glass-panel">
+        <div class="resident-card-header">
+            <div class="resident-card-title">
+                <i class="fa-solid fa-clock-rotate-left text-primary"></i> Verified Payment History & Proof of Settlement
             </div>
-            
+            <a href="receipts" class="btn btn-sm btn-outline-primary rounded-pill px-3" style="font-size: 0.8rem;">
+                All Receipts <i class="fa-solid fa-arrow-right ms-1"></i>
+            </a>
+        </div>
+        <div class="table-responsive">
+            <table class="table dashboard-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Receipt ID</th>
+                        <th>Invoice #</th>
+                        <th>Description</th>
+                        <th>Amount</th>
+                        <th>Method</th>
+                        <th>Paid Date</th>
+                        <th>Status</th>
+                        <th style="text-align: right;">Receipt</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if ($payments_res && $payments_res->num_rows > 0): ?>
+                        <?php while ($pay = $payments_res->fetch_assoc()): ?>
+                            <tr>
+                                <td>
+                                    <span class="mature-badge mature-badge-sky font-monospace" style="font-size: 0.75rem;">
+                                        <i class="fa-solid fa-receipt me-1"></i><?= htmlspecialchars($pay['receipt_number'] ?? 'Pending') ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="font-monospace text-secondary small">
+                                        <?= htmlspecialchars($pay['invoice_number'] ?: ($pay['invoice_id'] ? ('INV-' . $pay['invoice_id']) : 'Direct')) ?>
+                                    </span>
+                                </td>
+                                <td class="small fw-semibold text-slate-900"><?= htmlspecialchars($pay['type'] . ' - ' . ($pay['description'] ?? '')) ?></td>
+                                <td>
+                                    <span class="fw-bold text-success font-monospace">₦<?= number_format($pay['amount'], 2) ?></span>
+                                </td>
+                                <td>
+                                    <span class="mature-badge mature-badge-slate">
+                                        <?= htmlspecialchars(strtoupper(str_replace(['paystack_', '_'], ['', ' '], $pay['payment_method']))) ?>
+                                    </span>
+                                </td>
+                                <td class="small text-secondary">
+                                    <i class="fa-regular fa-calendar-check me-1"></i>
+                                    <?= date('M j, Y h:i A', strtotime($pay['created_at'])) ?>
+                                </td>
+                                <td>
+                                    <span class="mature-badge mature-badge-emerald">
+                                        <i class="fa-solid fa-check me-1"></i><?= htmlspecialchars(ucfirst($pay['status'])) ?>
+                                    </span>
+                                </td>
+                                <td style="text-align: right;">
+                                    <?php if (!empty($pay['receipt_number'])): ?>
+                                        <a href="receipt?receipt_no=<?= urlencode($pay['receipt_number']) ?>" class="btn btn-sm btn-outline-primary rounded-pill px-3" style="font-size: 0.8rem;">
+                                            <i class="fa-solid fa-print me-1"></i> View
+                                        </a>
+                                    <?php else: ?>
+                                        <span class="small text-secondary">Processing</span>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                        <?php endwhile; ?>
+                    <?php else: ?>
+                        <tr><td colspan="8" class="text-center py-4 text-secondary small">No payment history recorded yet.</td></tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ==========================================
+     MODERN FROSTED GLASS PAY MODAL
+     ========================================== -->
+<div id="payModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 1050; align-items: center; justify-content: center; padding: 1.5rem 1rem;">
+    <div class="resident-glass-panel" style="max-width: 520px; width: 100%; border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); overflow: hidden;">
+        <div class="p-4 border-bottom d-flex justify-content-between align-items-start" style="background: rgba(255, 255, 255, 0.4);">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                    <span id="modalInvoiceNumber" class="mature-badge mature-badge-primary font-monospace">INV-0000</span>
+                    <span class="mature-badge mature-badge-crimson">Unpaid</span>
+                    <span id="modalZoneBadge" class="mature-badge mature-badge-emerald" style="display:none;"></span>
+                </div>
+                <h3 id="modalTitle" class="h5 font-bold text-slate-900 m-0">Pay Invoice</h3>
+            </div>
+            <button type="button" onclick="document.getElementById('payModal').style.display='none'" class="btn-close" aria-label="Close"></button>
+        </div>
+        
+        <div class="p-4">
             <!-- Amount Card -->
-            <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); padding: 1.25rem; border-radius: 0.85rem; margin-bottom: 1.25rem; text-align: center; border: 1px solid #e2e8f0;">
-                <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; color: #64748b;">Total Amount Due</div>
-                <div id="modalAmount" style="font-family: 'Outfit', sans-serif; font-size: 2.25rem; font-weight: 800; color: #0f172a; margin-top: 0.25rem;">₦0.00</div>
+            <div class="p-3 rounded-3 text-center mb-4 border" style="background: rgba(59, 130, 246, 0.05); border-color: rgba(59, 130, 246, 0.2) !important;">
+                <div class="small text-uppercase fw-semibold text-secondary" style="letter-spacing: 0.05em;">Total Amount Due</div>
+                <div id="modalAmount" class="fw-bold text-primary mt-1" style="font-size: 2.25rem; font-family: 'Outfit', sans-serif;">₦0.00</div>
             </div>
 
             <!-- Tab Switcher -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; background: #f1f5f9; padding: 4px; border-radius: 0.6rem; margin-bottom: 1.25rem;">
-                <button type="button" id="tabBtnOnline" onclick="switchPayTab('online')" style="padding: 0.6rem 0.5rem; border: none; border-radius: 0.45rem; font-weight: 700; font-size: 0.85rem; cursor: pointer; background: white; color: #0f172a; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: all 0.2s;">
-                    <i class="fa-solid fa-bolt" style="color: #0284c7; margin-right: 4px;"></i> Online (Paystack)
+            <div id="modalTabsContainer" class="d-grid gap-1 p-1 rounded-3 mb-3" style="grid-template-columns: repeat(3, 1fr); background: rgba(15, 23, 42, 0.06);">
+                <button type="button" id="tabBtnDVA" onclick="switchPayTab('dva')" class="btn btn-sm fw-bold rounded-2 text-center" style="font-size: 0.8rem; background: white; color: #0f172a; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                    <i class="fa-solid fa-building-columns text-primary me-1"></i> Zone DVA
                 </button>
-                <button type="button" id="tabBtnOffline" onclick="switchPayTab('offline')" style="padding: 0.6rem 0.5rem; border: none; border-radius: 0.45rem; font-weight: 600; font-size: 0.85rem; cursor: pointer; background: transparent; color: #64748b; transition: all 0.2s;">
-                    <i class="fa-solid fa-receipt" style="margin-right: 4px;"></i> Manual Transfer Proof
+                <button type="button" id="tabBtnOnline" onclick="switchPayTab('online')" class="btn btn-sm fw-semibold rounded-2 text-center text-secondary" style="font-size: 0.8rem;">
+                    <i class="fa-solid fa-bolt text-warning me-1"></i> Paystack
+                </button>
+                <button type="button" id="tabBtnOffline" onclick="switchPayTab('offline')" class="btn btn-sm fw-semibold rounded-2 text-center text-secondary" style="font-size: 0.8rem;">
+                    <i class="fa-solid fa-receipt me-1"></i> Manual
                 </button>
             </div>
 
-            <!-- Panel 1: Online Paystack Channels -->
-            <div id="payPanelOnline">
-                <div style="margin-bottom: 1rem;">
-                    <div style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 0.5rem; letter-spacing: 0.05em;">Supported Payment Channels</div>
-                    <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
-                        <span style="font-size: 0.75rem; background: #eff6ff; color: #1e40af; padding: 4px 8px; border-radius: 6px; font-weight: 600;"><i class="fa-solid fa-credit-card me-1"></i> Debit Cards (Mastercard, Visa, Verve)</span>
-                        <span style="font-size: 0.75rem; background: #ecfdf5; color: #065f46; padding: 4px 8px; border-radius: 6px; font-weight: 600;"><i class="fa-solid fa-mobile-screen-button me-1"></i> USSD (*737#, *966#, *901#, etc.)</span>
-                        <span style="font-size: 0.75rem; background: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 6px; font-weight: 600;"><i class="fa-solid fa-building-columns me-1"></i> Instant Bank Transfer</span>
-                        <span style="font-size: 0.75rem; background: #f5f3ff; color: #5b21b6; padding: 4px 8px; border-radius: 6px; font-weight: 600;"><i class="fa-solid fa-qrcode me-1"></i> NQR & Mobile Money</span>
+            <!-- Panel 1: Zone Virtual Bank Account (Paystack DVA) -->
+            <div id="payPanelDVA">
+                <div class="p-3 rounded-3 mb-3 text-white" style="background: linear-gradient(135deg, #0b1329 0%, #1e293b 100%); border: 1px solid rgba(56, 189, 248, 0.3);">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small text-uppercase fw-bold text-slate-400" style="font-size: 0.72rem; letter-spacing: 0.05em;">
+                            <i class="fa-solid fa-building-columns text-info me-1"></i> Dedicated Virtual Account
+                        </span>
+                        <span id="dvaBankBadge" class="mature-badge mature-badge-sky">Wema Bank (Paystack DVA)</span>
+                    </div>
+
+                    <div class="mb-2">
+                        <div class="small text-slate-400 text-uppercase" style="font-size: 0.7rem;">Account Number</div>
+                        <div class="d-flex align-items-center justify-content-between mt-1">
+                            <span id="dvaAccountNumber" class="font-monospace text-info fw-bold" style="font-size: 1.65rem; letter-spacing: 0.08em;">0000000000</span>
+                            <button type="button" onclick="copyDvaAccount(this)" class="btn btn-sm btn-info rounded-pill px-3 fw-bold text-dark" style="font-size: 0.8rem;">
+                                <i class="fa-regular fa-copy me-1"></i> Copy
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-end pt-2 border-top border-slate-700 small">
+                        <div>
+                            <div class="text-slate-400" style="font-size: 0.7rem;">Beneficiary Name</div>
+                            <div id="dvaAccountName" class="fw-bold text-white">Estate Zone</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="text-slate-400" style="font-size: 0.7rem;">Target Zone</div>
+                            <div id="dvaZoneName" class="fw-bold text-success">Zone 1</div>
+                        </div>
                     </div>
                 </div>
 
-                <button type="button" id="payOnlineBtn" onclick="triggerPaystackInline()" style="width: 100%; padding: 1rem; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: white; border: none; border-radius: 0.75rem; font-weight: 700; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; box-shadow: 0 10px 15px -3px rgba(2, 132, 199, 0.35); transition: all 0.2s;">
-                    <i class="fa-solid fa-shield-halved"></i> <span id="payOnlineBtnText">Pay with Paystack (Card, USSD, Transfer)</span>
-                </button>
-
-                <div style="margin-top: 1rem; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 0.5rem; padding: 0.75rem; font-size: 0.8rem; color: #475569; line-height: 1.45;">
-                    <div style="font-weight: 700; color: #0f172a; margin-bottom: 0.2rem;"><i class="fa-regular fa-lightbulb text-warning me-1"></i> How to pay with USSD or Bank Transfer:</div>
-                    1. Click the button above to launch the secure Paystack window.<br>
-                    2. Choose <strong>"Transfer"</strong> to get an automated temporary bank account (pay via your mobile banking app, verified instantly), OR choose <strong>"USSD"</strong> to select your bank and dial the displayed code.
-                </div>
-
-                <div style="margin-top: 1rem; text-align: center;">
-                    <img src="https://paystack.com/assets/payment/img/paystack-badge-cards.png" alt="Secured by Paystack" style="height: 24px; opacity: 0.75;">
+                <div class="p-3 rounded-3 small border" style="background: rgba(16, 185, 129, 0.08); border-color: rgba(16, 185, 129, 0.25) !important; color: #065f46; line-height: 1.45;">
+                    <div class="fw-bold mb-1"><i class="fa-solid fa-circle-check text-success me-1"></i> Transfer Instructions:</div>
+                    Open your banking app &bull; Transfer the exact amount to the <strong>Dedicated Virtual Account</strong> above &bull; Funds remit automatically to the Zone ledger.
                 </div>
             </div>
 
-            <!-- Panel 2: Offline / Manual Bank Transfer Proof -->
+            <!-- Panel 2: Online Paystack Channels -->
+            <div id="payPanelOnline" style="display: none;">
+                <div class="mb-3">
+                    <div class="small fw-bold text-uppercase text-secondary mb-2" style="font-size: 0.75rem;">Supported Channels</div>
+                    <div class="d-flex flex-wrap gap-1">
+                        <span class="mature-badge mature-badge-primary"><i class="fa-solid fa-credit-card me-1"></i> Debit Cards</span>
+                        <span class="mature-badge mature-badge-emerald"><i class="fa-solid fa-mobile-screen-button me-1"></i> USSD</span>
+                        <span class="mature-badge mature-badge-amber"><i class="fa-solid fa-building-columns me-1"></i> Bank Transfer</span>
+                        <span class="mature-badge mature-badge-purple"><i class="fa-solid fa-qrcode me-1"></i> NQR</span>
+                    </div>
+                </div>
+
+                <button type="button" id="payOnlineBtn" onclick="triggerPaystackInline()" class="btn btn-primary w-100 py-3 fw-bold rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2">
+                    <i class="fa-solid fa-shield-halved"></i> <span id="payOnlineBtnText">Pay with Paystack Checkout</span>
+                </button>
+
+                <div class="text-center mt-3">
+                    <img src="https://paystack.com/assets/payment/img/paystack-badge-cards.png" alt="Secured by Paystack" style="height: 22px; opacity: 0.85;">
+                </div>
+            </div>
+
+            <!-- Panel 3: Offline / Manual Bank Transfer Proof -->
             <div id="payPanelOffline" style="display: none;">
-                <div style="background: #eff6ff; border-left: 3px solid #3b82f6; padding: 0.75rem; border-radius: 0.35rem; font-size: 0.82rem; color: #1e3a8a; margin-bottom: 1rem;">
-                    If you transferred directly to the estate's physical bank account, enter the transaction reference / teller number below for management approval.
+                <div class="alert alert-info border-0 small mb-3">
+                    If you made an offline deposit or transfer to the physical estate account, submit the transaction reference or teller number below for administrator clearance.
                 </div>
                 <form method="POST">
                     <input type="hidden" name="invoice_id" id="modalInvoiceId">
                     <input type="hidden" name="amount" id="modalFormAmount">
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem; color: #334155;">Bank Transfer Reference / Session ID / Teller #</label>
-                        <input type="text" name="transfer_ref" placeholder="e.g. TRF/20260901/10045" required style="width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.95rem;">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Bank Transfer Reference / Session ID / Teller #</label>
+                        <input type="text" name="transfer_ref" placeholder="e.g. TRF/20260901/10045" required class="form-control">
                     </div>
-                    <button type="submit" name="submit_bank_transfer" class="btn-action" style="width: 100%; justify-content: center; background: #0f172a; color: white; padding: 0.85rem; border-radius: 0.5rem; font-size: 0.95rem;">
+                    <button type="submit" name="submit_bank_transfer" class="btn btn-dark w-100 py-2 fw-semibold rounded-3">
                         <i class="fa-solid fa-paper-plane me-1"></i> Submit Reference for Verification
                     </button>
                 </form>
             </div>
         </div>
     </div>
+</div>
 
     <script>
-        let currentInvoice = { id: 0, title: '', amount: 0, number: '' };
+        let currentInvoice = { id: 0, title: '', amount: 0, number: '', bankName: '', accountNumber: '', accountName: '', subaccount: '', zoneName: '', zoneId: 0 };
         const userEmail = <?= json_encode($user['email'] ?? 'resident@estate.com') ?>;
         const userName = <?= json_encode($user['name'] ?? 'Resident User') ?>;
         const paystackPubKey = <?= json_encode($paystack_public) ?>;
 
+        function copyAccountText(text, btn) {
+            EstateDialog.copy(text, 'Account number copied: ' + text);
+        }
+
+        function copyDvaAccount(btn) {
+            const acct = document.getElementById('dvaAccountNumber').innerText.trim();
+            copyAccountText(acct, btn);
+        }
+
         function switchPayTab(tab) {
+            const tabDVA = document.getElementById('tabBtnDVA');
             const tabOnline = document.getElementById('tabBtnOnline');
             const tabOffline = document.getElementById('tabBtnOffline');
+            const panelDVA = document.getElementById('payPanelDVA');
             const panelOnline = document.getElementById('payPanelOnline');
             const panelOffline = document.getElementById('payPanelOffline');
 
-            if (tab === 'online') {
+            // Reset tabs styling
+            [tabDVA, tabOnline, tabOffline].forEach(btn => {
+                if (btn) {
+                    btn.style.background = 'transparent';
+                    btn.style.color = '#64748b';
+                    btn.style.boxShadow = 'none';
+                }
+            });
+
+            // Hide panels
+            if (panelDVA) panelDVA.style.display = 'none';
+            if (panelOnline) panelOnline.style.display = 'none';
+            if (panelOffline) panelOffline.style.display = 'none';
+
+            if (tab === 'dva') {
+                tabDVA.style.background = 'white';
+                tabDVA.style.color = '#0f172a';
+                tabDVA.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+                if (panelDVA) panelDVA.style.display = 'block';
+            } else if (tab === 'online') {
                 tabOnline.style.background = 'white';
                 tabOnline.style.color = '#0f172a';
                 tabOnline.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
-                tabOffline.style.background = 'transparent';
-                tabOffline.style.color = '#64748b';
-                tabOffline.style.boxShadow = 'none';
-                panelOnline.style.display = 'block';
-                panelOffline.style.display = 'none';
+                if (panelOnline) panelOnline.style.display = 'block';
             } else {
                 tabOffline.style.background = 'white';
                 tabOffline.style.color = '#0f172a';
                 tabOffline.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
-                tabOnline.style.background = 'transparent';
-                tabOnline.style.color = '#64748b';
-                tabOnline.style.boxShadow = 'none';
-                panelOnline.style.display = 'none';
-                panelOffline.style.display = 'block';
+                if (panelOffline) panelOffline.style.display = 'block';
             }
         }
 
-        function payInvoice(id, title, amount, number) {
-            currentInvoice = { id, title, amount, number: number || ('INV-' + id) };
+        function payInvoice(id, title, amount, number, bankName, accountNum, accountName, subaccount, zoneName, zoneId) {
+            currentInvoice = {
+                id: id,
+                title: title,
+                amount: amount,
+                number: number || ('INV-' + id),
+                bankName: bankName || 'Wema Bank (Paystack DVA)',
+                accountNumber: accountNum || '',
+                accountName: accountName || 'Estate Zone Account',
+                subaccount: subaccount || '',
+                zoneName: zoneName || 'Assigned Zone',
+                zoneId: zoneId || 0
+            };
+
             document.getElementById('modalTitle').innerText = title;
             document.getElementById('modalInvoiceNumber').innerText = currentInvoice.number;
             document.getElementById('modalAmount').innerText = "₦" + amount.toLocaleString('en-US', {minimumFractionDigits: 2});
             document.getElementById('payOnlineBtnText').innerText = "Pay ₦" + amount.toLocaleString('en-US', {minimumFractionDigits: 2}) + " with Paystack";
             document.getElementById('modalInvoiceId').value = id;
             document.getElementById('modalFormAmount').value = amount;
-            switchPayTab('online');
+
+            const badge = document.getElementById('modalZoneBadge');
+            if (zoneName) {
+                badge.innerText = zoneName;
+                badge.style.display = 'inline-block';
+            } else {
+                badge.style.display = 'none';
+            }
+
+            // Populate DVA Card
+            const tabDVA = document.getElementById('tabBtnDVA');
+            if (currentInvoice.accountNumber) {
+                document.getElementById('dvaAccountNumber').innerText = currentInvoice.accountNumber;
+                document.getElementById('dvaBankBadge').innerText = currentInvoice.bankName;
+                document.getElementById('dvaAccountName').innerText = currentInvoice.accountName;
+                document.getElementById('dvaZoneName').innerText = currentInvoice.zoneName;
+                tabDVA.style.display = 'block';
+                switchPayTab('dva');
+            } else {
+                tabDVA.style.display = 'none';
+                switchPayTab('online');
+            }
+
             document.getElementById('payModal').style.display = 'flex';
         }
 
         function triggerPaystackInline() {
             if (!paystackPubKey) {
-                alert("Paystack Public Key is not configured in Estate System Settings yet. Please use Manual Bank Transfer or contact Estate Admin.");
+                EstateDialog.alert({
+                    title: 'Gateway Notice',
+                    message: "Paystack Public Key is not configured in Estate System Settings yet. Please use the Dedicated Virtual Account or contact Estate Admin.",
+                    type: 'warning'
+                });
                 return;
             }
 
@@ -346,7 +612,7 @@ include 'sidebar.php';
             btn.disabled = true;
             document.getElementById('payOnlineBtnText').innerText = "Opening Checkout...";
 
-            let handler = PaystackPop.setup({
+            let setupOptions = {
                 key: paystackPubKey,
                 email: userEmail,
                 amount: Math.round(currentInvoice.amount * 100), // In kobo
@@ -358,7 +624,9 @@ include 'sidebar.php';
                         { display_name: "Invoice ID", variable_name: "invoice_id", value: currentInvoice.id },
                         { display_name: "Invoice Number", variable_name: "invoice_number", value: currentInvoice.number },
                         { display_name: "Resident Name", variable_name: "resident_name", value: userName },
-                        { display_name: "Charge Title", variable_name: "charge_title", value: currentInvoice.title }
+                        { display_name: "Charge Title", variable_name: "charge_title", value: currentInvoice.title },
+                        { display_name: "Zone ID", variable_name: "zone_id", value: currentInvoice.zoneId },
+                        { display_name: "Zone Remittance Account", variable_name: "zone_account", value: currentInvoice.accountNumber }
                     ]
                 },
                 callback: function(response) {
@@ -368,7 +636,14 @@ include 'sidebar.php';
                     btn.disabled = false;
                     document.getElementById('payOnlineBtnText').innerText = originalText;
                 }
-            });
+            };
+
+            // Direct Paystack subaccount routing for in-zone remittance
+            if (currentInvoice.subaccount && currentInvoice.subaccount.startsWith('SUB_')) {
+                setupOptions.subaccount = currentInvoice.subaccount;
+            }
+
+            let handler = PaystackPop.setup(setupOptions);
             handler.openIframe();
         }
     </script>

@@ -95,62 +95,218 @@ $owners = $conn->query("SELECT p.*,
                         GROUP BY p.id 
                         ORDER BY p.full_name");
 $ownership_types = $conn->query("SELECT * FROM property_ownership_types ORDER BY name ASC");
+
+// Executive KPI Metrics
+$owner_kpi_res = $conn->query("
+    SELECT 
+        COUNT(DISTINCT p.id) as total_owners,
+        COUNT(DISTINCT CASE WHEN p.owner_type = 'building' THEN p.id END) as building_owners,
+        COUNT(DISTINCT CASE WHEN p.owner_type = 'flat' THEN p.id END) as flat_owners,
+        COUNT(DISTINCT CASE WHEN p.id_type IS NOT NULL AND p.id_type != '' THEN p.id END) as verified_ids
+    FROM property_owners p
+    WHERE p.estate_id = $estate_id
+");
+$owner_kpi = $owner_kpi_res ? $owner_kpi_res->fetch_assoc() : [];
+$total_owners_count = intval($owner_kpi['total_owners'] ?? 0);
+$building_owners_count = intval($owner_kpi['building_owners'] ?? 0);
+$flat_owners_count = intval($owner_kpi['flat_owners'] ?? 0);
+$verified_ids_count = intval($owner_kpi['verified_ids'] ?? 0);
 ?>
 
-<div class="page-header">
-    <h1>Property Owners</h1>
+<div class="page-header-futuristic mb-4">
+    <div>
+        <div class="header-breadcrumbs">
+            <span>Portfolio</span>
+            <i class="fa-solid fa-chevron-right separator"></i>
+            <span>Ownership</span>
+            <i class="fa-solid fa-chevron-right separator"></i>
+            <span class="active">Directory</span>
+        </div>
+        <h1 class="page-title">Property Owners</h1>
+        <p class="page-subtitle">Centralized directory of building deed holders and individual flat proprietors.</p>
+    </div>
+    <div class="header-actions">
+        <button class="btn btn-sm btn-outline-secondary" onclick="exportOwnersCSV()">
+            <i class="fa-solid fa-file-export me-1"></i> Export List
+        </button>
+        <button class="btn btn-sm text-white" style="background: #0f172a;" onclick="openOwnerModal()">
+            <i class="fa-solid fa-user-plus me-1"></i> Register Owner
+        </button>
+    </div>
 </div>
 
 <?php if ($message): ?>
-    <div class="alert" style="background: #dcfce7; color: #166534; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
-        <?php echo $message; ?>
+    <div class="alert mature-card p-3 mb-4" style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); color: #059669; border-radius: 0.65rem; display: flex; align-items: center; gap: 0.75rem;">
+        <i class="fa-solid fa-circle-check" style="font-size: 1.1rem;"></i>
+        <div style="font-weight: 500; font-size: 0.9rem;"><?php echo $message; ?></div>
     </div>
 <?php endif; ?>
 
+<!-- ==========================================
+     EXECUTIVE KPI METRICS RIBBON (4 PILLARS)
+     ========================================== -->
+<div class="row g-3 mb-4">
+    <!-- Pillar 1: Total Owners -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="kpi-card h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <span class="kpi-title">Total Registered Owners</span>
+                    <div class="kpi-value"><?php echo number_format($total_owners_count); ?></div>
+                </div>
+                <div class="kpi-icon-wrap">
+                    <i class="fa-solid fa-user-tie"></i>
+                </div>
+            </div>
+            <div class="kpi-meta justify-content-between mt-2">
+                <span>Estate Deed Registry</span>
+                <span class="mature-badge mature-badge-slate">100% Registered</span>
+            </div>
+            <div class="kpi-progress-bar">
+                <div class="kpi-progress-fill" style="width: 100%;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pillar 2: Building Owners -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="kpi-card h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <span class="kpi-title">Building Deed Holders</span>
+                    <div class="kpi-value"><?php echo number_format($building_owners_count); ?></div>
+                </div>
+                <div class="kpi-icon-wrap">
+                    <i class="fa-solid fa-building"></i>
+                </div>
+            </div>
+            <div class="kpi-meta justify-content-between mt-2">
+                <span>Whole Structure Deeds</span>
+                <span class="mature-badge mature-badge-sky"><?php echo $total_owners_count > 0 ? round(($building_owners_count / $total_owners_count) * 100) : 0; ?>% Ratio</span>
+            </div>
+            <div class="kpi-progress-bar">
+                <div class="kpi-progress-fill" style="width: <?php echo $total_owners_count > 0 ? ($building_owners_count / $total_owners_count) * 100 : 0; ?>%;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pillar 3: Flat Owners -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="kpi-card h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <span class="kpi-title">Flat Proprietors</span>
+                    <div class="kpi-value"><?php echo number_format($flat_owners_count); ?></div>
+                </div>
+                <div class="kpi-icon-wrap">
+                    <i class="fa-solid fa-door-open"></i>
+                </div>
+            </div>
+            <div class="kpi-meta justify-content-between mt-2">
+                <span>Individual Flat Deeds</span>
+                <span class="mature-badge mature-badge-amber"><?php echo $total_owners_count > 0 ? round(($flat_owners_count / $total_owners_count) * 100) : 0; ?>% Ratio</span>
+            </div>
+            <div class="kpi-progress-bar">
+                <div class="kpi-progress-fill" style="width: <?php echo $total_owners_count > 0 ? ($flat_owners_count / $total_owners_count) * 100 : 0; ?>%;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pillar 4: Verified Identity -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="kpi-card h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <span class="kpi-title">Verified Identity Records</span>
+                    <div class="kpi-value"><?php echo number_format($verified_ids_count); ?></div>
+                </div>
+                <div class="kpi-icon-wrap">
+                    <i class="fa-solid fa-id-card-clip"></i>
+                </div>
+            </div>
+            <div class="kpi-meta justify-content-between mt-2">
+                <span>NIN / BVN / RC Registered</span>
+                <span class="mature-badge mature-badge-emerald"><?php echo $total_owners_count > 0 ? round(($verified_ids_count / $total_owners_count) * 100) : 0; ?>% Verified</span>
+            </div>
+            <div class="kpi-progress-bar">
+                <div class="kpi-progress-fill" style="width: <?php echo $total_owners_count > 0 ? ($verified_ids_count / $total_owners_count) * 100 : 0; ?>%;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==========================================
+     INTERACTIVE SEARCH & FILTER TOOLBAR
+     ========================================== -->
+<div class="futuristic-filter-bar mb-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-stretch align-items-md-center gap-3">
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <button class="filter-btn-pill active" onclick="setOwnerFilter('all', this)">
+                <i class="fa-solid fa-list-ul me-1"></i> All Owners (<?php echo $total_owners_count; ?>)
+            </button>
+            <button class="filter-btn-pill" onclick="setOwnerFilter('building', this)">
+                <i class="fa-solid fa-building me-1"></i> Building (<?php echo $building_owners_count; ?>)
+            </button>
+            <button class="filter-btn-pill" onclick="setOwnerFilter('flat', this)">
+                <i class="fa-solid fa-door-open me-1"></i> Flat (<?php echo $flat_owners_count; ?>)
+            </button>
+        </div>
+        <div class="position-relative" style="min-width: 280px;">
+            <i class="fa-solid fa-magnifying-glass position-absolute text-muted" style="top: 50%; left: 0.85rem; transform: translateY(-50%); font-size: 0.85rem;"></i>
+            <input type="text" id="ownerSearchInput" class="form-control ps-5" placeholder="Search by name, ID, phone, email, flat..." onkeyup="filterOwnersTable()">
+        </div>
+    </div>
+</div>
+
 <!-- Owner Registration Modal -->
 <div id="owner-modal" class="custom-modal-backdrop">
-    <div class="modal-content" style="max-width: 760px;">
-        <div class="modal-header">
-            <h2 id="modal-title">Register Owner</h2>
-            <button class="close-modal" type="button" onclick="closeOwnerModal()"><i class="fa-solid fa-times"></i></button>
+    <div class="modal-content mature-card" style="max-width: 760px; border-radius: 0.85rem; border: 1px solid var(--border-color); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
+        <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+            <div style="display: flex; align-items: center; gap: 0.65rem;">
+                <div style="width: 32px; height: 32px; border-radius: 0.4rem; background: rgba(59, 130, 246, 0.1); color: var(--primary-color); display: flex; align-items: center; justify-content: center;">
+                    <i class="fa-solid fa-user-tie"></i>
+                </div>
+                <h2 id="modal-title" style="margin: 0; font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em;">Register Owner</h2>
+            </div>
+            <button class="close-modal" type="button" onclick="closeOwnerModal()" style="background: none; border: none; font-size: 1.1rem; color: var(--text-muted); cursor: pointer;"><i class="fa-solid fa-times"></i></button>
         </div>
         <form method="POST" id="owner_form">
             <input type="hidden" name="owner_id" id="owner_id">
             <input type="hidden" name="add_owner" value="1">
             
-            <div class="form-grid">
+            <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.25rem;">
                 <div class="form-group">
-                    <label>First Name <span style="color: #ef4444;">*</span></label>
-                    <input type="text" name="first_name" id="first_name" required class="form-control" placeholder="e.g. John">
+                    <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem; display: block; text-transform: uppercase; letter-spacing: 0.03em;">First Name <span style="color: #ef4444;">*</span></label>
+                    <input type="text" name="first_name" id="first_name" required class="form-control" placeholder="e.g. John" style="border-radius: 0.5rem;">
                 </div>
                 <div class="form-group">
-                    <label>Last Name <span style="color: #ef4444;">*</span></label>
-                    <input type="text" name="last_name" id="last_name" required class="form-control" placeholder="e.g. Doe">
+                    <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem; display: block; text-transform: uppercase; letter-spacing: 0.03em;">Last Name <span style="color: #ef4444;">*</span></label>
+                    <input type="text" name="last_name" id="last_name" required class="form-control" placeholder="e.g. Doe" style="border-radius: 0.5rem;">
                 </div>
 
                 <!-- Ownership Scope Selector: Building Owner vs Flat Owner -->
                 <div class="form-group" style="grid-column: span 2;">
-                    <label style="font-weight: 600; color: #1e293b; margin-bottom: 0.5rem; display: block;">
+                    <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem; display: block; text-transform: uppercase; letter-spacing: 0.03em;">
                         Ownership Scope <span style="color: #ef4444;">*</span>
                     </label>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                        <label id="card_scope_building" onclick="selectOwnerScope('building')" style="display: flex; align-items: center; gap: 0.85rem; padding: 1rem; border: 2px solid var(--primary-color, #3b82f6); background: #eff6ff; border-radius: 0.75rem; cursor: pointer; transition: all 0.2s;">
+                        <label id="card_scope_building" onclick="selectOwnerScope('building')" style="display: flex; align-items: center; gap: 0.85rem; padding: 1rem; border: 1.5px solid var(--primary-color, #3b82f6); background: rgba(59, 130, 246, 0.06); border-radius: 0.65rem; cursor: pointer; transition: all 0.2s;">
                             <input type="radio" name="owner_type" id="scope_building" value="building" checked style="width: 18px; height: 18px; accent-color: var(--primary-color, #3b82f6);">
                             <div>
-                                <div style="font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 6px;">
+                                <div style="font-weight: 700; color: var(--text-color); display: flex; align-items: center; gap: 6px;">
                                     <i class="fa-solid fa-building" style="color: var(--primary-color, #3b82f6);"></i> Building Owner
                                 </div>
-                                <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">Owns an entire building / property</div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Owns an entire building / structure</div>
                             </div>
                         </label>
                         
-                        <label id="card_scope_flat" onclick="selectOwnerScope('flat')" style="display: flex; align-items: center; gap: 0.85rem; padding: 1rem; border: 2px solid #e2e8f0; background: #ffffff; border-radius: 0.75rem; cursor: pointer; transition: all 0.2s;">
+                        <label id="card_scope_flat" onclick="selectOwnerScope('flat')" style="display: flex; align-items: center; gap: 0.85rem; padding: 1rem; border: 1.5px solid var(--border-color); background: var(--card-bg); border-radius: 0.65rem; cursor: pointer; transition: all 0.2s;">
                             <input type="radio" name="owner_type" id="scope_flat" value="flat" style="width: 18px; height: 18px; accent-color: var(--primary-color, #3b82f6);">
                             <div>
-                                <div style="font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 6px;">
-                                    <i class="fa-solid fa-door-open" style="color: #d97706;"></i> Flat Owner
+                                <div style="font-weight: 700; color: var(--text-color); display: flex; align-items: center; gap: 6px;">
+                                    <i class="fa-solid fa-door-open" style="color: #f59e0b;"></i> Flat Owner
                                 </div>
-                                <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">Owns a specific unit / flat in a building</div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Owns a specific flat in a building</div>
                             </div>
                         </label>
                     </div>
@@ -158,16 +314,16 @@ $ownership_types = $conn->query("SELECT * FROM property_ownership_types ORDER BY
 
                 <!-- Assigned Property Location Hierarchy -->
                 <div class="form-group" style="grid-column: span 2;">
-                    <label id="location_label" style="font-weight: 600; color: #1e293b; margin-bottom: 0.5rem; display: block;">
+                    <label id="location_label" style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem; display: block; text-transform: uppercase; letter-spacing: 0.03em;">
                         Assigned Building Location
                     </label>
-                    <div style="background: #f8fafc; padding: 1.25rem; border-radius: 0.75rem; border: 1px solid #e2e8f0;">
+                    <div style="background: rgba(148, 163, 184, 0.06); padding: 1.25rem; border-radius: 0.65rem; border: 1px solid var(--border-color);">
                         <div id="location_grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; transition: all 0.2s ease;">
                             <div>
-                                <label style="font-size: 0.8rem; color: #64748b; font-weight: 600; display: block; margin-bottom: 0.35rem;">
+                                <label style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 0.35rem;">
                                     1. Select Street <span style="color: #ef4444;">*</span>
                                 </label>
-                                <select id="owner_street_id" name="owner_street_id" class="form-control" onchange="fetchOwnerBuildings(this.value)" required>
+                                <select id="owner_street_id" name="owner_street_id" class="form-control" onchange="fetchOwnerBuildings(this.value)" required style="border-radius: 0.5rem;">
                                     <option value="">-- Choose Street --</option>
                                     <?php 
                                     $estate_id = get_estate_id();
@@ -181,20 +337,20 @@ $ownership_types = $conn->query("SELECT * FROM property_ownership_types ORDER BY
                             </div>
                             
                             <div>
-                                <label style="font-size: 0.8rem; color: #64748b; font-weight: 600; display: block; margin-bottom: 0.35rem;">
+                                <label style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 0.35rem;">
                                     2. Select Property / Building <span style="color: #ef4444;">*</span>
                                 </label>
-                                <select id="owner_building_id" name="owner_building_id" class="form-control" onchange="onBuildingChange(this.value)" required>
+                                <select id="owner_building_id" name="owner_building_id" class="form-control" onchange="onBuildingChange(this.value)" required style="border-radius: 0.5rem;">
                                     <option value="">Select Street First</option>
                                 </select>
                             </div>
                             
                             <!-- Unit / Flat selection: Shown only for Flat Owner -->
                             <div id="col_owner_flat" style="display: none;">
-                                <label style="font-size: 0.8rem; color: #64748b; font-weight: 600; display: block; margin-bottom: 0.35rem;">
-                                    3. Select Flat / Unit <span style="color: #ef4444;">*</span>
+                                <label style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 0.35rem;">
+                                    3. Select Flat <span style="color: #ef4444;">*</span>
                                 </label>
-                                <select id="owner_flat_id" name="owner_flat_id" class="form-control">
+                                <select id="owner_flat_id" name="owner_flat_id" class="form-control" style="border-radius: 0.5rem;" disabled>
                                     <option value="">Select Building First</option>
                                 </select>
                             </div>
@@ -203,8 +359,8 @@ $ownership_types = $conn->query("SELECT * FROM property_ownership_types ORDER BY
                 </div>
 
                 <div class="form-group">
-                    <label>Ownership Category</label>
-                    <select name="ownership_type" id="ownership_type" class="form-control">
+                    <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem; display: block; text-transform: uppercase; letter-spacing: 0.03em;">Ownership Category</label>
+                    <select name="ownership_type" id="ownership_type" class="form-control" style="border-radius: 0.5rem;">
                         <?php 
                         if ($ownership_types && $ownership_types->num_rows > 0):
                             while($ot = $ownership_types->fetch_assoc()): ?>
@@ -214,146 +370,173 @@ $ownership_types = $conn->query("SELECT * FROM property_ownership_types ORDER BY
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Phone Number</label>
-                    <input type="text" name="phone" id="phone" class="form-control" placeholder="e.g. +234 800 000 0000">
+                    <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem; display: block; text-transform: uppercase; letter-spacing: 0.03em;">Phone Number</label>
+                    <input type="text" name="phone" id="phone" class="form-control" placeholder="e.g. +234 800 000 0000" style="border-radius: 0.5rem;">
                 </div>
                 <div class="form-group">
-                    <label>Email Address</label>
-                    <input type="email" name="email" id="email" class="form-control" placeholder="e.g. owner@example.com">
+                    <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem; display: block; text-transform: uppercase; letter-spacing: 0.03em;">Email Address</label>
+                    <input type="email" name="email" id="email" class="form-control" placeholder="e.g. owner@example.com" style="border-radius: 0.5rem;">
                 </div>
                 <div class="form-group">
-                    <label>ID Type (NIN, BVN, RC Number)</label>
-                    <input type="text" name="id_type" id="id_type" class="form-control" placeholder="e.g. NIN-123456789">
+                    <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem; display: block; text-transform: uppercase; letter-spacing: 0.03em;">ID Type (NIN, BVN, RC Number)</label>
+                    <input type="text" name="id_type" id="id_type" class="form-control" placeholder="e.g. NIN-123456789" style="border-radius: 0.5rem;">
                 </div>
                 <div class="form-group" style="grid-column: span 2;">
-                    <label>Registration Date</label>
-                    <input type="date" name="registration_date" id="registration_date" value="<?php echo date('Y-m-d'); ?>" class="form-control">
+                    <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem; display: block; text-transform: uppercase; letter-spacing: 0.03em;">Registration Date</label>
+                    <input type="date" name="registration_date" id="registration_date" value="<?php echo date('Y-m-d'); ?>" class="form-control" style="border-radius: 0.5rem;">
                 </div>
             </div>
-            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; border-top: 1px solid #e2e8f0; padding-top: 1.5rem;">
-                <button type="button" class="btn" style="background: #f1f5f9; color: #475569;" onclick="closeOwnerModal()">Cancel</button>
-                <button type="submit" class="btn btn-primary" id="submit_btn">Save Owner</button>
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
+                <button type="button" class="btn" style="background: rgba(148, 163, 184, 0.15); color: var(--text-muted); font-weight: 600;" onclick="closeOwnerModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="submit_btn" style="font-weight: 600; padding: 0.6rem 1.5rem;">Save Owner</button>
             </div>
         </form>
     </div>
 </div>
 
-<div style="background: white; padding: 1.5rem; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); border: 1px solid #e2e8f0;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+<div class="mature-card mb-4">
+    <div class="mature-card-header">
         <div>
-            <h2 style="font-size: 1.35rem; font-weight: 700; color: #1e293b; margin: 0;">Property Owners Directory</h2>
-            <p style="margin: 0.25rem 0 0; font-size: 0.875rem; color: #64748b;">Manage registered building owners and individual flat owners across the estate.</p>
+            <h2 class="mature-card-title">
+                <i class="fa-solid fa-user-tie text-secondary"></i> Property Owners Directory
+            </h2>
+            <p style="margin: 0.25rem 0 0; font-size: 0.8rem; color: var(--text-muted);">Registered deeds, title designations, and linked property assets.</p>
         </div>
-        <button class="btn btn-primary" onclick="openOwnerModal()" style="display: inline-flex; align-items: center; gap: 0.5rem;">
-            <i class="fa-solid fa-plus"></i> Register Owner
-        </button>
+        <div class="d-flex align-items-center gap-2">
+            <span class="tech-chip"><i class="fa-solid fa-users"></i> Total: <span id="visibleOwnerCount"><?php echo ($owners ? $owners->num_rows : 0); ?></span></span>
+        </div>
     </div>
 
-    <div style="overflow-x: auto;">
-        <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-                <tr style="text-align: left; color: #64748b; background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
-                    <th style="padding: 0.85rem; font-size: 0.85rem; font-weight: 600;">ID</th>
-                    <th style="padding: 0.85rem; font-size: 0.85rem; font-weight: 600;">Owner Name</th>
-                    <th style="padding: 0.85rem; font-size: 0.85rem; font-weight: 600;">Owner Scope</th>
-                    <th style="padding: 0.85rem; font-size: 0.85rem; font-weight: 600;">Assigned Property</th>
-                    <th style="padding: 0.85rem; font-size: 0.85rem; font-weight: 600;">Category</th>
-                    <th style="padding: 0.85rem; font-size: 0.85rem; font-weight: 600;">Contact</th>
-                    <th style="padding: 0.85rem; font-size: 0.85rem; font-weight: 600;">Registered</th>
-                    <th style="padding: 0.85rem; font-size: 0.85rem; font-weight: 600; text-align: right;">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if ($owners && $owners->num_rows > 0): ?>
-                    <?php while($row = $owners->fetch_assoc()): ?>
-                    <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
-                        <td style="padding: 0.85rem; font-family: monospace; color: #64748b; font-weight: 600; font-size: 0.85rem;">
-                            <?php echo htmlspecialchars($row['custom_id']); ?>
-                        </td>
-                        <td style="padding: 0.85rem;">
-                            <div style="font-weight: 600; color: #0f172a; font-size: 0.95rem;">
-                                <?php echo htmlspecialchars($row['first_name'] . ' ' . $row['last_name']); ?>
-                            </div>
-                            <?php if (!empty($row['id_type'])): ?>
-                                <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 2px;">
-                                    <?php echo htmlspecialchars($row['id_type']); ?>
-                                </div>
-                            <?php endif; ?>
-                        </td>
-                        <td style="padding: 0.85rem;">
-                            <?php if (($row['owner_type'] ?? '') === 'flat' || ($row['property_type'] ?? '') === 'flat'): ?>
-                                <span style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a; padding: 3px 9px; border-radius: 9999px; font-size: 0.78rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px;">
-                                    <i class="fa-solid fa-door-open"></i> Flat Owner
-                                </span>
-                            <?php else: ?>
-                                <span style="background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; padding: 3px 9px; border-radius: 9999px; font-size: 0.78rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px;">
-                                    <i class="fa-solid fa-building"></i> Building Owner
-                                </span>
-                            <?php endif; ?>
-                        </td>
-                        <td style="padding: 0.85rem;">
-                            <?php if (($row['owner_type'] ?? '') === 'flat' || ($row['property_type'] ?? '') === 'flat'): ?>
-                                <?php if (!empty($row['flat_number'])): ?>
-                                    <div style="font-weight: 600; color: #1e293b; font-size: 0.9rem;">
-                                        Flat <?php echo htmlspecialchars($row['flat_number']); ?>
-                                        <span style="font-weight: 400; color: #64748b; font-size: 0.8rem;">(Floor <?php echo htmlspecialchars($row['flat_floor'] ?? 'N/A'); ?>)</span>
+    <div class="mature-card-body p-0">
+        <div class="table-responsive">
+            <table class="table dashboard-table align-middle" id="ownersTable">
+                <thead>
+                    <tr>
+                        <th style="width: 120px;">System ID</th>
+                        <th>Owner Profile</th>
+                        <th>Ownership Scope</th>
+                        <th>Assigned Asset</th>
+                        <th>Category</th>
+                        <th>Contact Channels</th>
+                        <th>Registration</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="ownersTableBody">
+                    <?php if ($owners && $owners->num_rows > 0): ?>
+                        <?php while($row = $owners->fetch_assoc()): 
+                            $scope_type = (($row['owner_type'] ?? '') === 'flat' || ($row['property_type'] ?? '') === 'flat') ? 'flat' : 'building';
+                            $initials = strtoupper(substr($row['first_name'], 0, 1) . substr($row['last_name'], 0, 1));
+                            $search_meta = strtolower($row['custom_id'] . ' ' . $row['first_name'] . ' ' . $row['last_name'] . ' ' . $row['email'] . ' ' . $row['phone'] . ' ' . ($row['building_name'] ?? '') . ' ' . ($row['flat_number'] ?? ''));
+                        ?>
+                        <tr class="owner-row" data-scope="<?php echo $scope_type; ?>" data-search="<?php echo htmlspecialchars($search_meta); ?>">
+                            <td>
+                                <span class="id-chip"><?php echo htmlspecialchars($row['custom_id']); ?></span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="avatar-chip">
+                                        <?php echo $initials ?: '<i class="fa-solid fa-user"></i>'; ?>
                                     </div>
-                                    <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">
-                                        <i class="fa-solid fa-building" style="color: #94a3b8; font-size: 0.75rem;"></i> <?php echo htmlspecialchars($row['flat_building_name'] ?? ''); ?>
-                                        &bull; <?php echo htmlspecialchars($row['street_name'] ?? ''); ?>
-                                    </div>
-                                <?php else: ?>
-                                    <span style="color: #94a3b8; font-style: italic; font-size: 0.85rem;">Flat Unassigned</span>
-                                <?php endif; ?>
-                            <?php else: ?>
-                                <?php if (!empty($row['building_name'])): ?>
-                                    <div style="font-weight: 600; color: #1e293b; font-size: 0.9rem;">
-                                        <?php echo htmlspecialchars($row['building_name']); ?>
-                                        <?php if (!empty($row['building_number'])): ?>
-                                            <span style="font-weight: 400; color: #64748b; font-size: 0.8rem;">(#<?php echo htmlspecialchars($row['building_number']); ?>)</span>
+                                    <div>
+                                        <div style="font-weight: 600; color: var(--text-color); font-size: 0.92rem;">
+                                            <?php echo htmlspecialchars($row['first_name'] . ' ' . $row['last_name']); ?>
+                                        </div>
+                                        <?php if (!empty($row['id_type'])): ?>
+                                            <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 2px;">
+                                                <i class="fa-solid fa-id-card" style="font-size: 0.7rem; opacity: 0.7;"></i> <?php echo htmlspecialchars($row['id_type']); ?>
+                                            </div>
                                         <?php endif; ?>
                                     </div>
-                                    <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">
-                                        <i class="fa-solid fa-location-dot" style="color: #94a3b8; font-size: 0.75rem;"></i> <?php echo htmlspecialchars($row['street_name'] ?? ''); ?>
-                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <?php if ($scope_type === 'flat'): ?>
+                                    <span class="mature-badge mature-badge-amber">
+                                        <i class="fa-solid fa-door-open"></i> Flat Owner
+                                    </span>
                                 <?php else: ?>
-                                    <span style="color: #94a3b8; font-style: italic; font-size: 0.85rem;">Building Unassigned</span>
+                                    <span class="mature-badge mature-badge-sky">
+                                        <i class="fa-solid fa-building"></i> Building Owner
+                                    </span>
                                 <?php endif; ?>
-                            <?php endif; ?>
-                        </td>
-                        <td style="padding: 0.85rem;">
-                            <span style="background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 4px; font-size: 0.78rem; font-weight: 500;">
-                                <?php echo htmlspecialchars($row['ownership_type']); ?>
-                            </span>
-                        </td>
-                        <td style="padding: 0.85rem;">
-                            <div style="font-weight: 500; font-size: 0.875rem; color: #1e293b;"><?php echo htmlspecialchars($row['phone'] ?: '-'); ?></div>
-                            <div style="font-size: 0.78rem; color: #94a3b8;"><?php echo htmlspecialchars($row['email'] ?: '-'); ?></div>
-                        </td>
-                        <td style="padding: 0.85rem; font-size: 0.85rem; color: #64748b;">
-                            <?php echo $row['registration_date'] ? date('M d, Y', strtotime($row['registration_date'])) : '-'; ?>
-                        </td>
-                        <td style="padding: 0.85rem; text-align: right;">
-                            <button onclick='editOwner(<?php echo json_encode($row); ?>)' class="btn" style="padding: 0.35rem 0.65rem; background: #eff6ff; color: var(--primary-color, #2563eb); border: 1px solid #dbeafe; border-radius: 0.5rem; font-size: 0.85rem; cursor: pointer;" title="Edit Owner">
-                                <i class="fa-solid fa-pen-to-square"></i> Edit
-                            </button>
-                        </td>
-                    </tr>
-                    <?php endwhile; ?>
-                <?php else: ?>
-                    <tr>
-                        <td colspan="8" style="text-align: center; padding: 3.5rem 1rem; color: #94a3b8;">
-                            <?php if (isset($conn->error) && $conn->error): ?>
-                                <span style="color: #ef4444;">Database Error: <?php echo $conn->error; ?></span>
-                            <?php else: ?>
-                                <i class="fa-solid fa-user-tie" style="font-size: 2.5rem; color: #cbd5e1; display: block; margin-bottom: 0.75rem;"></i>
+                            </td>
+                            <td>
+                                <?php if ($scope_type === 'flat'): ?>
+                                    <?php if (!empty($row['flat_number'])): ?>
+                                        <div style="font-weight: 600; color: var(--text-color); font-size: 0.88rem;">
+                                            Flat <?php echo htmlspecialchars($row['flat_number']); ?>
+                                            <span style="font-weight: 400; color: var(--text-muted); font-size: 0.78rem;">(Fl. <?php echo htmlspecialchars($row['flat_floor'] ?? 'N/A'); ?>)</span>
+                                        </div>
+                                        <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 2px;">
+                                            <i class="fa-solid fa-building" style="font-size: 0.7rem; opacity: 0.7;"></i> <?php echo htmlspecialchars($row['flat_building_name'] ?? ''); ?>
+                                            &bull; <?php echo htmlspecialchars($row['street_name'] ?? ''); ?>
+                                        </div>
+                                    <?php else: ?>
+                                        <span style="color: var(--text-muted); font-style: italic; font-size: 0.82rem;">Flat Unassigned</span>
+                                    <?php endif; ?>
+                                <?php else: ?>
+                                    <?php if (!empty($row['building_name'])): ?>
+                                        <div style="font-weight: 600; color: var(--text-color); font-size: 0.88rem;">
+                                            <?php echo htmlspecialchars($row['building_name']); ?>
+                                            <?php if (!empty($row['building_number'])): ?>
+                                                <span style="font-weight: 400; color: var(--text-muted); font-size: 0.78rem;">(#<?php echo htmlspecialchars($row['building_number']); ?>)</span>
+                                            <?php endif; ?>
+                                        </div>
+                                        <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 2px;">
+                                            <i class="fa-solid fa-location-dot" style="font-size: 0.7rem; opacity: 0.7;"></i> <?php echo htmlspecialchars($row['street_name'] ?? ''); ?>
+                                        </div>
+                                    <?php else: ?>
+                                        <span style="color: var(--text-muted); font-style: italic; font-size: 0.82rem;">Building Unassigned</span>
+                                    <?php endif; ?>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <span class="mature-badge mature-badge-slate">
+                                    <?php echo htmlspecialchars($row['ownership_type']); ?>
+                                </span>
+                            </td>
+                            <td>
+                                <div style="font-weight: 500; font-size: 0.85rem; color: var(--text-color); font-family: monospace;">
+                                    <?php if (!empty($row['phone'])): ?>
+                                        <a href="tel:<?php echo htmlspecialchars($row['phone']); ?>" style="color: inherit; text-decoration: none;">
+                                            <i class="fa-solid fa-phone me-1 text-muted" style="font-size: 0.75rem;"></i><?php echo htmlspecialchars($row['phone']); ?>
+                                        </a>
+                                    <?php else: ?>
+                                        <span class="text-muted">-</span>
+                                    <?php endif; ?>
+                                </div>
+                                <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 2px;">
+                                    <?php if (!empty($row['email'])): ?>
+                                        <a href="mailto:<?php echo htmlspecialchars($row['email']); ?>" style="color: var(--text-muted); text-decoration: none;">
+                                            <i class="fa-solid fa-envelope me-1" style="font-size: 0.75rem;"></i><?php echo htmlspecialchars($row['email']); ?>
+                                        </a>
+                                    <?php else: ?>
+                                        <span>-</span>
+                                    <?php endif; ?>
+                                </div>
+                            </td>
+                            <td style="font-size: 0.82rem; color: var(--text-muted);">
+                                <?php echo $row['registration_date'] ? date('M d, Y', strtotime($row['registration_date'])) : '-'; ?>
+                            </td>
+                            <td style="text-align: right;">
+                                <button onclick='editOwner(<?php echo json_encode($row); ?>)' class="btn btn-sm btn-outline-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.8rem; font-weight: 600;" title="Edit Owner">
+                                    <i class="fa-solid fa-pen-to-square me-1"></i> Edit
+                                </button>
+                            </td>
+                        </tr>
+                        <?php endwhile; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="8" style="text-align: center; padding: 3.5rem 1rem; color: var(--text-muted);">
+                                <i class="fa-solid fa-user-tie" style="font-size: 2.2rem; color: var(--text-muted); opacity: 0.4; display: block; margin-bottom: 0.75rem;"></i>
                                 No property owners registered yet. Click <strong>Register Owner</strong> above to get started.
-                            <?php endif; ?>
-                        </td>
-                    </tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
+                            </td>
+                        </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
@@ -383,6 +566,7 @@ function selectOwnerScope(scope) {
         locationGrid.style.gridTemplateColumns = '1fr 1fr';
         colFlat.style.display = 'none';
         flatSelect.required = false;
+        flatSelect.disabled = true;
         flatSelect.value = '';
     } else {
         radioFlat.checked = true;
@@ -395,6 +579,7 @@ function selectOwnerScope(scope) {
         locationGrid.style.gridTemplateColumns = '1fr 1fr 1fr';
         colFlat.style.display = 'block';
         flatSelect.required = true;
+        flatSelect.disabled = false;
 
         // If a building is already selected, fetch flats for it
         if (buildingSelect.value) {
@@ -524,6 +709,70 @@ function editOwner(data) {
     document.getElementById('ownership_type').value = data.ownership_type;
     document.getElementById('registration_date').value = data.registration_date || '<?php echo date('Y-m-d'); ?>';
     document.getElementById('submit_btn').innerText = 'Update Owner';
+}
+
+let activeOwnerScope = 'all';
+
+function setOwnerFilter(scope, btn) {
+    activeOwnerScope = scope;
+    document.querySelectorAll('.filter-btn-pill').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    filterOwnersTable();
+}
+
+function filterOwnersTable() {
+    const term = (document.getElementById('ownerSearchInput')?.value || '').toLowerCase().trim();
+    const rows = document.querySelectorAll('.owner-row');
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+        const scope = row.getAttribute('data-scope');
+        const searchMeta = row.getAttribute('data-search') || '';
+        
+        const matchesScope = (activeOwnerScope === 'all') || (scope === activeOwnerScope);
+        const matchesTerm = !term || searchMeta.includes(term);
+
+        if (matchesScope && matchesTerm) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+
+    const countElem = document.getElementById('visibleOwnerCount');
+    if (countElem) countElem.innerText = visibleCount;
+}
+
+function exportOwnersCSV() {
+    let csv = "System ID,Owner Name,ID Type,Scope,Asset,Category,Phone,Email,Registration Date\n";
+    document.querySelectorAll('.owner-row').forEach(row => {
+        if (row.style.display !== 'none') {
+            const cols = row.querySelectorAll('td');
+            if (cols.length >= 7) {
+                const sysId = cols[0].innerText.trim();
+                const name = cols[1].querySelector('div > div')?.innerText.trim() || '';
+                const idType = cols[1].querySelector('div > div:nth-child(2)')?.innerText.trim() || '';
+                const scope = cols[2].innerText.trim();
+                const asset = cols[3].innerText.replace(/\s+/g, ' ').trim();
+                const category = cols[4].innerText.trim();
+                const phone = cols[5].querySelector('div:first-child')?.innerText.trim() || '';
+                const email = cols[5].querySelector('div:last-child')?.innerText.trim() || '';
+                const regDate = cols[6].innerText.trim();
+
+                csv += `"${sysId}","${name}","${idType}","${scope}","${asset}","${category}","${phone}","${email}","${regDate}"\n`;
+            }
+        }
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `Estate_Owners_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
 </script>
 

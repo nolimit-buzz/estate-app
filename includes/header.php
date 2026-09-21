@@ -3,6 +3,10 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+if (!isset($_SESSION['user_id'])) {
+    header("Location: ../login?error=unauthenticated");
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -21,13 +25,22 @@ if (session_status() === PHP_SESSION_NONE) {
     
     <!-- Custom CSS -->
     <link rel="stylesheet" href="../css/style.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="../css/estate_notifications.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="../css/estate_glassmorphism.css?v=<?php echo time(); ?>">
     
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Global In-House Notification & Modal Alert Engine -->
+    <script src="../js/estate_notifications.js?v=<?php echo time(); ?>"></script>
     <!-- Global Theme Switcher Script -->
     <script src="../js/theme.js"></script>
     <script src="../js/searchable_select.js?v=<?php echo time(); ?>" defer></script>
+    <!-- Universal Anti-Duplicate & Single-Click Submission Engine -->
+    <script src="../js/anti_duplicate.js?v=<?php echo time(); ?>"></script>
+    <!-- Real-time Emergency & Panic Alarm Engine -->
+    <script>window.ESTATE_IS_STAFF_OR_ADMIN = true; window.ESTATE_EMERGENCY_URL = '../admin/emergency';</script>
+    <script src="../js/emergency_alarm.js?v=<?php echo time(); ?>"></script>
 
     <?php
     // Fetch Theme Color

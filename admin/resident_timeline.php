@@ -1,6 +1,9 @@
 <?php
 // admin/resident_timeline.php
 require_once '../config.php';
+require_once '../includes/auth_guard.php';
+requireAdminAccess();
+
 include '../includes/header.php';
 include '../includes/sidebar.php';
 
@@ -22,45 +25,64 @@ if (!$res) {
 }
 ?>
 
-<div class="page-header">
-    <h1><i class="fa-solid fa-user-clock"></i> Resident Timeline: <?php echo htmlspecialchars($res['name']); ?></h1>
-    <a href="residents" class="btn" style="background: #f1f5f9; color: #475569;"><i class="fa-solid fa-arrow-left"></i> Back</a>
+<div class="page-header-futuristic mb-4">
+    <div>
+        <div class="header-breadcrumbs">
+            <span>Community</span>
+            <i class="fa-solid fa-chevron-right separator"></i>
+            <a href="residents" style="color: var(--text-muted); text-decoration: none;">Residents</a>
+            <i class="fa-solid fa-chevron-right separator"></i>
+            <span class="active">Lifecycle Dossier</span>
+        </div>
+        <h1 class="page-title"><i class="fa-solid fa-user-clock me-2" style="color: var(--primary-color);"></i> Resident Dossier: <?php echo htmlspecialchars($res['name']); ?></h1>
+        <p class="page-subtitle">Chronological residency audit, relocation history, and identity records.</p>
+    </div>
+    <div class="header-actions">
+        <a href="residents" class="btn btn-outline" style="display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 600; padding: 0.6rem 1.25rem; border-radius: 0.5rem; border: 1px solid var(--border-color); color: var(--text-color); background: var(--card-bg);">
+            <i class="fa-solid fa-arrow-left"></i> Back to Directory
+        </a>
+    </div>
 </div>
 
-<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem;">
+<div style="display: grid; grid-template-columns: 320px 1fr; gap: 1.75rem; align-items: start;">
     <!-- LEFT: Profile Summary -->
     <div>
-        <div class="glass" style="padding: 1.5rem; border-radius: 0.5rem; text-align: center;">
+        <div class="mature-card" style="padding: 1.75rem; text-align: center;">
             <?php if($res['image_path']): ?>
-                <img src="<?php echo htmlspecialchars($res['image_path']); ?>" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; margin-bottom: 1rem; border: 4px solid #fff; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
+                <img src="<?php echo htmlspecialchars($res['image_path']); ?>" style="width: 110px; height: 110px; border-radius: 50%; object-fit: cover; margin: 0 auto 1rem; border: 3px solid var(--border-color); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
             <?php else: ?>
-                <div style="width: 120px; height: 120px; border-radius: 50%; background: #e2e8f0; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 3rem; color: #94a3b8;">
+                <div style="width: 110px; height: 110px; border-radius: 50%; background: rgba(148, 163, 184, 0.15); margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 2.8rem; color: var(--text-muted); border: 3px solid var(--border-color);">
                     <i class="fa-solid fa-user"></i>
                 </div>
             <?php endif; ?>
-            <h3><?php echo htmlspecialchars($res['name']); ?></h3>
-            <p style="color: #64748b; font-size: 0.9rem; margin-top: -0.5rem;"><?php echo $res['custom_id']; ?></p>
+            <h3 style="font-size: 1.2rem; font-weight: 700; color: var(--text-color); margin: 0 0 0.25rem;"><?php echo htmlspecialchars($res['name']); ?></h3>
+            <span class="id-chip"><?php echo htmlspecialchars($res['custom_id']); ?></span>
             
-            <div style="text-align: left; margin-top: 1.5rem; font-size: 0.9rem; line-height: 1.8;">
-                <p><i class="fa-solid fa-envelope" style="width: 20px; color: #94a3b8;"></i> <?php echo htmlspecialchars($res['email']); ?></p>
-                <p><i class="fa-solid fa-phone" style="width: 20px; color: #94a3b8;"></i> <?php echo htmlspecialchars($res['phone']); ?></p>
-                <p><i class="fa-solid fa-circle-check" style="width: 20px; color: #94a3b8;"></i> Status: <strong><?php echo ucfirst($res['status']); ?></strong></p>
-                <p><i class="fa-solid fa-user-tag" style="width: 20px; color: #94a3b8;"></i> Current Role: <?php echo ucfirst($res['type']); ?></p>
+            <div style="text-align: left; margin-top: 1.5rem; font-size: 0.86rem; line-height: 2; border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
+                <p style="margin: 0; display: flex; align-items: center; gap: 0.6rem; color: var(--text-color);"><i class="fa-solid fa-envelope" style="width: 18px; color: var(--text-muted);"></i> <?php echo htmlspecialchars($res['email']); ?></p>
+                <p style="margin: 0; display: flex; align-items: center; gap: 0.6rem; color: var(--text-color);"><i class="fa-solid fa-phone" style="width: 18px; color: var(--text-muted);"></i> <?php echo htmlspecialchars($res['phone']); ?></p>
+                <p style="margin: 0; display: flex; align-items: center; gap: 0.6rem; color: var(--text-color);"><i class="fa-solid fa-circle-check" style="width: 18px; color: var(--text-muted);"></i> Status: <span class="<?php echo ($res['status'] ?? 'Active') == 'Active' ? 'mature-badge-emerald' : 'mature-badge-slate'; ?>" style="margin-left: 4px;"><?php echo ucfirst($res['status']); ?></span></p>
+                <p style="margin: 0; display: flex; align-items: center; gap: 0.6rem; color: var(--text-color);"><i class="fa-solid fa-user-tag" style="width: 18px; color: var(--text-muted);"></i> Role: <span class="mature-badge-sky" style="margin-left: 4px;"><?php echo ucfirst($res['type']); ?></span></p>
                 <?php if ($res['registration_date']): ?>
-                    <p><i class="fa-solid fa-calendar-day" style="width: 20px; color: #94a3b8;"></i> Registered: <?php echo date('M d, Y', strtotime($res['registration_date'])); ?></p>
+                    <p style="margin: 0; display: flex; align-items: center; gap: 0.6rem; color: var(--text-color);"><i class="fa-solid fa-calendar-day" style="width: 18px; color: var(--text-muted);"></i> Registered: <?php echo date('M d, Y', strtotime($res['registration_date'])); ?></p>
                 <?php endif; ?>
             </div>
             
-            <a href="generate_id?id=<?php echo $res['id']; ?>&type=resident" target="_blank" class="btn btn-primary" style="width: 100%; margin-top: 1.5rem;"><i class="fa-solid fa-id-card"></i> View ID Card</a>
+            <a href="generate_id?id=<?php echo $res['id']; ?>&type=resident" target="_blank" class="btn btn-primary" style="width: 100%; margin-top: 1.5rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; font-weight: 600; padding: 0.65rem 1rem;"><i class="fa-solid fa-id-card"></i> View Digital ID</a>
         </div>
     </div>
     
     <!-- RIGHT: Movement History -->
     <div>
-        <div class="glass" style="padding: 1.5rem; border-radius: 0.5rem;">
-            <h4 style="margin-top:0; margin-bottom: 1.5rem;">Movement History</h4>
+        <div class="mature-card" style="padding: 1.75rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <div>
+                    <h4 style="margin: 0; font-size: 1.15rem; font-weight: 700; color: var(--text-color); letter-spacing: -0.01em;">Relocation & Occupancy Timeline</h4>
+                    <p style="margin: 0.2rem 0 0; font-size: 0.8rem; color: var(--text-muted);">Sequential log of flat assignments, transfers, and exit events.</p>
+                </div>
+            </div>
             
-            <div class="timeline" style="position: relative; padding-left: 2rem; border-left: 2px solid #e2e8f0; margin-left: 1rem;">
+            <div class="timeline" style="position: relative; padding-left: 2rem; border-left: 2px solid var(--border-color); margin-left: 0.75rem;">
                 <?php 
                 $hist = $conn->query("SELECT rh.*, f.number as flat_num, b.name as b_name, s.name as s_name 
                                     FROM resident_history rh 
@@ -71,30 +93,35 @@ if (!$res) {
                                     ORDER BY rh.timestamp DESC");
                 
                 if($hist->num_rows == 0): ?>
-                    <p style="color: #94a3b8; text-align: center; padding: 2rem;">No movement records found.</p>
+                    <p style="color: var(--text-muted); text-align: center; padding: 3rem 1rem;">
+                        <i class="fa-solid fa-clock-rotate-left" style="font-size: 2rem; opacity: 0.4; display: block; margin-bottom: 0.5rem;"></i>
+                        No movement records found for this resident.
+                    </p>
                 <?php else: 
                     while($h = $hist->fetch_assoc()): ?>
                     <div class="timeline-item" style="position: relative; margin-bottom: 2rem;">
-                        <span style="position: absolute; left: -2.75rem; top: 0.25rem; width: 1.5rem; height: 1.5rem; background: #fff; border: 2px solid <?php echo $h['action_type'] == 'Moved In' ? '#22c55e' : '#ef4444'; ?>; border-radius: 50%; z-index: 1;"></span>
-                        <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 0.25rem;">
+                        <span style="position: absolute; left: -2.7rem; top: 0.2rem; width: 1.4rem; height: 1.4rem; background: var(--card-bg); border: 2.5px solid <?php echo $h['action_type'] == 'Moved In' ? '#10b981' : '#ef4444'; ?>; border-radius: 50%; z-index: 1;"></span>
+                        <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.25rem;">
                             <?php echo date('M d, Y', strtotime($h['start_date'])); ?> 
-                            <span style="margin: 0 10px; opacity: 0.3;">|</span> 
+                            <span style="margin: 0 8px; opacity: 0.4;">&bull;</span> 
                             <?php echo date('h:i A', strtotime($h['timestamp'])); ?>
                         </div>
-                        <div style="font-weight: 600; font-size: 1.1rem; color: <?php echo $h['action_type'] == 'Moved In' ? '#166534' : '#991b1b'; ?>;">
-                            <?php echo $h['action_type']; ?>
+                        <div>
+                            <span class="<?php echo $h['action_type'] == 'Moved In' ? 'mature-badge-emerald' : 'mature-badge-crimson'; ?>" style="font-size: 0.8rem; font-weight: 700;">
+                                <?php echo htmlspecialchars($h['action_type']); ?>
+                            </span>
                         </div>
-                        <div style="margin-top: 0.25rem; font-size: 0.95rem;">
+                        <div style="margin-top: 0.5rem; font-size: 0.92rem; color: var(--text-color); font-weight: 500;">
                             <?php if($h['flat_num']): ?>
-                                <i class="fa-solid fa-location-dot" style="color: #94a3b8; margin-right: 5px;"></i>
-                                <?php echo "Flat " . $h['flat_num'] . ", " . $h['b_name'] . " Building, " . $h['s_name']; ?>
+                                <i class="fa-solid fa-location-dot" style="color: var(--text-muted); margin-right: 5px;"></i>
+                                <?php echo "Flat " . htmlspecialchars($h['flat_num']) . ", " . htmlspecialchars($h['b_name']) . " Building, " . htmlspecialchars($h['s_name']); ?>
                             <?php else: ?>
-                                <i class="fa-solid fa-circle-question" style="color: #94a3b8; margin-right: 5px;"></i> Property information unavailable
+                                <i class="fa-solid fa-circle-question" style="color: var(--text-muted); margin-right: 5px;"></i> Property information unavailable
                             <?php endif; ?>
                         </div>
                         <?php if($h['reason_for_exit']): ?>
-                            <div style="margin-top: 0.5rem; padding: 0.75rem; background: #f8fafc; border-radius: 0.375rem; font-size: 0.85rem; color: #475569; border-left: 3px solid #cbd5e1;">
-                                <strong>Notes:</strong> <?php echo htmlspecialchars($h['reason_for_exit']); ?>
+                            <div style="margin-top: 0.6rem; padding: 0.75rem 1rem; background: rgba(148, 163, 184, 0.08); border-radius: 0.5rem; font-size: 0.84rem; color: var(--text-muted); border-left: 3px solid var(--border-color);">
+                                <strong style="color: var(--text-color);">Notes:</strong> <?php echo htmlspecialchars($h['reason_for_exit']); ?>
                             </div>
                         <?php endif; ?>
                     </div>

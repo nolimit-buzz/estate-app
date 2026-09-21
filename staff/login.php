@@ -27,6 +27,7 @@ if ($sys_res) {
     }
 }
 $estate_name = $sys['estate_name'] ?? 'Estate Operations';
+$estate_logo = $sys['estate_logo'] ?? '';
 
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -47,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Staff & Security Sign In - <?php echo htmlspecialchars($estate_name); ?></title>
+    <title>Staff Sign In - <?php echo htmlspecialchars($estate_name); ?></title>
     
     <!-- Google Fonts: Outfit -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -70,12 +71,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </a>
             
             <div class="auth-header">
-                <div class="auth-badge badge-staff">
-                    <i class="fa-solid fa-shield-halved"></i> Staff & Security Console
+                <div class="d-flex justify-content-center mb-3">
+                    <?php if ($estate_logo): ?>
+                        <img src="../<?php echo htmlspecialchars($estate_logo); ?>" alt="Logo" style="height: 48px; border-radius: 8px;">
+                    <?php else: ?>
+                        <div style="width: 52px; height: 52px; border-radius: 12px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #10b981; margin: 0 auto;">
+                            <i class="fa-solid fa-user-shield"></i>
+                        </div>
+                    <?php endif; ?>
                 </div>
                 
-                <h2 class="auth-title">Staff Sign In</h2>
-                <p class="auth-subtitle">Gate security pass verification and maintenance operations</p>
+                <h2 class="auth-title">Welcome Back</h2>
+                <p class="auth-subtitle">Select your portal and sign in to <?php echo htmlspecialchars($estate_name); ?></p>
+            </div>
+
+            <!-- Role Selector Pills -->
+            <div class="role-pills">
+                <a href="../login?role=admin" class="role-pill pill-admin">
+                    <i class="fa-solid fa-shield-halved me-1"></i> Central
+                </a>
+                <a href="../zone/login" class="role-pill pill-zone">
+                    <i class="fa-solid fa-layer-group me-1"></i> Zone
+                </a>
+                <a href="../resident/login" class="role-pill pill-resident">
+                    <i class="fa-solid fa-house-user me-1"></i> Resident
+                </a>
+                <a href="login" class="role-pill pill-staff active">
+                    <i class="fa-solid fa-user-shield me-1"></i> Staff
+                </a>
             </div>
 
             <?php if ($error): ?>
@@ -103,17 +126,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <button type="submit" class="auth-btn auth-btn-staff">
-                    <span>Access Security Console</span>
+                    <span>Sign In to Staff Console</span>
                     <i class="fa-solid fa-arrow-right"></i>
                 </button>
             </form>
 
-            <div class="auth-switcher">
-                Estate Resident? <a href="../resident/login" style="color: #38bdf8;">Resident Portal</a><br>
-                Estate Administrator? <a href="../login" style="color: #f59e0b;">Admin Login</a>
-            </div>
-
-            <div style="margin-top: 1.25rem; text-align: center; font-size: 0.8rem; color: #64748b;">
+            <div style="margin-top: 1.5rem; text-align: center; font-size: 0.8rem; color: #64748b;">
                 Demo Staff: paul@estate.com / admin123
             </div>
         </div>

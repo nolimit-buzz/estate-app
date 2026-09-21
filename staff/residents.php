@@ -58,18 +58,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register_resident']))
         $reg_date = $conn->real_escape_string($_POST['registration_date']);
         $status = 'active';
 
-        // Check if user already exists
-        $user_chk = $conn->query("SELECT id FROM users WHERE email = '$email' AND estate_id = $estate_id");
-        if ($user_chk && $user_chk->num_rows > 0) {
-            $user_id = $user_chk->fetch_assoc()['id'];
-            $conn->query("UPDATE users SET first_name='$first_name', last_name='$last_name', name='$name', phone='$phone' WHERE id=$user_id");
+        // DUPLICATE BLOCKER: Check if email or phone is already registered in estate
+        if (!empty($email) && function_exists('isEmailTakenInEstate') && ($taken = isEmailTakenInEstate($conn, $email, $estate_id))) {
+            $message = "Duplicate Blocker: Email '$email' is already registered in this estate to {$taken['name']}. Duplicate emails are prohibited.";
+            $message_type = "danger";
+        } elseif (!empty($phone) && function_exists('isPhoneTakenInEstate') && ($taken = isPhoneTakenInEstate($conn, $phone, $estate_id))) {
+            $message = "Duplicate Blocker: Phone number '$phone' is already registered in this estate to {$taken['name']}. Duplicate phone numbers are prohibited.";
+            $message_type = "danger";
         } else {
             $default_pass = !empty($first_name) ? trim($first_name) : 'welcome123';
             $password = password_hash($default_pass, PASSWORD_DEFAULT);
             $conn->query("INSERT INTO users (estate_id, first_name, last_name, name, email, phone, password, role) 
                           VALUES ($estate_id, '$first_name', '$last_name', '$name', '$email', '$phone', '$password', 'resident')");
             $user_id = $conn->insert_id;
-        }
 
         $custom_id = generateCustomID($conn, 'residents', 'RES');
         $image = handleResidentUpload($_FILES['image']);
@@ -87,6 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register_resident']))
             $message_type = "danger";
         }
     }
+}
 }
 
 // Fetch Residents Directory

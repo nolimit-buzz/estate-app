@@ -2,6 +2,8 @@
 // admin/staff.php
 require_once '../config.php';
 require_once '../includes/auth_guard.php';
+require_once '../includes/Mailer.php';
+require_once '../includes/emergency_roster_init.php';
 requireAdminAccess();
 
 $estate_id = get_estate_id();
@@ -61,40 +63,51 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $staff_id = intval($_POST['staff_id']);
             $get_uid = $conn->query("SELECT user_id FROM estate_staff WHERE id = $staff_id AND estate_id = $estate_id");
             if ($get_uid && $get_uid->num_rows > 0) {
-                $uid = $get_uid->fetch_assoc()['user_id'];
+                $uid = intval($get_uid->fetch_assoc()['user_id']);
                 
-                // Update users table
-                $conn->query("UPDATE users SET first_name='$first_name', last_name='$last_name', name='$name', email='$email', phone='$phone', role='$role_slug' WHERE id=$uid");
-                
-                // Update estate_staff table
-                $updates = "role_id=$role_id, role='$role_title', registration_date='$reg_date', status='$status', phone='$phone'";
-                $image = handleUpload($_FILES['image']);
-                if ($image) $updates .= ", image_path='$image'";
-                
-                if ($conn->query("UPDATE estate_staff SET $updates WHERE id=$staff_id AND estate_id = $estate_id")) {
-                    $message = "Staff member updated successfully!";
-                    logAudit($conn, "Staff Updated", "Staff Management", "Updated staff #$staff_id ($name) as $role_title");
-                } else {
-                    $message = "Error updating staff: " . $conn->error;
+                // Duplicate validation
+                if (!empty($email) && function_exists('isEmailTakenInEstate') && ($taken = isEmailTakenInEstate($conn, $email, $estate_id, $uid))) {
+                    $message = "Duplicate Blocker: Email '$email' is already registered to {$taken['name']}.";
                     $message_type = "danger";
+                } elseif (!empty($phone) && function_exists('isPhoneTakenInEstate') && ($taken = isPhoneTakenInEstate($conn, $phone, $estate_id, $uid))) {
+                    $message = "Duplicate Blocker: Phone number '$phone' is already registered to {$taken['name']}.";
+                    $message_type = "danger";
+                } else {
+                    // Update users table
+                    $conn->query("UPDATE users SET first_name='$first_name', last_name='$last_name', name='$name', email='$email', phone='$phone', role='$role_slug' WHERE id=$uid");
+                    
+                    // Update estate_staff table
+                    $updates = "role_id=$role_id, role='$role_title', registration_date='$reg_date', status='$status', phone='$phone'";
+                    $image = handleUpload($_FILES['image']);
+                    if ($image) $updates .= ", image_path='$image'";
+                    
+                    if ($conn->query("UPDATE estate_staff SET $updates WHERE id=$staff_id AND estate_id = $estate_id")) {
+                        $message = "Staff member updated successfully!";
+                        logAudit($conn, "Staff Updated", "Staff Management", "Updated staff #$staff_id ($name) as $role_title");
+                    } else {
+                        $message = "Error updating staff: " . $conn->error;
+                        $message_type = "danger";
+                    }
                 }
             }
         } else {
             // Register New Staff
-            $check = $conn->query("SELECT id FROM users WHERE email = '$email'");
-            if ($check && $check->num_rows > 0) {
-                $user_id = $check->fetch_assoc()['id'];
-                $conn->query("UPDATE users SET role='$role_slug', first_name='$first_name', last_name='$last_name', name='$name', phone='$phone' WHERE id=$user_id");
+            // DUPLICATE BLOCKER: Check if email or phone is already registered in estate
+            if (!empty($email) && function_exists('isEmailTakenInEstate') && ($taken = isEmailTakenInEstate($conn, $email, $estate_id))) {
+                $message = "Duplicate Blocker: Email '$email' is already registered in this estate to {$taken['name']}. Duplicate emails are prohibited.";
+                $message_type = "danger";
+            } elseif (!empty($phone) && function_exists('isPhoneTakenInEstate') && ($taken = isPhoneTakenInEstate($conn, $phone, $estate_id))) {
+                $message = "Duplicate Blocker: Phone number '$phone' is already registered in this estate to {$taken['name']}. Duplicate phone numbers are prohibited.";
+                $message_type = "danger";
             } else {
                 $default_pass = !empty($first_name) ? trim($first_name) : 'staff123';
                 $password = password_hash($default_pass, PASSWORD_DEFAULT);
                 $conn->query("INSERT INTO users (estate_id, first_name, last_name, name, email, phone, password, role) VALUES ($estate_id, '$first_name', '$last_name', '$name', '$email', '$phone', '$password', '$role_slug')");
                 $user_id = $conn->insert_id;
-            }
+                
+                // Dispatch Welcome Email with Credentials to New Staff
+                EstateMailer::sendWelcomeCredentialsEmail($conn, $user_id, $default_pass);
 
-            // Check if already active staff
-            $checkStaff = $conn->query("SELECT id FROM estate_staff WHERE user_id = $user_id AND estate_id = $estate_id");
-            if ($checkStaff->num_rows == 0) {
                 $custom_id = generateCustomID($conn, 'estate_staff', 'EST');
                 $image = handleUpload($_FILES['image']);
                 
@@ -107,9 +120,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $message = "Error creating staff: " . $conn->error;
                     $message_type = "danger";
                 }
-            } else {
-                $message = "This user is already registered as an estate staff member.";
-                $message_type = "warning";
             }
         }
         $active_tab = 'directory';
@@ -237,177 +247,286 @@ while ($p = $perms_res->fetch_assoc()) {
     $all_perms[$p['module']][] = $p;
 }
 
+// Executive Workforce KPI Metrics
+$staff_kpi_res = $conn->query("
+    SELECT 
+        COUNT(*) as total_staff,
+        SUM(CASE WHEN s.status = 'active' THEN 1 ELSE 0 END) as active_staff,
+        SUM(CASE WHEN LOWER(COALESCE(r.slug, r.name, '')) LIKE '%security%' OR LOWER(COALESCE(r.slug, r.name, '')) LIKE '%gate%' THEN 1 ELSE 0 END) as security_staff,
+        (SELECT COUNT(*) FROM roles WHERE estate_id = $estate_id) as total_roles
+    FROM estate_staff s
+    LEFT JOIN roles r ON s.role_id = r.id
+    WHERE s.estate_id = $estate_id
+");
+$staff_kpi = $staff_kpi_res ? $staff_kpi_res->fetch_assoc() : [];
+$total_staff_count = intval($staff_kpi['total_staff'] ?? 0);
+$active_staff_count = intval($staff_kpi['active_staff'] ?? 0);
+$security_staff_count = intval($staff_kpi['security_staff'] ?? 0);
+$total_roles_count = intval($staff_kpi['total_roles'] ?? 0);
+
 include '../includes/header.php';
 include '../includes/sidebar.php';
 ?>
 
-<style>
-    /* Modern Tab Styles */
-    .tab-nav {
-        display: flex;
-        gap: 0.5rem;
-        border-bottom: 2px solid #e2e8f0;
-        margin-bottom: 2rem;
-    }
-    .tab-btn {
-        padding: 0.75rem 1.5rem;
-        border: none;
-        background: transparent;
-        font-weight: 600;
-        color: #64748b;
-        cursor: pointer;
-        border-bottom: 3px solid transparent;
-        margin-bottom: -2px;
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        text-decoration: none;
-    }
-    .tab-btn:hover {
-        color: var(--primary-color);
-    }
-    .tab-btn.active {
-        color: var(--primary-color);
-        border-bottom-color: var(--primary-color);
-        background: #f8fafc;
-        border-top-left-radius: 0.5rem;
-        border-top-right-radius: 0.5rem;
-    }
-    .badge-count {
-        background: #e2e8f0;
-        color: #334155;
-        padding: 2px 8px;
-        border-radius: 9999px;
-        font-size: 0.75rem;
-    }
-    .tab-btn.active .badge-count {
-        background: var(--primary-color);
-        color: #ffffff;
-    }
-    .role-matrix-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 0.75rem;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-    }
-</style>
-
-<div class="page-header d-flex justify-content-between align-items-center mb-4">
+<div class="page-header-futuristic mb-4">
     <div>
-        <h1 class="h3 font-bold text-slate-800 m-0">Estate Staff & Permissions</h1>
-        <p class="text-secondary small mb-0">Manage estate team members, define custom staff roles, and configure granular permissions.</p>
+        <div class="header-breadcrumbs">
+            <span>Administration</span>
+            <i class="fa-solid fa-chevron-right separator"></i>
+            <span>Workforce</span>
+            <i class="fa-solid fa-chevron-right separator"></i>
+            <span class="active">Staff & Roles</span>
+        </div>
+        <h1 class="page-title">Estate Staff & Permissions</h1>
+        <p class="page-subtitle">Manage estate team members, define custom staff roles, and configure granular permissions.</p>
     </div>
-    <div class="d-flex gap-2">
+    <div class="header-actions">
+        <button class="btn btn-sm btn-outline-secondary" onclick="exportStaffCSV()">
+            <i class="fa-solid fa-file-export me-1"></i> Export Roster
+        </button>
         <?php if ($active_tab == 'roles'): ?>
-            <button class="btn btn-primary" onclick="openNewRoleModal()"><i class="fa-solid fa-plus me-1"></i> Create Custom Role</button>
+            <button class="btn btn-sm text-white" style="background: #0f172a;" onclick="openNewRoleModal()">
+                <i class="fa-solid fa-shield-plus me-1"></i> Create Custom Role
+            </button>
         <?php else: ?>
-            <button class="btn btn-primary" onclick="openStaffModal()"><i class="fa-solid fa-user-plus me-1"></i> Add Staff Member</button>
+            <button class="btn btn-sm text-white" style="background: #0f172a;" onclick="openStaffModal()">
+                <i class="fa-solid fa-user-plus me-1"></i> Add Staff Member
+            </button>
         <?php endif; ?>
     </div>
 </div>
 
 <?php if ($message): ?>
-    <div class="alert alert-<?php echo $message_type; ?> alert-dismissible fade show" role="alert">
-        <i class="fa-solid fa-circle-check me-2"></i> <?php echo $message; ?>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <div class="alert mature-card p-3 mb-4" style="background: <?php echo ($message_type ?? 'success') === 'danger' ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)'; ?>; border: 1px solid <?php echo ($message_type ?? 'success') === 'danger' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.3)'; ?>; color: <?php echo ($message_type ?? 'success') === 'danger' ? '#ef4444' : '#059669'; ?>; border-radius: 0.65rem; display: flex; align-items: center; gap: 0.75rem;">
+        <i class="fa-solid <?php echo ($message_type ?? 'success') === 'danger' ? 'fa-circle-exclamation' : 'fa-circle-check'; ?>" style="font-size: 1.1rem;"></i>
+        <div style="font-weight: 500; font-size: 0.9rem;"><?php echo htmlspecialchars($message); ?></div>
     </div>
 <?php endif; ?>
 
-<!-- Navigation Tabs -->
-<div class="tab-nav">
-    <a href="?tab=directory" class="tab-btn <?php echo ($active_tab == 'directory') ? 'active' : ''; ?>">
+<!-- ==========================================
+     EXECUTIVE KPI METRICS RIBBON (4 PILLARS)
+     ========================================== -->
+<div class="row g-3 mb-4">
+    <!-- Pillar 1: Total Workforce -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="kpi-card h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <span class="kpi-title">Total Personnel Roster</span>
+                    <div class="kpi-value"><?php echo number_format($total_staff_count); ?></div>
+                </div>
+                <div class="kpi-icon-wrap">
+                    <i class="fa-solid fa-users-gear"></i>
+                </div>
+            </div>
+            <div class="kpi-meta justify-content-between mt-2">
+                <span>All Departments</span>
+                <span class="mature-badge mature-badge-slate">100% Roster</span>
+            </div>
+            <div class="kpi-progress-bar">
+                <div class="kpi-progress-fill" style="width: 100%;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pillar 2: Active On-Duty -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="kpi-card h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <span class="kpi-title">Active On-Duty Staff</span>
+                    <div class="kpi-value"><?php echo number_format($active_staff_count); ?></div>
+                </div>
+                <div class="kpi-icon-wrap">
+                    <i class="fa-solid fa-user-check"></i>
+                </div>
+            </div>
+            <div class="kpi-meta justify-content-between mt-2">
+                <span>Currently Assigned</span>
+                <span class="mature-badge mature-badge-emerald"><?php echo $total_staff_count > 0 ? round(($active_staff_count / $total_staff_count) * 100) : 0; ?>% Active</span>
+            </div>
+            <div class="kpi-progress-bar">
+                <div class="kpi-progress-fill" style="width: <?php echo $total_staff_count > 0 ? ($active_staff_count / $total_staff_count) * 100 : 0; ?>%;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pillar 3: Security & Gate Force -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="kpi-card h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <span class="kpi-title">Security & Gate Force</span>
+                    <div class="kpi-value"><?php echo number_format($security_staff_count); ?></div>
+                </div>
+                <div class="kpi-icon-wrap">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+            </div>
+            <div class="kpi-meta justify-content-between mt-2">
+                <span>Gate Officers</span>
+                <span class="mature-badge mature-badge-sky"><?php echo $total_staff_count > 0 ? round(($security_staff_count / $total_staff_count) * 100) : 0; ?>% Force</span>
+            </div>
+            <div class="kpi-progress-bar">
+                <div class="kpi-progress-fill" style="width: <?php echo $total_staff_count > 0 ? ($security_staff_count / $total_staff_count) * 100 : 0; ?>%;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pillar 4: Configured Roles -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="kpi-card h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <span class="kpi-title">Configured Operational Roles</span>
+                    <div class="kpi-value"><?php echo number_format($total_roles_count); ?></div>
+                </div>
+                <div class="kpi-icon-wrap">
+                    <i class="fa-solid fa-sitemap"></i>
+                </div>
+            </div>
+            <div class="kpi-meta justify-content-between mt-2">
+                <span>Granular Permissions Matrix</span>
+                <span class="mature-badge mature-badge-primary">System Secure</span>
+            </div>
+            <div class="kpi-progress-bar">
+                <div class="kpi-progress-fill" style="width: 100%;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Futuristic Navigation Tabs -->
+<div class="futuristic-tabs">
+    <a href="?tab=directory" class="futuristic-tab-btn <?php echo ($active_tab == 'directory') ? 'active' : ''; ?>">
         <i class="fa-solid fa-users-gear"></i> Staff Directory 
-        <span class="badge-count"><?php echo $staff_list ? $staff_list->num_rows : 0; ?></span>
+        <span class="tech-chip" style="font-size: 0.72rem; padding: 1px 6px;"><?php echo $staff_list ? $staff_list->num_rows : 0; ?></span>
     </a>
-    <a href="?tab=roles" class="tab-btn <?php echo ($active_tab == 'roles') ? 'active' : ''; ?>">
-        <i class="fa-solid fa-shield-halved"></i> Roles & Permission Matrix 
-        <span class="badge-count"><?php echo count($available_roles); ?></span>
+    <a href="?tab=roles" class="futuristic-tab-btn <?php echo ($active_tab == 'roles') ? 'active' : ''; ?>">
+        <i class="fa-solid fa-shield-halved"></i> Roles & Permissions Matrix 
+        <span class="tech-chip" style="font-size: 0.72rem; padding: 1px 6px;"><?php echo count($available_roles); ?></span>
     </a>
 </div>
 
 <?php if ($active_tab == 'directory'): ?>
     <!-- TAB 1: STAFF DIRECTORY -->
-    <div class="glass p-4 rounded-3 shadow-sm bg-white border">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="fw-bold text-slate-800 m-0">Active Team Directory</h5>
-            <input type="text" id="staffSearch" placeholder="Search staff by name, email or role..." class="form-control form-control-sm" style="max-width: 320px;" onkeyup="filterStaffTable()">
+    <div class="futuristic-filter-bar mb-3">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-stretch align-items-md-center gap-3">
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <button class="filter-btn-pill active" onclick="setStaffFilter('all', this)">
+                    <i class="fa-solid fa-list-ul me-1"></i> All Staff (<?php echo $total_staff_count; ?>)
+                </button>
+                <button class="filter-btn-pill" onclick="setStaffFilter('active', this)">
+                    <i class="fa-solid fa-circle-check me-1"></i> Active (<?php echo $active_staff_count; ?>)
+                </button>
+                <button class="filter-btn-pill" onclick="setStaffFilter('security', this)">
+                    <i class="fa-solid fa-shield-halved me-1"></i> Security (<?php echo $security_staff_count; ?>)
+                </button>
+                <button class="filter-btn-pill" onclick="setStaffFilter('inactive', this)">
+                    <i class="fa-solid fa-box-archive me-1"></i> Archived
+                </button>
+            </div>
+            <div class="position-relative" style="min-width: 280px;">
+                <i class="fa-solid fa-magnifying-glass position-absolute text-muted" style="top: 50%; left: 0.85rem; transform: translateY(-50%); font-size: 0.85rem;"></i>
+                <input type="text" id="staffSearch" placeholder="Search staff by name, email, phone, role, ID..." class="form-control ps-5" onkeyup="filterStaffTable()">
+            </div>
+        </div>
+    </div>
+
+    <div class="mature-card mb-4">
+        <div class="mature-card-header">
+            <div>
+                <h3 class="mature-card-title">
+                    <i class="fa-solid fa-users-gear text-secondary"></i> Active Team Directory
+                </h3>
+                <p style="margin: 0.25rem 0 0; font-size: 0.8rem; color: var(--text-muted);">Estate administration, security gate officers, and facility engineers.</p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="tech-chip"><i class="fa-solid fa-user-check"></i> Showing: <span id="visibleStaffCount"><?php echo $staff_list ? $staff_list->num_rows : 0; ?></span></span>
+            </div>
         </div>
         
-        <div class="table-responsive">
-            <table class="table align-middle" id="staffTable">
-                <thead class="table-light">
-                    <tr style="color: #64748b; font-size: 0.85rem; text-transform: uppercase;">
-                        <th>ID</th>
-                        <th>Staff Member</th>
-                        <th>Assigned Role</th>
-                        <th>Contact</th>
-                        <th>Registration</th>
-                        <th>Status</th>
-                        <th class="text-end">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if ($staff_list && $staff_list->num_rows > 0): ?>
-                        <?php while($row = $staff_list->fetch_assoc()): ?>
-                        <tr style="<?php echo $row['status'] == 'inactive' ? 'opacity: 0.6;' : ''; ?>">
-                            <td style="font-family: monospace; color: #64748b;"><?php echo htmlspecialchars($row['custom_id']); ?></td>
-                            <td>
-                                <div class="d-flex align-items-center gap-3">
-                                    <?php if($row['image_path']): ?>
-                                        <img src="<?php echo htmlspecialchars($row['image_path']); ?>" style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%; border: 2px solid #e2e8f0;">
-                                    <?php else: ?>
-                                        <div style="width: 40px; height: 40px; background: #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #94a3b8;">
-                                            <i class="fa-solid fa-user"></i>
-                                        </div>
-                                    <?php endif; ?>
-                                    <div>
-                                        <div class="fw-bold text-slate-800"><?php echo htmlspecialchars($row['first_name'] . ' ' . $row['last_name']); ?></div>
-                                        <div class="small text-muted"><?php echo htmlspecialchars($row['email']); ?></div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="badge" style="background: #e0f2fe; color: #0284c7; font-size: 0.8rem; font-weight: 600; padding: 0.35rem 0.65rem;">
-                                    <i class="fa-solid fa-id-badge me-1"></i> <?php echo htmlspecialchars($row['role_name'] ?? $row['role']); ?>
-                                </span>
-                            </td>
-                            <td>
-                                <div class="fw-semibold text-slate-800 small"><?php echo htmlspecialchars($row['phone'] ?: 'N/A'); ?></div>
-                                <a href="generate_id?id=<?php echo $row['id']; ?>&type=estate_staff" target="_blank" class="small text-primary text-decoration-none fw-bold" style="font-size: 0.72rem;">
-                                    <i class="fa-solid fa-id-card"></i> Print ID Card
-                                </a>
-                            </td>
-                            <td class="small text-muted"><?php echo date('M d, Y', strtotime($row['registration_date'])); ?></td>
-                            <td>
-                                <span class="badge <?php echo $row['status'] == 'active' ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'; ?> text-uppercase" style="font-size: 0.7rem; font-weight: 700;">
-                                    <?php echo htmlspecialchars($row['status']); ?>
-                                </span>
-                            </td>
-                            <td class="text-end">
-                                <button onclick='editStaff(<?php echo json_encode($row); ?>)' class="btn btn-sm btn-outline-primary me-1" title="Edit Staff Member">
-                                    <i class="fa-solid fa-pen-to-square"></i>
-                                </button>
-                                <?php if($row['status'] != 'inactive'): ?>
-                                <form method="POST" style="display:inline;" onsubmit="return confirm('Archive this staff member?');">
-                                    <input type="hidden" name="archive_id" value="<?php echo $row['id']; ?>">
-                                    <button type="submit" name="archive_staff" class="btn btn-sm btn-outline-danger" title="Archive / Deactivate">
-                                        <i class="fa-solid fa-box-archive"></i>
-                                    </button>
-                                </form>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                        <?php endwhile; ?>
-                    <?php else: ?>
+        <div class="mature-card-body p-0">
+            <div class="table-responsive">
+                <table class="table dashboard-table align-middle" id="staffTable">
+                    <thead>
                         <tr>
-                            <td colspan="7" class="text-center py-4 text-muted">No estate staff registered yet. Click "Add Staff Member" to get started.</td>
+                            <th style="width: 120px;">System ID</th>
+                            <th>Staff Member</th>
+                            <th>Assigned Role</th>
+                            <th>Contact / Digital ID</th>
+                            <th>Registration</th>
+                            <th>Status</th>
+                            <th style="text-align: right;">Actions</th>
                         </tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <?php if ($staff_list && $staff_list->num_rows > 0): ?>
+                            <?php while($row = $staff_list->fetch_assoc()): 
+                                $initials = strtoupper(substr($row['first_name'], 0, 1) . substr($row['last_name'], 0, 1));
+                                $role_lower = strtolower($row['role_name'] ?? $row['role']);
+                                $status_lower = strtolower($row['status']);
+                                $search_meta = strtolower($row['custom_id'] . ' ' . $row['first_name'] . ' ' . $row['last_name'] . ' ' . $row['email'] . ' ' . $row['phone'] . ' ' . $role_lower);
+                            ?>
+                            <tr class="staff-row" data-role="<?php echo htmlspecialchars($role_lower); ?>" data-status="<?php echo htmlspecialchars($status_lower); ?>" data-search="<?php echo htmlspecialchars($search_meta); ?>" style="<?php echo $status_lower == 'inactive' ? 'opacity: 0.6;' : ''; ?>">
+                                <td><span class="id-chip"><?php echo htmlspecialchars($row['custom_id']); ?></span></td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <?php if($row['image_path']): ?>
+                                            <img src="<?php echo htmlspecialchars($row['image_path']); ?>" style="width: 36px; height: 36px; object-fit: cover; border-radius: 50%; border: 1px solid var(--border-color);" alt="">
+                                        <?php else: ?>
+                                            <div class="avatar-chip">
+                                                <?php echo $initials ?: '<i class="fa-solid fa-user"></i>'; ?>
+                                            </div>
+                                        <?php endif; ?>
+                                        <div>
+                                            <div style="font-weight: 600; color: var(--text-color); font-size: 0.92rem;"><?php echo htmlspecialchars($row['first_name'] . ' ' . $row['last_name']); ?></div>
+                                            <div style="font-size: 0.76rem; color: var(--text-muted);"><?php echo htmlspecialchars($row['email']); ?></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="mature-badge mature-badge-sky">
+                                        <i class="fa-solid fa-id-badge me-1"></i> <?php echo htmlspecialchars($row['role_name'] ?? $row['role']); ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <div style="font-size: 0.82rem; font-family: monospace; color: var(--text-color); font-weight: 500;"><?php echo htmlspecialchars($row['phone'] ?: 'N/A'); ?></div>
+                                    <a href="generate_id?id=<?php echo $row['id']; ?>&type=estate_staff" target="_blank" style="display: inline-flex; align-items: center; gap: 0.3rem; margin-top: 2px; font-size: 0.74rem; color: var(--primary-color); text-decoration: none; font-weight: 600;">
+                                        <i class="fa-solid fa-id-card"></i> Print ID Card
+                                    </a>
+                                </td>
+                                <td style="font-size: 0.82rem; color: var(--text-muted);"><?php echo date('M d, Y', strtotime($row['registration_date'])); ?></td>
+                                <td>
+                                    <span class="mature-badge <?php echo $status_lower == 'active' ? 'mature-badge-emerald' : 'mature-badge-slate'; ?> text-uppercase">
+                                        <?php echo htmlspecialchars($row['status']); ?>
+                                    </span>
+                                </td>
+                                <td style="text-align: right;">
+                                    <div class="d-inline-flex align-items-center gap-1">
+                                        <button onclick='editStaff(<?php echo json_encode($row); ?>)' class="btn btn-sm btn-outline-secondary" style="padding: 0.3rem 0.55rem; font-size: 0.8rem;" title="Edit Staff Member">
+                                            <i class="fa-solid fa-pen-to-square"></i>
+                                        </button>
+                                        <?php if($status_lower != 'inactive'): ?>
+                                        <form method="POST" style="display:inline;" onsubmit="return confirm('Archive this staff member?');">
+                                            <input type="hidden" name="archive_id" value="<?php echo $row['id']; ?>">
+                                            <button type="submit" name="archive_staff" class="btn btn-sm btn-outline-danger" style="padding: 0.3rem 0.55rem; font-size: 0.8rem;" title="Archive / Deactivate">
+                                                <i class="fa-solid fa-box-archive"></i>
+                                            </button>
+                                        </form>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
+                            </tr>
+                            <?php endwhile; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 3rem; color: var(--text-muted);">No estate staff registered yet. Click "Add Staff Member" to get started.</td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -432,28 +551,28 @@ include '../includes/sidebar.php';
                     $assigned_perms[] = $rp['permission_id'];
                 }
                 ?>
-                <div class="role-matrix-card">
-                    <div class="d-flex justify-content-between align-items-start border-bottom pb-3 mb-3">
+                <div class="mature-card p-4 mb-4">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
                         <div>
-                            <div class="d-flex align-items-center gap-2">
-                                <h4 class="h5 fw-bold text-slate-800 m-0"><?php echo htmlspecialchars($r['name']); ?></h4>
-                                <span class="badge bg-light text-secondary border font-monospace" style="font-size: 0.75rem;">slug: <?php echo htmlspecialchars($r['slug']); ?></span>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                                <h4 style="font-size: 1.15rem; font-weight: 700; color: var(--text-color); margin: 0;"><?php echo htmlspecialchars($r['name']); ?></h4>
+                                <span class="id-chip" style="font-size: 0.72rem;">slug: <?php echo htmlspecialchars($r['slug']); ?></span>
                                 <?php if ($r['is_system']): ?>
-                                    <span class="badge bg-warning-subtle text-warning-emphasis" style="font-size: 0.7rem;">System Role</span>
+                                    <span class="mature-badge-amber" style="font-size: 0.7rem;">System Role</span>
                                 <?php else: ?>
-                                    <span class="badge bg-primary-subtle text-primary" style="font-size: 0.7rem;">Custom Role</span>
+                                    <span class="mature-badge-sky" style="font-size: 0.7rem;">Custom Role</span>
                                 <?php endif; ?>
-                                <span class="badge bg-secondary-subtle text-dark" style="font-size: 0.75rem;">
-                                    <i class="fa-solid fa-users me-1"></i> <?php echo intval($r['active_staff_count']); ?> Active Staff
+                                <span class="tech-chip" style="font-size: 0.72rem;">
+                                    <i class="fa-solid fa-users"></i> <?php echo intval($r['active_staff_count']); ?> Active Staff
                                 </span>
                             </div>
-                            <p class="text-secondary small mb-0 mt-1"><?php echo htmlspecialchars($r['description'] ?: 'No description specified.'); ?></p>
+                            <p style="color: var(--text-muted); font-size: 0.825rem; margin: 0.35rem 0 0;"><?php echo htmlspecialchars($r['description'] ?: 'No description specified.'); ?></p>
                         </div>
                         
                         <?php if (!$r['is_system']): ?>
                             <form method="POST" onsubmit="return confirm('Delete this role? This cannot be undone.');">
                                 <input type="hidden" name="role_id" value="<?php echo $r['id']; ?>">
-                                <button type="submit" name="delete_role" class="btn btn-outline-danger btn-sm" title="Delete Role">
+                                <button type="submit" name="delete_role" class="btn btn-sm" style="padding: 0.35rem 0.65rem; background: rgba(239, 68, 68, 0.08); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 0.4rem; font-size: 0.8rem; font-weight: 600;" title="Delete Role">
                                     <i class="fa-solid fa-trash-can me-1"></i> Delete Role
                                 </button>
                             </form>
@@ -467,25 +586,28 @@ include '../includes/sidebar.php';
                         <div class="row g-3 mb-3">
                             <?php 
                             $module_icons = [
-                                'Visitors' => 'fa-shield-halved text-teal',
-                                'Finance' => 'fa-coins text-success',
-                                'Residents' => 'fa-users text-primary',
-                                'Properties' => 'fa-building text-info',
-                                'Maintenance' => 'fa-hammer text-warning',
-                                'Staff' => 'fa-user-tie text-secondary',
-                                'Settings' => 'fa-sliders text-dark'
+                                'Visitors' => 'fa-shield-halved',
+                                'Security & Incidents' => 'fa-book-skull',
+                                'Roster & Attendance' => 'fa-calendar-check',
+                                'Gate & Visitor Passes' => 'fa-shield-halved',
+                                'Finance' => 'fa-coins',
+                                'Residents' => 'fa-users',
+                                'Properties' => 'fa-building',
+                                'Maintenance' => 'fa-hammer',
+                                'Staff' => 'fa-user-tie',
+                                'Settings' => 'fa-sliders'
                             ];
                             ?>
                             <?php foreach ($all_perms as $module_name => $module_perms): ?>
                                 <div class="col-md-6 col-lg-4">
-                                    <div class="p-3 rounded bg-light border h-100">
-                                        <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
-                                            <span class="fw-bold small text-uppercase text-slate-700">
-                                                <i class="fa-solid <?php echo $module_icons[$module_name] ?? 'fa-cube'; ?> me-1"></i>
+                                    <div class="p-3 rounded border h-100" style="background: rgba(148, 163, 184, 0.05); border-color: var(--border-color) !important;">
+                                        <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom" style="border-color: var(--border-color) !important;">
+                                            <span class="fw-bold small text-uppercase" style="color: var(--text-color); font-size: 0.78rem; letter-spacing: 0.03em;">
+                                                <i class="fa-solid <?php echo $module_icons[$module_name] ?? 'fa-cube'; ?> me-1" style="color: var(--primary-color);"></i>
                                                 <?php echo htmlspecialchars($module_name); ?>
                                             </span>
                                             <?php if ($r['slug'] != 'admin'): ?>
-                                                <button type="button" class="btn btn-link p-0 text-decoration-none small" style="font-size: 0.72rem;" onclick="toggleAllCheckboxes(this)">Toggle All</button>
+                                                <button type="button" class="btn btn-link p-0 text-decoration-none small" style="font-size: 0.72rem; color: var(--primary-color);" onclick="toggleAllCheckboxes(this)">Toggle All</button>
                                             <?php endif; ?>
                                         </div>
                                         <div class="d-flex flex-column gap-2">
@@ -494,10 +616,10 @@ include '../includes/sidebar.php';
                                                     <input type="checkbox" name="permissions[]" value="<?php echo $p['id']; ?>" 
                                                         <?php echo in_array($p['id'], $assigned_perms) ? 'checked' : ''; ?> 
                                                         <?php echo ($r['slug'] == 'admin') ? 'checked disabled' : ''; ?> 
-                                                        class="form-check-input mt-1 perm-box">
+                                                        class="form-check-input mt-1 perm-box" style="accent-color: var(--primary-color);">
                                                     <div>
-                                                        <div class="fw-semibold text-slate-800"><?php echo htmlspecialchars($p['name']); ?></div>
-                                                        <div class="text-muted" style="font-size: 0.72rem;"><?php echo htmlspecialchars($p['description']); ?></div>
+                                                        <div class="fw-semibold" style="color: var(--text-color); font-size: 0.82rem;"><?php echo htmlspecialchars($p['name']); ?></div>
+                                                        <div style="font-size: 0.72rem; color: var(--text-muted);"><?php echo htmlspecialchars($p['description']); ?></div>
                                                     </div>
                                                 </label>
                                             <?php endforeach; ?>
@@ -509,7 +631,7 @@ include '../includes/sidebar.php';
 
                         <?php if ($r['slug'] != 'admin'): ?>
                             <div class="text-end">
-                                <button type="submit" name="update_role_permissions" class="btn btn-success px-4 fw-semibold">
+                                <button type="submit" name="update_role_permissions" class="btn btn-primary px-4 fw-semibold" style="border-radius: 0.5rem; padding: 0.6rem 1.5rem;">
                                     <i class="fa-solid fa-floppy-disk me-1"></i> Save Permissions for <?php echo htmlspecialchars($r['name']); ?>
                                 </button>
                             </div>
@@ -702,13 +824,71 @@ function toggleAllCheckboxes(btn) {
     boxes.forEach(b => b.checked = !allChecked);
 }
 
+let activeStaffFilter = 'all';
+
+function setStaffFilter(filter, btn) {
+    activeStaffFilter = filter;
+    document.querySelectorAll('.filter-btn-pill').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    filterStaffTable();
+}
+
 function filterStaffTable() {
-    const input = document.getElementById('staffSearch').value.toLowerCase();
-    const rows = document.querySelectorAll('#staffTable tbody tr');
+    const input = (document.getElementById('staffSearch')?.value || '').toLowerCase().trim();
+    const rows = document.querySelectorAll('.staff-row');
+    let visibleCount = 0;
+
     rows.forEach(row => {
-        const text = row.innerText.toLowerCase();
-        row.style.display = text.includes(input) ? '' : 'none';
+        const role = row.getAttribute('data-role') || '';
+        const status = row.getAttribute('data-status') || '';
+        const searchMeta = row.getAttribute('data-search') || '';
+
+        let matchesFilter = true;
+        if (activeStaffFilter === 'active') matchesFilter = (status === 'active');
+        else if (activeStaffFilter === 'inactive') matchesFilter = (status === 'inactive');
+        else if (activeStaffFilter === 'security') matchesFilter = role.includes('security') || role.includes('gate');
+
+        const matchesTerm = !input || searchMeta.includes(input);
+
+        if (matchesFilter && matchesTerm) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
     });
+
+    const countElem = document.getElementById('visibleStaffCount');
+    if (countElem) countElem.innerText = visibleCount;
+}
+
+function exportStaffCSV() {
+    let csv = "System ID,Full Name,Role,Email,Phone,Registration Date,Status\n";
+    document.querySelectorAll('.staff-row').forEach(row => {
+        if (row.style.display !== 'none') {
+            const cols = row.querySelectorAll('td');
+            if (cols.length >= 6) {
+                const sysId = cols[0].innerText.trim();
+                const name = cols[1].querySelector('div > div > div:first-child')?.innerText.trim() || '';
+                const email = cols[1].querySelector('div > div > div:nth-child(2)')?.innerText.trim() || '';
+                const role = cols[2].innerText.trim();
+                const phone = cols[3].querySelector('div:first-child')?.innerText.trim() || '';
+                const regDate = cols[4].innerText.trim();
+                const status = cols[5].innerText.trim();
+
+                csv += `"${sysId}","${name}","${role}","${email}","${phone}","${regDate}","${status}"\n`;
+            }
+        }
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `Estate_Staff_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
 </script>
 

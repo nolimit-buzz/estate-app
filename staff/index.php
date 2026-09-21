@@ -13,6 +13,30 @@ $can_finance = hasPermission('finance.view_invoices') || hasPermission('finance.
 $can_residents = hasPermission('residents.view') || hasPermission('residents.manage');
 $can_maintenance = hasPermission('maintenance.view_assigned') || hasPermission('maintenance.update_status');
 
+// Count module grants for the duty profile
+$perms_count = 0;
+$role_id = $_SESSION['role_id'] ?? null;
+if (!$role_id && isset($_SESSION['user_id'])) {
+    $uid = intval($_SESSION['user_id']);
+    $st_res = $conn->query("SELECT role_id FROM estate_staff WHERE user_id = $uid AND status = 'active' LIMIT 1");
+    if ($st_res && $st_row = $st_res->fetch_assoc()) {
+        $role_id = $st_row['role_id'];
+        $_SESSION['role_id'] = $role_id;
+    }
+}
+if ($role_id) {
+    $pc_res = $conn->query("SELECT COUNT(permission_id) as cnt FROM role_permissions WHERE role_id = " . intval($role_id));
+    if ($pc_res && $pc_row = $pc_res->fetch_assoc()) {
+        $perms_count = intval($pc_row['cnt']);
+    }
+} else {
+    $role_slug = $conn->real_escape_string($_SESSION['role'] ?? 'staff');
+    $pc_res = $conn->query("SELECT COUNT(rp.permission_id) as cnt FROM role_permissions rp JOIN roles r ON rp.role_id = r.id WHERE (r.slug = '$role_slug' OR r.name = '$role_slug') AND r.estate_id = $estate_id");
+    if ($pc_res && $pc_row = $pc_res->fetch_assoc()) {
+        $perms_count = intval($pc_row['cnt']);
+    }
+}
+
 // Gate Stats
 $today_visitors = 0;
 $pending_checkins = 0;
@@ -69,13 +93,17 @@ if ($can_maintenance) {
     $assigned_work_orders = $m_cnt ? $m_cnt->fetch_assoc()['cnt'] : 0;
 }
 
-// Count user's assigned permissions
-$role_id = $_SESSION['role_id'] ?? 0;
-$perms_count = 0;
-if ($role_id) {
-    $p_res = $conn->query("SELECT COUNT(*) as cnt FROM role_permissions WHERE role_id = " . intval($role_id));
-    $perms_count = $p_res ? $p_res->fetch_assoc()['cnt'] : 0;
-}
+// Fetch Current Duty Shift for this staff member
+$today_str = date('Y-m-d');
+$now_str = date('Y-m-d H:i:s');
+$staff_duty = $conn->query("SELECT sr.*, sp.post_name, sp.phone_extension, ss.name as shift_name, ss.start_time, ss.end_time, ss.color_code
+                           FROM security_roster sr
+                           LEFT JOIN security_posts sp ON sr.post_id = sp.id
+                           LEFT JOIN security_shifts ss ON sr.shift_id = ss.id
+                           WHERE sr.estate_id = $estate_id 
+                             AND sr.user_id = $user_id 
+                             AND (sr.duty_date = '$today_str' OR (sr.start_datetime <= '$now_str' AND sr.end_datetime >= '$now_str'))
+                           ORDER BY (CASE WHEN sr.status = 'on_duty' THEN 0 ELSE 1 END), sr.start_datetime ASC LIMIT 1")->fetch_assoc();
 ?>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -84,6 +112,12 @@ if ($role_id) {
         <p class="text-secondary small mb-0">Welcome back, <strong><?php echo htmlspecialchars($user_name); ?></strong>. Role: <span class="badge bg-teal" style="background: #0f766e;"><?php echo htmlspecialchars($user_role_display); ?></span></p>
     </div>
     <div class="d-flex gap-2">
+        <a href="roster" class="btn btn-outline-dark rounded-pill px-3 shadow-sm">
+            <i class="fa-solid fa-calendar-check me-1 text-teal" style="color: #0d9488;"></i> My Duty Roster &amp; Calendar
+        </a>
+        <a href="community_chat" class="btn btn-outline-secondary rounded-pill px-3 shadow-sm">
+            <i class="fa-solid fa-comments me-1"></i> Estate Forum
+        </a>
         <?php if ($can_gate && hasPermission('visitors.check_in_out')): ?>
             <a href="security" class="btn btn-primary" style="background: #0d9488; border: none;">
                 <i class="fa-solid fa-qrcode me-1"></i> Verify Visitor Code
@@ -101,6 +135,101 @@ if ($role_id) {
         <?php endif; ?>
     </div>
 </div>
+
+<!-- ==========================================
+     ACTIVE DUTY SHIFT & ATTENDANCE ACTION DECK
+     ========================================== -->
+<?php if (!empty($staff_duty)): ?>
+    <?php
+    $duty_is_on = ($staff_duty['status'] === 'on_duty');
+    $duty_is_done = ($staff_duty['status'] === 'completed');
+    $duty_is_sched = ($staff_duty['status'] === 'scheduled');
+    ?>
+    <div class="card border-0 shadow-sm rounded-4 p-3 mb-4" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff;">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); color: #5eead4; display: flex; align-items: center; justify-content: center; font-size: 1.35rem;">
+                    <i class="fa-solid fa-user-shield"></i>
+                </div>
+                <div>
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <?php if ($duty_is_on): ?>
+                            <span class="badge bg-success rounded-pill px-2 py-1 small"><i class="fa-solid fa-circle-check me-1"></i> ON DUTY NOW</span>
+                        <?php elseif ($duty_is_done): ?>
+                            <span class="badge bg-info text-dark rounded-pill px-2 py-1 small"><i class="fa-solid fa-flag-checkered me-1"></i> SHIFT COMPLETED</span>
+                        <?php else: ?>
+                            <span class="badge bg-warning text-dark rounded-pill px-2 py-1 small"><i class="fa-solid fa-clock me-1"></i> SCHEDULED TODAY</span>
+                        <?php endif; ?>
+                        <strong class="text-white fs-6"><?php echo htmlspecialchars($staff_duty['post_name'] ?? 'Main Post'); ?></strong>
+                        <?php if (!empty($staff_duty['phone_extension'])): ?>
+                            <span class="badge bg-black bg-opacity-25 text-slate-300">Ext: <?php echo htmlspecialchars($staff_duty['phone_extension']); ?></span>
+                        <?php endif; ?>
+                    </div>
+                    <div class="text-slate-300 small">
+                        <strong><?php echo htmlspecialchars($staff_duty['shift_name']); ?></strong> (<?php echo date('h:i A', strtotime($staff_duty['start_time'])); ?> - <?php echo date('h:i A', strtotime($staff_duty['end_time'])); ?>)
+                        <?php if ($duty_is_on && !empty($staff_duty['clock_in_time'])): ?>
+                            &bull; Clocked in at <strong><?php echo date('h:i A', strtotime($staff_duty['clock_in_time'])); ?></strong>
+                        <?php elseif ($duty_is_done && !empty($staff_duty['clock_out_time'])): ?>
+                            &bull; Concluded at <strong><?php echo date('h:i A', strtotime($staff_duty['clock_out_time'])); ?></strong>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+                <?php if ($duty_is_sched): ?>
+                    <button type="button" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm" onclick="quickClockInOutIndex(<?php echo $staff_duty['id']; ?>, 'clock_in')">
+                        <i class="fa-solid fa-arrow-right-to-bracket me-1"></i> Clock In For Duty
+                    </button>
+                <?php elseif ($duty_is_on): ?>
+                    <button type="button" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm" onclick="quickClockInOutIndex(<?php echo $staff_duty['id']; ?>, 'clock_out')">
+                        <i class="fa-solid fa-arrow-right-from-bracket me-1"></i> Clock Out Shift
+                    </button>
+                <?php endif; ?>
+                <a href="roster" class="btn btn-outline-light rounded-pill px-3">
+                    <i class="fa-solid fa-calendar me-1"></i> My Duty Schedule
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    async function quickClockInOutIndex(rosterId, type) {
+        let handover = '';
+        if (type === 'clock_out') {
+            handover = await EstateDialog.prompt({
+                title: 'Shift Handover & Clock Out',
+                message: "Optional shift handover notes for the incoming officer:",
+                inputType: 'textarea',
+                placeholder: 'e.g. Everything orderly, keys handed over...',
+                confirmText: 'Clock Out'
+            });
+            if (handover === null) return;
+        }
+
+        const formData = new FormData();
+        formData.append('action', 'clock_in_out');
+        formData.append('roster_id', rosterId);
+        formData.append('type', type);
+        formData.append('handover_notes', handover || '');
+
+        fetch('../api/roster_query.php', { method: 'POST', body: formData })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    EstateDialog.toast({ type: 'success', message: res.message || 'Attendance updated.' });
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    EstateDialog.alert({ title: 'Clock Error', message: res.error || 'Failed to update attendance.', type: 'danger' });
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                EstateDialog.toast({ type: 'error', message: 'Network error updating attendance.' });
+            });
+    }
+    </script>
+<?php endif; ?>
 
 <!-- Dynamic KPI Cards Row -->
 <div class="row g-3 mb-4">
