@@ -363,27 +363,27 @@ if (!function_exists('getEstatePoliciesList')) {
 if (!function_exists('formatPunishmentTypeBadge')) {
     function formatPunishmentTypeBadge($type) {
         $map = [
-            'warning' => ['bg' => '#fef3c7', 'text' => '#b45309', 'icon' => 'fa-triangle-exclamation', 'label' => 'Official Warning'],
-            'fine' => ['bg' => '#fee2e2', 'text' => '#b91c1c', 'icon' => 'fa-money-bill-wave', 'label' => 'Monetary Fine'],
-            'clamping_towing' => ['bg' => '#ffedd5', 'text' => '#c2410c', 'icon' => 'fa-truck-pickup', 'label' => 'Clamping & Towing'],
-            'privilege_suspension' => ['bg' => '#f3e8ff', 'text' => '#7e22ce', 'icon' => 'fa-ban', 'label' => 'Privilege Suspension'],
-            'gate_restriction' => ['bg' => '#e0e7ff', 'text' => '#4338ca', 'icon' => 'fa-torii-gate', 'label' => 'Gate Barcode Revoked'],
-            'community_service' => ['bg' => '#dcfce7', 'text' => '#15803d', 'icon' => 'fa-hands-holding-child', 'label' => 'Community Service'],
-            'legal_eviction' => ['bg' => '#fecdd3', 'text' => '#9f1239', 'icon' => 'fa-gavel', 'label' => 'Legal Eviction'],
-            'other' => ['bg' => '#f1f5f9', 'text' => '#475569', 'icon' => 'fa-scale-balanced', 'label' => 'Disciplinary Action']
+            'warning' => ['bg' => '#fef3c7', 'text' => '#92400e', 'icon' => 'fa-triangle-exclamation', 'label' => 'Official Warning'],
+            'fine' => ['bg' => '#f1f5f9', 'text' => '#334155', 'icon' => 'fa-money-bill-wave', 'label' => 'Monetary Fine'],
+            'clamping_towing' => ['bg' => '#f8fafc', 'text' => '#475569', 'icon' => 'fa-truck-pickup', 'label' => 'Clamping & Towing'],
+            'privilege_suspension' => ['bg' => '#f5f3ff', 'text' => '#6d28d9', 'icon' => 'fa-ban', 'label' => 'Privilege Suspension'],
+            'gate_restriction' => ['bg' => '#eef2ff', 'text' => '#4338ca', 'icon' => 'fa-torii-gate', 'label' => 'Gate Barcode Revoked'],
+            'community_service' => ['bg' => '#f0fdf4', 'text' => '#166534', 'icon' => 'fa-hands-holding-child', 'label' => 'Community Service'],
+            'legal_eviction' => ['bg' => '#fff1f2', 'text' => '#9f1239', 'icon' => 'fa-gavel', 'label' => 'Legal Eviction'],
+            'other' => ['bg' => '#f8fafc', 'text' => '#475569', 'icon' => 'fa-scale-balanced', 'label' => 'Disciplinary Action']
         ];
         $cfg = $map[$type] ?? $map['other'];
-        return '<span class="badge d-inline-flex align-items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-pill" style="background: ' . $cfg['bg'] . '; color: ' . $cfg['text'] . '; border: 1px solid ' . $cfg['text'] . '33;"><i class="fa-solid ' . $cfg['icon'] . '"></i> ' . $cfg['label'] . '</span>';
+        return '<span class="badge d-inline-flex align-items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-pill" style="background: ' . $cfg['bg'] . '; color: ' . $cfg['text'] . '; border: 1px solid rgba(0,0,0,0.08);"><i class="fa-solid ' . $cfg['icon'] . '"></i> ' . $cfg['label'] . '</span>';
     }
 }
 
 if (!function_exists('formatSeverityBadge')) {
     function formatSeverityBadge($severity) {
         $map = [
-            'low' => ['class' => 'bg-info bg-opacity-10 text-info border border-info border-opacity-25', 'icon' => 'fa-circle-info', 'label' => 'Low Severity'],
-            'medium' => ['class' => 'bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25', 'icon' => 'fa-triangle-exclamation', 'label' => 'Medium Severity'],
-            'high' => ['class' => 'bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25', 'icon' => 'fa-circle-exclamation', 'label' => 'High Severity'],
-            'critical' => ['class' => 'bg-danger text-white border border-danger', 'icon' => 'fa-skull-crossbones', 'label' => 'CRITICAL VIOLATION']
+            'low' => ['class' => 'bg-light text-slate-700 border', 'icon' => 'fa-circle-info text-secondary', 'label' => 'Low Severity'],
+            'medium' => ['class' => 'bg-warning bg-opacity-10 text-dark border border-warning border-opacity-25', 'icon' => 'fa-triangle-exclamation text-warning', 'label' => 'Medium Severity'],
+            'high' => ['class' => 'bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25', 'icon' => 'fa-circle-exclamation text-danger', 'label' => 'High Severity'],
+            'critical' => ['class' => 'bg-danger text-white border border-danger', 'icon' => 'fa-skull-crossbones', 'label' => 'Critical Violation']
         ];
         $cfg = $map[$severity] ?? $map['medium'];
         return '<span class="badge d-inline-flex align-items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-pill ' . $cfg['class'] . '"><i class="fa-solid ' . $cfg['icon'] . '"></i> ' . $cfg['label'] . '</span>';

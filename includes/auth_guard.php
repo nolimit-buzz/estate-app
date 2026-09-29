@@ -32,11 +32,41 @@ function verifyCSRFToken() {
     return true;
 }
 
-// Enforce User Login
+// Enforce User Login & Security Guard
 function requireLogin() {
+    $script = $_SERVER['SCRIPT_NAME'] ?? '';
+    $isInSubdir = (strpos($script, '/admin/') !== false || strpos($script, '/resident/') !== false || strpos($script, '/zone/') !== false || strpos($script, '/staff/') !== false);
+    $prefix = $isInSubdir ? '../' : '';
+
     if (!isset($_SESSION['user_id'])) {
-        header("Location: ../login?error=unauthenticated");
+        header("Location: {$prefix}login?error=unauthenticated");
         exit;
+    }
+
+    // Active Database Status & Force Password Change Check
+    global $conn;
+    if ($conn && isset($_SESSION['user_id'])) {
+        $uid = intval($_SESSION['user_id']);
+        $u_chk = $conn->query("SELECT status, force_password_change FROM users WHERE id = $uid LIMIT 1");
+        if ($u_chk && $u_row = $u_chk->fetch_assoc()) {
+            // If account was disabled/suspended by admin in real-time
+            if (isset($u_row['status']) && in_array(strtolower($u_row['status']), ['disabled', 'suspended', 'inactive'])) {
+                $_SESSION = [];
+                if (session_id()) session_destroy();
+                header("Location: {$prefix}login?error=account_disabled");
+                exit;
+            }
+            $_SESSION['force_password_change'] = intval($u_row['force_password_change'] ?? 0);
+        }
+    }
+
+    // Intercept forced password change
+    if (!empty($_SESSION['force_password_change'])) {
+        $current = basename($_SERVER['PHP_SELF']);
+        if ($current !== 'change_password.php' && $current !== 'logout.php') {
+            header("Location: {$prefix}change_password");
+            exit;
+        }
     }
 }
 

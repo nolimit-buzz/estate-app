@@ -39,26 +39,30 @@ $success = $_SESSION['success_msg'] ?? '';
 $error = $_SESSION['error_msg'] ?? '';
 unset($_SESSION['success_msg'], $_SESSION['error_msg']);
 
-// Fetch Report Log (All with resident and attending staff info)
+// Fetch Report Log (All with resident, attending staff and artisan info)
 $estate_id = get_estate_id();
 $report_log = $conn->query("SELECT m.*, u.name as resident_name, f.number as flat_number, b.name as building_name,
-                                   u_att.name as attended_staff_name, u_att.role as attended_staff_role
+                                   u_att.name as attended_staff_name, u_att.role as attended_staff_role,
+                                   art.full_name as artisan_name, art.artisan_code, art.trade_category as artisan_trade, art.phone as artisan_phone
                             FROM maintenance_requests m 
                             JOIN users u ON m.user_id = u.id 
                             LEFT JOIN flats f ON m.flat_id = f.id 
                             LEFT JOIN buildings b ON f.building_id = b.id
                             LEFT JOIN users u_att ON m.attended_by = u_att.id
+                            LEFT JOIN artisans art ON m.artisan_id = art.id
                             WHERE m.estate_id = $estate_id
                             ORDER BY m.created_at DESC");
 
-// Fetch Fixes Log (Specifically resolved/closed with reports and attending staff info)
+// Fetch Fixes Log (Specifically resolved/closed with reports, attending staff and artisan info)
 $fixes_log = $conn->query("SELECT m.*, u.name as resident_name, f.number as flat_number, b.name as building_name,
-                                  u_att.name as attended_staff_name, u_att.role as attended_staff_role
+                                  u_att.name as attended_staff_name, u_att.role as attended_staff_role,
+                                  art.full_name as artisan_name, art.artisan_code, art.trade_category as artisan_trade, art.phone as artisan_phone
                           FROM maintenance_requests m 
                           JOIN users u ON m.user_id = u.id 
                           LEFT JOIN flats f ON m.flat_id = f.id 
                           LEFT JOIN buildings b ON f.building_id = b.id
                           LEFT JOIN users u_att ON m.attended_by = u_att.id
+                          LEFT JOIN artisans art ON m.artisan_id = art.id
                           WHERE m.estate_id = $estate_id AND m.status IN ('resolved', 'closed')
                           ORDER BY m.created_at DESC");
 ?>
@@ -134,7 +138,16 @@ $fixes_log = $conn->query("SELECT m.*, u.name as resident_name, f.number as flat
                             <div style="font-weight: 500; font-size: 0.95rem;"><?= htmlspecialchars($row['resident_name']) ?></div>
                             <div style="font-size: 0.75rem; color: #64748b;"><?= htmlspecialchars($row['building_name']) ?> (Flat <?= htmlspecialchars($row['flat_number']) ?>)</div>
                         </td>
-                        <td style="padding: 12px; font-size: 0.9rem; color: #334155;"><?= htmlspecialchars($row['title']) ?></td>
+                        <td style="padding: 12px; font-size: 0.9rem; color: #334155;">
+                            <div style="font-weight: 600;"><?= htmlspecialchars($row['title']) ?></div>
+                            <?php if (!empty($row['artisan_name'])): ?>
+                                <div style="margin-top: 3px;">
+                                    <span style="background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 9999px; font-size: 0.72rem; font-weight: 700;">
+                                        <i class="fa-solid fa-screwdriver-wrench me-1"></i><?= htmlspecialchars($row['artisan_name']) ?> (<?= htmlspecialchars($row['artisan_code'] ?: 'Handyman') ?>)
+                                    </span>
+                                </div>
+                            <?php endif; ?>
+                        </td>
                         <td style="padding: 12px;">
                             <?php
                             $p_color = ['low'=>'#10b981', 'medium'=>'#f59e0b', 'high'=>'#ef4444', 'emergency'=>'#7f1d1d'];

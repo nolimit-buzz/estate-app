@@ -378,15 +378,17 @@ include '../includes/sidebar.php';
                     <form method="POST" id="installmentPolicyForm">
                         <!-- Enable Installments Toggle -->
                         <div class="p-3 mb-4 rounded-3 border" style="background: rgba(59, 130, 246, 0.04); border-color: rgba(59, 130, 246, 0.2) !important;">
-                            <div class="form-check form-switch d-flex align-items-center gap-3 ps-0 mb-0">
-                                <input class="form-check-input ms-0 me-2" type="checkbox" role="switch" id="allow_installments" name="allow_installments" value="1" <?= $billing_settings['allow_installments'] ? 'checked' : '' ?> style="width: 2.75rem; height: 1.4rem; cursor: pointer;">
-                                <div>
-                                    <label class="form-check-label fw-bold text-dark d-block" for="allow_installments" style="cursor: pointer; font-size: 0.95rem;">
+                            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3">
+                                <div style="flex: 1; min-width: 0;">
+                                    <label class="form-check-label fw-bold text-dark d-block mb-1" for="allow_installments" style="cursor: pointer; font-size: 0.95rem;">
                                         Permit Installment & Milestone Payments
                                     </label>
-                                    <small class="text-muted d-block" style="font-size: 0.78rem;">
+                                    <small class="text-muted d-block" style="font-size: 0.78rem; line-height: 1.45;">
                                         When enabled, invoices generated under charges allowing installments will offer automated milestone breakdown schedules.
                                     </small>
+                                </div>
+                                <div class="form-check form-switch ps-0 mb-0 align-self-end align-self-sm-center flex-shrink-0">
+                                    <input class="form-check-input m-0" type="checkbox" role="switch" id="allow_installments" name="allow_installments" value="1" <?= $billing_settings['allow_installments'] ? 'checked' : '' ?> style="width: 2.85rem; height: 1.45rem; cursor: pointer;">
                                 </div>
                             </div>
                         </div>

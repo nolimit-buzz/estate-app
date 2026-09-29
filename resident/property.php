@@ -49,10 +49,137 @@ $occupants_res = $conn->query("SELECT r.*, u.name, u.phone, u.email
 $vehicles_res = $conn->query("SELECT * FROM vehicles WHERE flat_id = $flat_id");
 
 // Household Staff
-$domestic_staff_res = $conn->query("SELECT * FROM household_staff WHERE flat_id = $flat_id");
+// Building Units List for Image 1 Screen 3 Chips
+$units_list = [];
+if ($building_id) {
+    $bu_q = $conn->query("SELECT f.number as flat_no, f.status, f.type FROM flats f WHERE f.building_id = $building_id ORDER BY f.number ASC LIMIT 8");
+    if ($bu_q) while($u = $bu_q->fetch_assoc()) $units_list[] = $u;
+}
+
+// Property Financial & Ticket Metrics for Screen 3
+$prop_fin = $conn->query("SELECT 
+    COALESCE(SUM(balance), 0) as rent_due,
+    COALESCE(SUM(amount_paid), 0) as rent_collected
+    FROM invoices WHERE user_id = $user_id AND estate_id = $estate_id")->fetch_assoc();
+$open_req_cnt = $conn->query("SELECT COUNT(id) as cnt FROM maintenance_requests WHERE user_id = $user_id AND status IN ('open','in_progress')")->fetch_assoc()['cnt'] ?? 0;
+
 include 'header.php';
 include 'sidebar.php';
 ?>
+
+<!-- ==========================================
+     NATIVE MOBILE PROPERTY VIEW (Image 1 Screen 3)
+     ========================================== -->
+<div class="mobile-only mb-4">
+    <!-- 1. Hero Property Image Banner -->
+    <div class="mobile-property-hero-wrap">
+        <img src="../images/hero_estate.jpg" alt="<?= htmlspecialchars($resident['building_name'] ?? 'Residence') ?>" class="mobile-property-hero-img">
+        <div class="mobile-property-hero-gradient">
+            <div class="mobile-hero-badge">
+                <i class="fa-solid fa-building me-1"></i> <?= htmlspecialchars($resident['building_type'] ?? 'Luxury Residential') ?>
+            </div>
+            <h2 class="mobile-hero-title"><?= htmlspecialchars($resident['building_name'] ?? 'Estate Residence') ?></h2>
+        </div>
+    </div>
+
+    <!-- 2. Address Location Badge -->
+    <div class="mobile-address-badge">
+        <i class="fa-solid fa-location-dot"></i>
+        <span><?= htmlspecialchars(($resident['street_name'] ?? 'Main Street') . ' &bull; Unit ' . ($resident['flat_number'] ?? '101')) ?></span>
+    </div>
+
+    <!-- 3. Summary 2x2 Grid with Monthly Dropdown (Image 1 Screen 3) -->
+    <div class="mobile-section-header">
+        <h3 class="mobile-section-title">Summary</h3>
+        <div class="mobile-pill-dropdown">
+            <span>Monthly</span>
+            <i class="fa-solid fa-chevron-down" style="font-size: 0.65rem;"></i>
+        </div>
+    </div>
+    <div class="mobile-kpi-grid">
+        <div class="mobile-kpi-card kpi-tint-orange">
+            <div class="mobile-kpi-val">₦<?= number_format(floatval($prop_fin['rent_collected'] ?? 0) / 1000, 1) ?>k</div>
+            <span class="mobile-kpi-label mt-1">Financial History</span>
+        </div>
+        <div class="mobile-kpi-card kpi-tint-blue">
+            <div class="mobile-kpi-val">₦<?= number_format(floatval($prop_fin['rent_due'] ?? 0) / 1000, 1) ?>k</div>
+            <span class="mobile-kpi-label mt-1">Outstanding Dues</span>
+        </div>
+        <div class="mobile-kpi-card kpi-tint-emerald">
+            <div class="mobile-kpi-val"><?= ($tenancy['status'] ?? 'Active') === 'Active' ? '100%' : '0%' ?></div>
+            <span class="mobile-kpi-label mt-1">Occupied</span>
+        </div>
+        <div class="mobile-kpi-card kpi-tint-amber">
+            <div class="mobile-kpi-val"><?= str_pad($open_req_cnt, 2, '0', STR_PAD_LEFT) ?></div>
+            <span class="mobile-kpi-label mt-1">Open Requests</span>
+        </div>
+    </div>
+
+    <!-- 4. List of Units / Horizontal Scrolling Status Chips -->
+    <div class="mobile-section-header mt-4">
+        <h3 class="mobile-section-title">List of Units</h3>
+        <span class="mature-badge mature-badge-slate"><?= count($units_list) > 0 ? count($units_list) . ' Units' : '1 Unit' ?></span>
+    </div>
+    <div class="mobile-unit-chip-container">
+        <?php if (!empty($units_list)): ?>
+            <?php foreach ($units_list as $u): ?>
+                <div class="mobile-unit-chip <?= ($u['flat_no'] == ($resident['flat_number'] ?? '')) ? 'border-primary' : '' ?>">
+                    <span class="mobile-unit-chip-num">Unit <?= htmlspecialchars($u['flat_no']) ?></span>
+                    <span class="mobile-unit-chip-status" style="color: <?= ($u['status'] === 'occupied') ? '#059669' : '#d97706' ?>;">
+                        <?= htmlspecialchars(ucfirst($u['status'])) ?>
+                    </span>
+                </div>
+            <?php endforeach; ?>
+        <?php else: ?>
+            <div class="mobile-unit-chip border-primary">
+                <span class="mobile-unit-chip-num">Unit <?= htmlspecialchars($resident['flat_number'] ?? '101') ?></span>
+                <span class="mobile-unit-chip-status">Occupied</span>
+            </div>
+            <div class="mobile-unit-chip">
+                <span class="mobile-unit-chip-num">Unit 102</span>
+                <span class="mobile-unit-chip-status">Occupied</span>
+            </div>
+            <div class="mobile-unit-chip">
+                <span class="mobile-unit-chip-num">Unit 103</span>
+                <span class="mobile-unit-chip-status" style="color: #d97706;">Vacant</span>
+            </div>
+        <?php endif; ?>
+    </div>
+
+    <!-- 5. Registered Household Occupants -->
+    <div class="mobile-section-header mt-4">
+        <h3 class="mobile-section-title">Household Members</h3>
+        <span class="mature-badge mature-badge-emerald"><?= $occupants_res ? $occupants_res->num_rows : 0 ?> Active</span>
+    </div>
+    <div class="mobile-activity-list">
+        <?php 
+        if ($occupants_res && $occupants_res->num_rows > 0): 
+            $occupants_res->data_seek(0);
+            while($occ = $occupants_res->fetch_assoc()):
+        ?>
+            <div class="mobile-activity-item">
+                <div class="mobile-activity-left">
+                    <div class="mobile-activity-icon" style="background: rgba(59, 130, 246, 0.12); color: #2563eb;">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div class="mobile-activity-text">
+                        <h5 class="mobile-activity-title"><?= htmlspecialchars($occ['name']) ?></h5>
+                        <div class="mobile-activity-meta">
+                            <span><?= htmlspecialchars(ucfirst($occ['relationship'] ?? 'Resident')) ?></span> &bull; 
+                            <span><?= htmlspecialchars($occ['phone'] ?? 'Verified') ?></span>
+                        </div>
+                    </div>
+                </div>
+                <span class="mature-badge mature-badge-emerald py-1 px-2" style="font-size: 0.68rem;">Active</span>
+            </div>
+        <?php 
+            endwhile; 
+        endif; 
+        ?>
+    </div>
+</div>
+
+<div class="desktop-only">
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
     <div>
         <div class="d-flex align-items-center gap-2 mb-1">
@@ -261,5 +388,6 @@ include 'sidebar.php';
         </div>
     </div>
 </div>
+</div> <!-- End .desktop-only -->
 
 <?php include 'footer.php'; ?>

@@ -1,0 +1,474 @@
+/**
+ * css/hotline.css
+ * Styles for Header Hotline Button & Direct-Dial Emergency Directory Modal
+ */
+
+/* Header Hotline Button (Desktop & Tablet) */
+.estate-hotline-btn {
+    position: relative;
+    border-color: rgba(239, 68, 68, 0.45) !important;
+    color: #dc2626 !important;
+    background: rgba(239, 68, 68, 0.08);
+    font-weight: 600;
+    font-size: 0.82rem;
+    transition: all 0.25s ease-in-out;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.1);
+}
+
+.estate-hotline-btn:hover {
+    background: #dc2626 !important;
+    color: #ffffff !important;
+    border-color: #dc2626 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+}
+
+.estate-hotline-btn:hover .hotline-pulse-icon {
+    color: #ffffff !important;
+}
+
+/* Subtle Phone Icon Pulse Animation */
+@keyframes hotlinePhonePulse {
+    0%, 100% {
+        transform: scale(1) rotate(0deg);
+    }
+    15% {
+        transform: scale(1.18) rotate(-12deg);
+    }
+    30% {
+        transform: scale(1.18) rotate(12deg);
+    }
+    45% {
+        transform: scale(1.1) rotate(-6deg);
+    }
+    60% {
+        transform: scale(1) rotate(0deg);
+    }
+}
+
+.hotline-pulse-icon {
+    display: inline-block;
+    animation: hotlinePhonePulse 3.5s infinite ease-in-out;
+    transform-origin: center;
+}
+
+/* Mobile Icon Button variant */
+.mobile-icon-btn.estate-hotline-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    padding: 0;
+}
+
+.mobile-icon-btn.estate-hotline-btn:active {
+    transform: scale(0.92);
+    background: #ef4444;
+    color: #ffffff;
+}
+
+/* ==========================================================================
+   DIRECT HOTLINE MODAL STYLING
+   ========================================================================== */
+
+#estateHotlineModal .modal-dialog {
+    max-width: 640px;
+}
+
+#estateHotlineModal .modal-content {
+    border: none;
+    border-radius: 1.25rem;
+    overflow: hidden;
+    box-shadow: 0 25px 60px rgba(15, 23, 42, 0.25);
+    background: #ffffff;
+    font-family: 'Outfit', sans-serif;
+}
+
+/* Modal Header */
+#estateHotlineModal .modal-header {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    color: #ffffff;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 2px solid rgba(239, 68, 68, 0.4);
+}
+
+.hotline-modal-badge {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);
+}
+
+/* Direct Dial Safety Banner */
+.hotline-safety-notice {
+    background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
+    border: 1px solid #bfdbfe;
+    border-radius: 12px;
+    padding: 0.85rem 1rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.hotline-safe-badge {
+    background: #10b981;
+    color: #ffffff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.2rem 0.55rem;
+    border-radius: 9999px;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+}
+
+.hotline-safety-notice p {
+    font-size: 0.82rem;
+    color: #1e293b;
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* Search Bar */
+.hotline-search-wrap {
+    position: relative;
+    margin-bottom: 1.25rem;
+}
+
+.hotline-search-wrap i {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 0.9rem;
+}
+
+.hotline-search-input {
+    width: 100%;
+    padding: 0.65rem 1rem 0.65rem 2.4rem;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    font-size: 0.875rem;
+    color: #0f172a;
+    transition: all 0.2s ease;
+}
+
+.hotline-search-input:focus {
+    outline: none;
+    border-color: #ef4444;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+
+/* Contacts Container & Cards */
+.hotline-cards-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 52vh;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+/* Custom Scrollbar */
+.hotline-cards-list::-webkit-scrollbar {
+    width: 5px;
+}
+.hotline-cards-list::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+
+.hotline-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 0.95rem 1.15rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    transition: all 0.2s ease;
+}
+
+.hotline-card:hover {
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.04);
+}
+
+.hotline-card.is-primary {
+    border: 1.5px solid #fca5a5;
+    background: linear-gradient(135deg, #ffffff 0%, #fffbfb 100%);
+}
+
+.hotline-card-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.hotline-card-icon.type-security {
+    background: rgba(16, 185, 129, 0.12);
+    color: #059669;
+}
+
+.hotline-card-icon.type-police {
+    background: rgba(37, 99, 235, 0.12);
+    color: #1d4ed8;
+}
+
+.hotline-card-icon.type-fire {
+    background: rgba(249, 115, 22, 0.14);
+    color: #ea580c;
+}
+
+.hotline-card-icon.type-medical {
+    background: rgba(239, 68, 68, 0.12);
+    color: #dc2626;
+}
+
+.hotline-card-icon.type-management {
+    background: rgba(99, 102, 241, 0.12);
+    color: #4f46e5;
+}
+
+.hotline-card-icon.type-general {
+    background: rgba(100, 116, 139, 0.12);
+    color: #475569;
+}
+
+.hotline-card-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.hotline-card-label {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #0f172a;
+    margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.hotline-badge-primary {
+    background: #dc2626;
+    color: #ffffff;
+    font-size: 0.62rem;
+    font-weight: 700;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.hotline-badge-type {
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.hotline-card-number {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1e293b;
+    letter-spacing: 0.02em;
+    font-family: 'Outfit', monospace, sans-serif;
+    display: block;
+}
+
+/* Card Action Buttons */
+.hotline-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-shrink: 0;
+}
+
+.btn-hotline-call {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #ffffff !important;
+    border: none;
+    font-weight: 600;
+    font-size: 0.8rem;
+    padding: 0.42rem 0.85rem;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);
+}
+
+.btn-hotline-call:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.35);
+}
+
+.btn-hotline-copy {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+    font-weight: 600;
+    font-size: 0.8rem;
+    padding: 0.42rem 0.75rem;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-hotline-copy:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+    border-color: #94a3b8;
+}
+
+.btn-hotline-copy.copied {
+    background: #dcfce7 !important;
+    border-color: #86efac !important;
+    color: #166534 !important;
+}
+
+/* Active Duty Guards Ribbon */
+.hotline-guard-section {
+    margin-top: 1rem;
+    padding-top: 0.85rem;
+    border-top: 1px dashed #e2e8f0;
+}
+
+.hotline-guard-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #64748b;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+/* Modal Footer */
+#estateHotlineModal .modal-footer {
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    padding: 0.85rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* ==========================================================================
+   DARK MODE STYLING
+   ========================================================================== */
+[data-theme="dark"] #estateHotlineModal .modal-content,
+body.dark-mode #estateHotlineModal .modal-content {
+    background: #0f172a;
+    color: #f1f5f9;
+}
+
+[data-theme="dark"] #estateHotlineModal .modal-header,
+body.dark-mode #estateHotlineModal .modal-header {
+    background: #020617;
+}
+
+[data-theme="dark"] .hotline-safety-notice,
+body.dark-mode .hotline-safety-notice {
+    background: rgba(30, 41, 59, 0.7);
+    border-color: #334155;
+}
+
+[data-theme="dark"] .hotline-safety-notice p,
+body.dark-mode .hotline-safety-notice p {
+    color: #e2e8f0;
+}
+
+[data-theme="dark"] .hotline-search-input,
+body.dark-mode .hotline-search-input {
+    background: #1e293b;
+    border-color: #334155;
+    color: #ffffff;
+}
+
+[data-theme="dark"] .hotline-card,
+body.dark-mode .hotline-card {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .hotline-card.is-primary,
+body.dark-mode .hotline-card.is-primary {
+    border-color: #7f1d1d;
+    background: rgba(127, 29, 29, 0.15);
+}
+
+[data-theme="dark"] .hotline-card-label,
+body.dark-mode .hotline-card-label {
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .hotline-card-number,
+body.dark-mode .hotline-card-number {
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .btn-hotline-copy,
+body.dark-mode .btn-hotline-copy {
+    background: #334155;
+    border-color: #475569;
+    color: #e2e8f0;
+}
+
+[data-theme="dark"] #estateHotlineModal .modal-footer,
+body.dark-mode #estateHotlineModal .modal-footer {
+    background: #020617;
+    border-color: #1e293b;
+}
+
+[data-theme="dark"] .estate-hotline-btn,
+body.dark-mode .estate-hotline-btn {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.5) !important;
+    color: #f87171 !important;
+}
+
+[data-theme="dark"] .estate-hotline-btn:hover,
+body.dark-mode .estate-hotline-btn:hover {
+    background: #dc2626 !important;
+    color: #ffffff !important;
+}

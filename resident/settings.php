@@ -130,7 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             if ($resident_zone_id) {
-                $zone_admin_q = $conn->query("SELECT id FROM users WHERE estate_id=$estate_id AND role='zone_admin' AND (zone_id=$resident_zone_id OR id IN (SELECT user_id FROM zones WHERE id=$resident_zone_id))");
+                $zone_admin_q = $conn->query("SELECT id FROM users WHERE estate_id=$estate_id AND role='zone_admin' AND zone_id=$resident_zone_id");
                 if ($zone_admin_q) {
                     while ($z_adm = $zone_admin_q->fetch_assoc()) {
                         $z_adm_id = $z_adm['id'];

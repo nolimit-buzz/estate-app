@@ -398,12 +398,20 @@ include 'sidebar.php';
                             <input type="hidden" name="save_installment_settings" value="1">
                             
                             <!-- Toggle Allow Installments -->
-                            <div class="form-check form-switch p-3 mb-4 rounded-3 border" style="background: rgba(126, 34, 206, 0.04); border-color: rgba(126, 34, 206, 0.18) !important;">
-                                <input class="form-check-input ms-0 me-3" type="checkbox" role="switch" id="allow_installments" name="allow_installments" value="1" <?= $billing_settings['allow_installments'] ? 'checked' : '' ?> style="width: 2.4em; height: 1.25em; cursor: pointer;">
-                                <label class="form-check-label fw-bold text-slate-900" for="allow_installments" style="cursor: pointer;">
-                                    Enable Installment Payments for Residents
-                                    <div class="text-secondary small fw-normal mt-0.5">When enabled, eligible residents in this zone can split invoices into an initial downpayment and subsequent scheduled milestones.</div>
-                                </label>
+                            <div class="p-3 mb-4 rounded-3 border" style="background: rgba(126, 34, 206, 0.04); border-color: rgba(126, 34, 206, 0.18) !important;">
+                                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3">
+                                    <div style="flex: 1; min-width: 0;">
+                                        <label class="form-check-label fw-bold text-slate-900 d-block mb-1" for="allow_installments" style="cursor: pointer; font-size: 0.95rem;">
+                                            Enable Installment Payments for Residents
+                                        </label>
+                                        <div class="text-secondary small fw-normal" style="font-size: 0.78rem; line-height: 1.45;">
+                                            When enabled, eligible residents in this zone can split invoices into an initial downpayment and subsequent scheduled milestones.
+                                        </div>
+                                    </div>
+                                    <div class="form-check form-switch ps-0 mb-0 align-self-end align-self-sm-center flex-shrink-0">
+                                        <input class="form-check-input m-0" type="checkbox" role="switch" id="allow_installments" name="allow_installments" value="1" <?= $billing_settings['allow_installments'] ? 'checked' : '' ?> style="width: 2.85rem; height: 1.45rem; cursor: pointer;">
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- Downpayment Percentage Slider & Input -->

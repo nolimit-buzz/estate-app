@@ -134,38 +134,38 @@ include '../includes/sidebar.php';
     </div>
 </div>
 
-<!-- Forum Operational Stats Strip -->
-<div class="row g-3 mb-4">
-    <div class="col-sm-6 col-lg-4">
-        <div class="stat-card p-3 d-flex align-items-center gap-3">
-            <div class="p-3 rounded-3 bg-primary bg-opacity-10 text-primary fs-4">
+<!-- Forum Operational Stats Strip (Horizontal Layout) -->
+<div class="row g-2 g-md-3 mb-3">
+    <div class="col-4">
+        <div class="stat-card p-2 p-md-3 d-flex flex-column flex-sm-row align-items-center text-center text-sm-start gap-1.5 gap-md-3 h-100 rounded-3">
+            <div class="p-2 rounded-3 bg-primary bg-opacity-10 text-primary flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; font-size: 1.1rem;">
                 <i class="fa-solid fa-comments"></i>
             </div>
-            <div>
-                <span class="text-secondary small fw-semibold text-uppercase">Total Forum Posts</span>
-                <div class="fs-4 fw-bold text-slate-900"><?= number_format($total_messages) ?></div>
+            <div class="min-w-0">
+                <span class="text-secondary small fw-semibold text-uppercase text-truncate d-block" style="font-size: 0.65rem;">Posts</span>
+                <div class="fs-5 fs-md-4 fw-bold text-slate-900"><?= number_format($total_messages) ?></div>
             </div>
         </div>
     </div>
-    <div class="col-sm-6 col-lg-4">
-        <div class="stat-card p-3 d-flex align-items-center gap-3">
-            <div class="p-3 rounded-3 bg-success bg-opacity-10 text-success fs-4">
+    <div class="col-4">
+        <div class="stat-card p-2 p-md-3 d-flex flex-column flex-sm-row align-items-center text-center text-sm-start gap-1.5 gap-md-3 h-100 rounded-3">
+            <div class="p-2 rounded-3 bg-success bg-opacity-10 text-success flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; font-size: 1.1rem;">
                 <i class="fa-solid fa-calendar-day"></i>
             </div>
-            <div>
-                <span class="text-secondary small fw-semibold text-uppercase">Posted Today</span>
-                <div class="fs-4 fw-bold text-slate-900"><?= number_format($today_messages) ?></div>
+            <div class="min-w-0">
+                <span class="text-secondary small fw-semibold text-uppercase text-truncate d-block" style="font-size: 0.65rem;">Today</span>
+                <div class="fs-5 fs-md-4 fw-bold text-slate-900"><?= number_format($today_messages) ?></div>
             </div>
         </div>
     </div>
-    <div class="col-sm-6 col-lg-4">
-        <div class="stat-card p-3 d-flex align-items-center gap-3">
-            <div class="p-3 rounded-3 bg-purple bg-opacity-10 text-purple-700 fs-4" style="background: rgba(168, 85, 247, 0.12); color: #7e22ce;">
+    <div class="col-4">
+        <div class="stat-card p-2 p-md-3 d-flex flex-column flex-sm-row align-items-center text-center text-sm-start gap-1.5 gap-md-3 h-100 rounded-3">
+            <div class="p-2 rounded-3 flex-shrink-0 d-flex align-items-center justify-content-center" style="background: rgba(168, 85, 247, 0.12); color: #7e22ce; width: 38px; height: 38px; font-size: 1.1rem;">
                 <i class="fa-solid fa-users-line"></i>
             </div>
-            <div>
-                <span class="text-secondary small fw-semibold text-uppercase">Active Participants</span>
-                <div class="fs-4 fw-bold text-slate-900"><?= number_format($active_posters) ?></div>
+            <div class="min-w-0">
+                <span class="text-secondary small fw-semibold text-uppercase text-truncate d-block" style="font-size: 0.65rem;">Active</span>
+                <div class="fs-5 fs-md-4 fw-bold text-slate-900"><?= number_format($active_posters) ?></div>
             </div>
         </div>
     </div>
@@ -213,24 +213,97 @@ include '../includes/sidebar.php';
         </div>
     </div>
 
-    <!-- Input Footer Bar -->
-    <div class="p-3 border-top" style="background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(10px);">
-        <form id="chatForm" class="d-flex align-items-center gap-2">
-            <div class="input-group flex-grow-1">
-                <span class="input-group-text bg-transparent border-end-0 text-secondary ps-3">
-                    <i class="fa-solid fa-shield-check text-primary"></i>
+    <!-- Modern Chat Input Footer Bar -->
+    <div class="chat-input-container p-3 border-top" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px);">
+        <form id="chatForm" class="d-flex align-items-center gap-2.5 m-0">
+            <div class="chat-capsule-wrapper d-flex align-items-center flex-grow-1">
+                <span class="chat-input-icon ps-3 pe-2 text-primary">
+                    <i class="fa-solid fa-shield-halved"></i>
                 </span>
-                <input type="text" id="messageInput" class="form-control border-start-0 ps-2" placeholder="Send an announcement or response as Central Administration..." required autocomplete="off" style="border-radius: 0 9999px 9999px 0; padding-top: 0.75rem; padding-bottom: 0.75rem;">
+                <input type="text" id="messageInput" class="chat-input-control flex-grow-1" placeholder="Broadcast an announcement or response as Central Administration..." required autocomplete="off">
             </div>
-            <button type="submit" id="sendBtn" class="btn btn-primary rounded-pill px-4 fw-semibold d-flex align-items-center gap-2 shadow-sm" style="padding-top: 0.75rem; padding-bottom: 0.75rem;">
+            <button type="submit" id="sendBtn" class="chat-send-btn d-flex align-items-center justify-content-center" title="Broadcast message">
                 <i class="fa-solid fa-paper-plane"></i>
-                <span class="d-none d-sm-inline">Broadcast</span>
             </button>
         </form>
     </div>
 </div>
 
 <style>
+.chat-capsule-wrapper {
+    background: #f1f5f9;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 9999px;
+    padding: 0.35rem 0.65rem;
+    transition: all 0.2s ease;
+}
+.chat-capsule-wrapper:focus-within {
+    background: #ffffff;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+.chat-input-control {
+    border: none;
+    outline: none;
+    background: transparent;
+    padding: 0.45rem 0.5rem;
+    font-size: 0.92rem;
+    color: #1e293b;
+    width: 100%;
+}
+.chat-input-control::placeholder {
+    color: #94a3b8;
+    font-size: 0.88rem;
+}
+.chat-send-btn {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #ffffff;
+    border: none;
+    outline: none;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+.chat-send-btn:hover {
+    transform: scale(1.06);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.45);
+    background: linear-gradient(135deg, #1d4ed8, #1e40af);
+}
+.chat-send-btn:active {
+    transform: scale(0.96);
+}
+
+[data-theme="dark"] .chat-input-container,
+body.dark-mode .chat-input-container {
+    background: rgba(15, 23, 42, 0.92) !important;
+    border-top-color: rgba(255, 255, 255, 0.08) !important;
+}
+[data-theme="dark"] .chat-capsule-wrapper,
+body.dark-mode .chat-capsule-wrapper {
+    background: rgba(30, 41, 59, 0.8) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+[data-theme="dark"] .chat-capsule-wrapper:focus-within,
+body.dark-mode .chat-capsule-wrapper:focus-within {
+    background: rgba(30, 41, 59, 1) !important;
+    border-color: #38bdf8 !important;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2) !important;
+}
+[data-theme="dark"] .chat-input-control,
+body.dark-mode .chat-input-control {
+    color: #f8fafc !important;
+}
+[data-theme="dark"] .chat-input-control::placeholder,
+body.dark-mode .chat-input-control::placeholder {
+    color: #64748b !important;
+}
 .status-dot-pulse {
     width: 8px;
     height: 8px;

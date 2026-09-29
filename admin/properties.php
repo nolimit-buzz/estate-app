@@ -248,13 +248,29 @@ $flat_types = $conn->query("SELECT * FROM flat_types ORDER BY name");
 $flat_statuses = $conn->query("SELECT * FROM flat_statuses ORDER BY name");
 ?>
 
-<div class="page-header-futuristic">
-    <div>
-        <h1 class="h4 font-bold text-slate-900 m-0"><i class="fa-solid fa-building me-2 text-secondary"></i> Property Portfolio & Assets</h1>
-        <p class="text-secondary small">Comprehensive directory of estate streets, buildings, and residential/commercial flats</p>
+<div class="hero-header-enterprise">
+    <div class="hero-title-group">
+        <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+            <h1>Property Portfolio &amp; Assets</h1>
+            <span class="mature-badge mature-badge-primary">
+                <i class="fa-solid fa-building me-1"></i> Physical Infrastructure
+            </span>
+        </div>
+        <div class="hero-meta-strip">
+            <span><i class="fa-solid fa-road me-1"></i> Streets</span>
+            <span>•</span>
+            <span><i class="fa-solid fa-city me-1"></i> Buildings &amp; Compounds</span>
+            <span>•</span>
+            <span><i class="fa-solid fa-door-open me-1"></i> Flats &amp; Units</span>
+        </div>
     </div>
-    <div class="d-flex gap-2">
-        <span class="id-chip"><i class="fa-solid fa-database me-1"></i> Inventory Directory</span>
+    <div class="hero-actions-group">
+        <a href="zones" class="btn-export-ghost">
+            <i class="fa-solid fa-layer-group text-primary"></i> Zones &amp; Sectors
+        </a>
+        <a href="owners" class="btn-export-ghost">
+            <i class="fa-solid fa-id-card-clip text-success"></i> Property Owners
+        </a>
     </div>
 </div>
 

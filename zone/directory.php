@@ -159,7 +159,7 @@ include 'sidebar.php';
      ========================================== -->
 <div class="directory-hero d-flex flex-wrap align-items-center justify-content-between gap-3">
     <div class="d-flex align-items-center gap-3">
-        <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(168, 85, 247, 0.15); color: #9333ea; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
+        <div class="glass-icon-circle hero-icon-circle glass-icon-light-purple" style="width: 48px; height: 48px; min-width: 48px; min-height: 48px; font-size: 1.4rem;">
             <i class="fa-solid fa-address-book"></i>
         </div>
         <div>

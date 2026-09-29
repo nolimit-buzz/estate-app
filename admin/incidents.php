@@ -221,9 +221,9 @@ include '../includes/sidebar.php';
             <div class="card border-0 shadow-sm rounded-4 p-3 bg-white mb-3">
                 <div class="row g-2 align-items-center">
                     <div class="col-12 col-md-3">
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-magnifying-glass text-secondary"></i></span>
-                            <input type="text" id="filter_search" placeholder="Search ref, resident, visitor, plate..." class="form-control border-start-0" onkeyup="debounceLoadIncidents()">
+                        <div class="search-integrated-wrap">
+                            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                            <input type="text" id="filter_search" placeholder="Search ref, resident, visitor, plate..." class="form-control" onkeyup="debounceLoadIncidents()">
                         </div>
                     </div>
                     <div class="col-6 col-md-2">

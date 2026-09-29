@@ -1,6 +1,7 @@
 <?php
 // includes/NoticeManager.php
 require_once __DIR__ . '/Mailer.php';
+require_once __DIR__ . '/WhatsApp.php';
 
 class NoticeManager {
     /**
@@ -18,7 +19,12 @@ class NoticeManager {
         $created_by = intval($data['created_by'] ?? ($_SESSION['user_id'] ?? 1));
         $pin_to_top = !empty($data['pin_to_top']) ? 1 : 0;
         $dispatch_notification = !empty($data['dispatch_notification']);
-        $dispatch_email = !empty($data['dispatch_email']);
+        $dispatch_email = isset($data['dispatch_email']) ? !empty($data['dispatch_email']) : true;
+        $dispatch_whatsapp = isset($data['dispatch_whatsapp']) ? !empty($data['dispatch_whatsapp']) : true;
+
+        if (function_exists('set_time_limit')) {
+            @set_time_limit(180);
+        }
 
         if (empty($title) || empty($content)) {
             return ['success' => false, 'message' => 'Title and content cannot be blank.'];
@@ -43,29 +49,8 @@ class NoticeManager {
         // Fetch target users for In-App Notifications and/or Broadcast Email
         $target_users = self::getTargetUsers($conn, $estate_id, $zone_id, $target_audience);
 
-        // 1. Dispatch in-app notifications
+        // Broadcasts remain strictly in estate_announcements and are NOT merged into notifications table
         $notification_count = 0;
-        if ($dispatch_notification && !empty($target_users)) {
-            $notif_title_esc = $conn->real_escape_string(($zone_id ? "[Zonal Notice] " : "[Estate Broadcast] ") . $title);
-            $notif_msg_esc = $conn->real_escape_string(substr(strip_tags($content), 0, 200) . (strlen($content) > 200 ? '...' : ''));
-            $notif_type = $zone_id ? 'zone_notice' : 'estate_broadcast';
-
-            $values = [];
-            foreach ($target_users as $u) {
-                $uid = intval($u['id']);
-                $values[] = "($estate_id, $uid, '$notif_title_esc', '$notif_msg_esc', '$notif_type', $notice_id, 0, NOW())";
-            }
-
-            if (!empty($values)) {
-                // Chunk insert if large
-                $chunks = array_chunk($values, 100);
-                foreach ($chunks as $chunk) {
-                    $bulk_sql = "INSERT INTO notifications (estate_id, user_id, title, message, type, reference_id, is_read, created_at) VALUES " . implode(',', $chunk);
-                    $conn->query($bulk_sql);
-                }
-                $notification_count = count($values);
-            }
-        }
 
         // 2. Dispatch broadcast email
         $email_count = 0;
@@ -74,11 +59,19 @@ class NoticeManager {
             $email_count = EstateMailer::sendBroadcastEmail($conn, $email_subject, nl2br(htmlspecialchars($content)), $target_audience, $estate_id, $zone_id);
         }
 
+        // 3. Dispatch broadcast WhatsApp via Kapso
+        $whatsapp_count = 0;
+        if ($dispatch_whatsapp && !empty($target_users) && class_exists('EstateWhatsApp')) {
+            $wa_subject = ($zone_id ? "[Zonal Notice] " : "[Estate Broadcast] ") . $title;
+            $whatsapp_count = EstateWhatsApp::sendBroadcastWhatsApp($conn, $wa_subject, $content, $target_audience, $estate_id, $zone_id);
+        }
+
         return [
             'success' => true,
             'notice_id' => $notice_id,
             'notifications_sent' => $notification_count,
             'emails_sent' => $email_count,
+            'whatsapp_sent' => $whatsapp_count,
             'message' => 'Broadcast / Notice successfully dispatched!'
         ];
     }
@@ -93,7 +86,7 @@ class NoticeManager {
         if ($zone_id && $zone_id > 0) {
             $zone_id = intval($zone_id);
             // Residents in zone
-            $sql = "SELECT DISTINCT u.id, u.name, u.email 
+            $sql = "SELECT DISTINCT u.id, u.name, u.email, u.phone 
                     FROM users u
                     JOIN residents r ON r.user_id = u.id
                     JOIN flats f ON r.flat_id = f.id
@@ -102,7 +95,7 @@ class NoticeManager {
                     WHERE u.estate_id = $estate_id AND s.zone_id = $zone_id AND r.status = 'active'";
             
             if ($target_audience === 'tenants' || $target_audience === 'residents') {
-                $sql .= " AND r.type = 'dependent' OR r.type = 'head'";
+                $sql .= " AND (r.type = 'dependent' OR r.type = 'head')";
             }
             
             $res = $conn->query($sql);
@@ -114,7 +107,7 @@ class NoticeManager {
 
             // Also check property owners with properties in this zone if target_audience is 'all' or 'owners'
             if ($target_audience === 'all' || $target_audience === 'owners') {
-                $owner_sql = "SELECT DISTINCT u.id, u.name, u.email
+                $owner_sql = "SELECT DISTINCT u.id, u.name, u.email, u.phone
                               FROM users u
                               JOIN property_owners po ON (po.email = u.email AND po.estate_id = $estate_id)
                               JOIN owner_properties op ON po.id = op.owner_id
@@ -138,7 +131,7 @@ class NoticeManager {
             } elseif ($target_audience === 'tenants' || $target_audience === 'residents') {
                 $where .= " AND role = 'resident'";
             }
-            $res = $conn->query("SELECT id, name, email FROM users WHERE $where");
+            $res = $conn->query("SELECT id, name, email, phone FROM users WHERE $where");
             if ($res) {
                 while ($r = $res->fetch_assoc()) {
                     $users[$r['id']] = $r;

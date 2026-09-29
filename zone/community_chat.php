@@ -113,7 +113,7 @@ include 'sidebar.php';
 ?>
 
 <!-- Zonal Chat Header -->
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+<div class="desktop-only d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
     <div>
         <div class="d-flex align-items-center gap-2 mb-1">
             <span class="mature-badge py-1 px-2.5 rounded-pill" style="background: rgba(168, 85, 247, 0.12); color: #7e22ce; font-weight: 600; font-size: 0.8rem; border: 1px solid rgba(168, 85, 247, 0.25);">
@@ -171,24 +171,94 @@ include 'sidebar.php';
         </div>
     </div>
 
-    <!-- Input Footer Bar -->
-    <div class="p-3 border-top" style="background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(10px);">
-        <form id="chatForm" class="d-flex align-items-center gap-2">
-            <div class="input-group flex-grow-1">
-                <span class="input-group-text bg-transparent border-end-0 text-secondary ps-3">
-                    <i class="fa-solid fa-layer-group" style="color: #7e22ce;"></i>
+    <!-- Modern Chat Input Footer Bar -->
+    <div class="chat-input-container p-3 border-top" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px);">
+        <form id="chatForm" class="d-flex align-items-center gap-2.5 m-0">
+            <div class="chat-capsule-wrapper d-flex align-items-center flex-grow-1">
+                <span class="chat-input-icon ps-3 pe-2" style="color: #7e22ce;">
+                    <i class="fa-solid fa-layer-group"></i>
                 </span>
-                <input type="text" id="messageInput" class="form-control border-start-0 ps-2" placeholder="Write a message as <?= htmlspecialchars($zone_code_display) ?> Admin..." required autocomplete="off" style="border-radius: 0 9999px 9999px 0; padding-top: 0.75rem; padding-bottom: 0.75rem;">
+                <input type="text" id="messageInput" class="chat-input-control flex-grow-1" placeholder="Write a message as <?= htmlspecialchars($zone_code_display) ?> Admin..." required autocomplete="off">
             </div>
-            <button type="submit" id="sendBtn" class="btn text-white rounded-pill px-4 fw-semibold d-flex align-items-center gap-2 shadow-sm" style="background: #7e22ce; padding-top: 0.75rem; padding-bottom: 0.75rem;">
+            <button type="submit" id="sendBtn" class="chat-send-btn d-flex align-items-center justify-content-center" title="Send message" style="background: linear-gradient(135deg, #7e22ce, #6b21a8); box-shadow: 0 4px 12px rgba(126, 34, 206, 0.35);">
                 <i class="fa-solid fa-paper-plane"></i>
-                <span class="d-none d-sm-inline">Send</span>
             </button>
         </form>
     </div>
 </div>
 
 <style>
+.chat-capsule-wrapper {
+    background: #f1f5f9;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 9999px;
+    padding: 0.35rem 0.65rem;
+    transition: all 0.2s ease;
+}
+.chat-capsule-wrapper:focus-within {
+    background: #ffffff;
+    border-color: #7e22ce;
+    box-shadow: 0 0 0 3px rgba(126, 34, 206, 0.15);
+}
+.chat-input-control {
+    border: none;
+    outline: none;
+    background: transparent;
+    padding: 0.45rem 0.5rem;
+    font-size: 0.92rem;
+    color: #1e293b;
+    width: 100%;
+}
+.chat-input-control::placeholder {
+    color: #94a3b8;
+    font-size: 0.88rem;
+}
+.chat-send-btn {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    border-radius: 50%;
+    color: #ffffff;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+.chat-send-btn:hover {
+    transform: scale(1.06);
+    box-shadow: 0 6px 16px rgba(126, 34, 206, 0.45);
+}
+.chat-send-btn:active {
+    transform: scale(0.96);
+}
+
+[data-theme="dark"] .chat-input-container,
+body.dark-mode .chat-input-container {
+    background: rgba(15, 23, 42, 0.92) !important;
+    border-top-color: rgba(255, 255, 255, 0.08) !important;
+}
+[data-theme="dark"] .chat-capsule-wrapper,
+body.dark-mode .chat-capsule-wrapper {
+    background: rgba(30, 41, 59, 0.8) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+[data-theme="dark"] .chat-capsule-wrapper:focus-within,
+body.dark-mode .chat-capsule-wrapper:focus-within {
+    background: rgba(30, 41, 59, 1) !important;
+    border-color: #a855f7 !important;
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2) !important;
+}
+[data-theme="dark"] .chat-input-control,
+body.dark-mode .chat-input-control {
+    color: #f8fafc !important;
+}
+[data-theme="dark"] .chat-input-control::placeholder,
+body.dark-mode .chat-input-control::placeholder {
+    color: #64748b !important;
+}
 .status-dot-pulse {
     width: 8px;
     height: 8px;

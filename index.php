@@ -61,10 +61,12 @@ if ($pol_q) {
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Landing CSS -->
-    <link rel="stylesheet" href="css/landing.css?v=<?php echo time(); ?>">
+    <!-- Core Design & Mobile CSS -->
     <link rel="stylesheet" href="css/estate_notifications.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="css/mobile_app.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="css/landing.css?v=<?php echo time(); ?>">
     <script src="js/estate_notifications.js?v=<?php echo time(); ?>"></script>
+    <script src="js/mobile_app.js?v=<?php echo time(); ?>" defer></script>
     
     <style>
         :root {
@@ -89,6 +91,7 @@ if ($pol_q) {
             <ul class="nav-links">
                 <li><a href="#about">About</a></li>
                 <li><a href="#portals">Portals</a></li>
+                <li><a href="artisan_register.php"><i class="fa-solid fa-wrench me-1 text-primary"></i> Artisan Network</a></li>
                 <li><a href="#features">Amenities</a></li>
                 <?php if ($estate_rules || $estate_conduct): ?>
                     <li><a href="#governance">Governance</a></li>
@@ -118,7 +121,123 @@ if ($pol_q) {
 
     <!-- Hero Section with Luxury Estate Image Blend -->
     <section class="hero-section" id="about">
-        <div class="hero-content">
+        <!-- Mature Executive Mobile Hero Showcase -->
+        <div class="mobile-only w-100 mobile-hero-wrapper">
+            <div class="mobile-hero-showcase">
+                <!-- Status & Brand Indicator -->
+                <div class="mobile-hero-badge">
+                    <span class="live-pulse-dot"></span>
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span>Official Estate Portal &bull; Gated Community</span>
+                </div>
+
+                <!-- Mature Main Title -->
+                <h1 class="mobile-hero-title">
+                    Smart, Secure &amp; Connected Community Living
+                </h1>
+
+                <!-- Mature Subtitle (No mention of rent!) -->
+                <p class="mobile-hero-subtitle">
+                    Welcome to <strong><?php echo htmlspecialchars($estate_name); ?></strong>. <?php echo htmlspecialchars($estate_motto); ?>. Enjoy seamless digital gate access, automated service assessments, instant maintenance dispatch, and unified neighborhood governance.
+                </p>
+
+                <!-- Primary & Secondary Action CTAs -->
+                <div class="mobile-hero-actions">
+                    <a href="#portals" class="mobile-btn-primary">
+                        <span>Access Portals</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                    <a href="#features" class="mobile-btn-glass">
+                        <i class="fa-solid fa-compass"></i>
+                        <span>Explore Amenities</span>
+                    </a>
+                </div>
+
+                <!-- Executive Mobile Micro-Stats Strip (2x2 Grid) -->
+                <div class="mobile-hero-stats">
+                    <div class="mobile-stat-chip">
+                        <div class="stat-chip-icon stat-icon-emerald"><i class="fa-solid fa-shield-halved"></i></div>
+                        <div class="stat-chip-text">
+                            <strong>24/7</strong>
+                            <span>Gate Security</span>
+                        </div>
+                    </div>
+                    <div class="mobile-stat-chip">
+                        <div class="stat-chip-icon stat-icon-sky"><i class="fa-solid fa-qrcode"></i></div>
+                        <div class="stat-chip-text">
+                            <strong>100%</strong>
+                            <span>Digital Passes</span>
+                        </div>
+                    </div>
+                    <div class="mobile-stat-chip">
+                        <div class="stat-chip-icon stat-icon-indigo"><i class="fa-solid fa-receipt"></i></div>
+                        <div class="stat-chip-text">
+                            <strong>Instant</strong>
+                            <span>Assessments</span>
+                        </div>
+                    </div>
+                    <div class="mobile-stat-chip">
+                        <div class="stat-chip-icon stat-icon-amber"><i class="fa-solid fa-bolt"></i></div>
+                        <div class="stat-chip-text">
+                            <strong>Rapid</strong>
+                            <span>Maintenance</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Instant Direct Portal Launcher for Mobile Users -->
+                <div class="mobile-portal-launcher">
+                    <div class="launcher-header">
+                        <i class="fa-solid fa-arrow-right-to-bracket text-primary"></i>
+                        <span>Direct Portal Access</span>
+                    </div>
+                    <div class="launcher-grid">
+                        <a href="resident/login" class="launcher-item launcher-resident">
+                            <div class="launcher-icon"><i class="fa-solid fa-house-user"></i></div>
+                            <div class="launcher-info">
+                                <span class="launcher-name">Resident Portal</span>
+                                <span class="launcher-sub">Passes, Dues &amp; Community</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-right launcher-arrow"></i>
+                        </a>
+                        <a href="staff/login" class="launcher-item launcher-staff">
+                            <div class="launcher-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                            <div class="launcher-info">
+                                <span class="launcher-name">Staff &amp; Security</span>
+                                <span class="launcher-sub">Gatehouse Scanner &amp; Shifts</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-right launcher-arrow"></i>
+                        </a>
+                        <a href="zone/login" class="launcher-item launcher-zone">
+                            <div class="launcher-icon"><i class="fa-solid fa-diagram-project"></i></div>
+                            <div class="launcher-info">
+                                <span class="launcher-name">Zonal Admin</span>
+                                <span class="launcher-sub">Streets, Levies &amp; Residents</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-right launcher-arrow"></i>
+                        </a>
+                        <a href="login" class="launcher-item launcher-admin">
+                            <div class="launcher-icon"><i class="fa-solid fa-building-columns"></i></div>
+                            <div class="launcher-info">
+                                <span class="launcher-name">Central Hub</span>
+                                <span class="launcher-sub">Estate-Wide Oversight</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-right launcher-arrow"></i>
+                        </a>
+                        <a href="artisan_register.php?ref=public" class="launcher-item" style="border-left-color: #0284c7;">
+                            <div class="launcher-icon" style="background: rgba(2, 132, 199, 0.1); color: #0284c7;"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+                            <div class="launcher-info">
+                                <span class="launcher-name">Artisan Network</span>
+                                <span class="launcher-sub">Accreditation &amp; Onboarding</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-right launcher-arrow"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="hero-content desktop-only">
             <div class="hero-badge">
                 <i class="fa-solid fa-shield-halved"></i>
                 <span>Gated & Secure Smart Community</span>
@@ -261,6 +380,28 @@ if ($pol_q) {
                 </ul>
                 <a href="login" class="portal-btn">
                     <span>Central Sign In</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </a>
+            </div>
+
+            <!-- 5. Artisan & Facility Contractors -->
+            <div class="portal-card" style="border-top: 4px solid #0284c7;">
+                <div class="portal-icon-wrapper" style="background: rgba(2, 132, 199, 0.1); color: #0284c7;">
+                    <i class="fa-solid fa-screwdriver-wrench"></i>
+                </div>
+                <span class="portal-tag" style="background: rgba(2, 132, 199, 0.1); color: #0284c7;">Artisans &amp; Trades</span>
+                <h3 class="portal-title">Artisan Network</h3>
+                <p class="portal-desc">
+                    Plumbers, electricians, HVAC technicians, carpenters, and facility contractors can apply for official estate accreditation and receive service requests.
+                </p>
+                <ul class="portal-features">
+                    <li><i class="fa-solid fa-circle-check"></i> Central Admin Vetted Badge</li>
+                    <li><i class="fa-solid fa-circle-check"></i> Direct Resident Work Orders</li>
+                    <li><i class="fa-solid fa-circle-check"></i> Seamless Security Gate Clearance</li>
+                    <li><i class="fa-solid fa-circle-check"></i> Trust Ratings &amp; Performance Review</li>
+                </ul>
+                <a href="artisan_register.php?ref=public" class="portal-btn" style="background: #0284c7; color: #fff;">
+                    <span>Apply for Accreditation</span>
                     <i class="fa-solid fa-arrow-right"></i>
                 </a>
             </div>

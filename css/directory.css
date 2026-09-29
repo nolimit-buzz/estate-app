@@ -176,12 +176,16 @@
 .dir-avatar {
     width: 52px;
     height: 52px;
-    border-radius: 12px;
+    min-width: 52px;
+    min-height: 52px;
+    border-radius: 50% !important;
+    aspect-ratio: 1 / 1 !important;
+    overflow: hidden !important;
     object-fit: cover;
-    flex-shrink: 0;
+    flex-shrink: 0 !important;
     background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
     color: #ffffff;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     font-weight: 700;
@@ -192,12 +196,16 @@
 .dir-avatar-dependent {
     width: 38px;
     height: 38px;
-    border-radius: 8px;
+    min-width: 38px;
+    min-height: 38px;
+    border-radius: 50% !important;
+    aspect-ratio: 1 / 1 !important;
+    overflow: hidden !important;
     object-fit: cover;
-    flex-shrink: 0;
+    flex-shrink: 0 !important;
     background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
     color: #ffffff;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     font-weight: 600;
@@ -586,6 +594,61 @@
 .dir-toast.show {
     opacity: 1;
     transform: translateY(0);
+}
+
+/* Responsive Toolbar Space Maximization (iPhone 16, mobile & tablet) */
+@media (max-width: 991px) {
+    .directory-toolbar {
+        padding: 0.85rem;
+        margin-bottom: 1.25rem;
+    }
+    .directory-toolbar .search-input-wrap {
+        min-width: 100%;
+        width: 100%;
+    }
+    .directory-toolbar .d-flex.flex-wrap {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.5rem !important;
+        width: 100% !important;
+    }
+    .filter-select {
+        width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box;
+        padding: 0.55rem 1.6rem 0.55rem 0.65rem;
+        font-size: 0.82rem;
+        text-overflow: ellipsis;
+    }
+    .view-mode-toggle {
+        display: flex !important;
+        width: 100% !important;
+        box-sizing: border-box;
+        justify-content: stretch;
+    }
+    .view-mode-toggle .view-btn {
+        flex: 1;
+        justify-content: center;
+        padding: 0.45rem 0.35rem;
+        font-size: 0.82rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .directory-toolbar {
+        padding: 0.7rem;
+    }
+    .directory-toolbar .d-flex.flex-wrap {
+        gap: 0.4rem !important;
+    }
+    .filter-select {
+        font-size: 0.78rem;
+        padding: 0.5rem 1.4rem 0.5rem 0.55rem;
+    }
+    .view-mode-toggle .view-btn {
+        font-size: 0.78rem;
+        padding: 0.4rem 0.2rem;
+    }
 }
 
 /* Print Optimization */

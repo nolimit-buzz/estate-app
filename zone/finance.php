@@ -456,29 +456,31 @@ include 'header.php';
 include 'sidebar.php';
 ?>
 
-<div class="page-header-futuristic mb-4">
-    <div>
-        <div class="header-breadcrumbs">
-            <span>Treasury</span>
-            <i class="fa-solid fa-chevron-right separator"></i>
-            <span>Zonal Billing & Collections</span>
-            <i class="fa-solid fa-chevron-right separator"></i>
-            <span class="active">Finance Hub</span>
+<!-- Enterprise Hero Header (Image 3 Style) -->
+<div class="hero-header-enterprise">
+    <div class="hero-title-group">
+        <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+            <h1>Zonal Finance &amp; Collections</h1>
+            <span class="mature-badge mature-badge-purple">
+                <i class="fa-solid fa-wallet me-1"></i> Zone <?php echo htmlspecialchars($_SESSION['zone_name'] ?? 'Treasury'); ?>
+            </span>
         </div>
-        <h1 class="page-title">Zonal Finance & Collections Hub</h1>
-        <p class="page-subtitle">Complete treasury console for <?php echo htmlspecialchars($_SESSION['zone_name'] ?? 'your zone'); ?>: targeted billing, collection reconciliation, receipts, and offline ledger.</p>
+        <div class="hero-meta-strip">
+            <span><i class="fa-solid fa-file-invoice-dollar me-1"></i> Zonal Assessment Ledger</span>
+            <span>•</span>
+            <span><i class="fa-solid fa-receipt me-1"></i> Verified Collections</span>
+            <span>•</span>
+            <span class="text-success"><i class="fa-solid fa-circle me-1" style="font-size: 0.5rem;"></i> Active Scope</span>
+        </div>
     </div>
-    <div class="header-actions">
-        <button type="button" onclick="exportFinanceCSV()" class="btn btn-sm btn-outline-secondary" style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.55rem 0.9rem; font-weight:600;">
-            <i class="fa-solid fa-file-export"></i> Export Ledger
+    <div class="hero-actions-group">
+        <button type="button" onclick="exportFinanceCSV()" class="btn-export-ghost" title="Export Ledger to CSV">
+            <i class="fa-solid fa-file-csv text-purple" style="color: #7e22ce;"></i> Export Ledger
         </button>
-        <button type="button" onclick="openPaymentMethodsModal()" class="btn btn-sm btn-outline-secondary" style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.55rem 0.9rem; font-weight:600;">
-            <i class="fa-solid fa-credit-card"></i> Payment Channels
+        <button type="button" onclick="openPaymentMethodsModal()" class="btn-export-ghost" title="Payment Channels">
+            <i class="fa-solid fa-credit-card text-success"></i> Channels
         </button>
-        <a href="charges" class="btn btn-sm btn-outline-secondary" style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.55rem 0.9rem; font-weight:600; text-decoration:none;">
-            <i class="fa-solid fa-list-check"></i> Charge Catalog
-        </a>
-        <button onclick="document.getElementById('invoiceModal').style.display='flex'" class="btn btn-sm text-white" style="background: #6b21a8; border: none; padding:0.55rem 1.1rem; font-weight:600; border-radius:0.45rem; display:inline-flex; align-items:center; gap:0.4rem;">
+        <button type="button" onclick="document.getElementById('invoiceModal').style.display='flex'" class="btn-primary-action-pill" style="background: linear-gradient(135deg, #7e22ce 0%, #6b21a8 100%); box-shadow: 0 4px 14px -2px rgba(126, 34, 206, 0.4);">
             <i class="fa-solid fa-plus"></i> Invoicing Dispatch
         </button>
     </div>
@@ -537,9 +539,9 @@ include 'sidebar.php';
 <!-- ==========================================
      EXECUTIVE FINANCIAL KPIS (4 PILLARS)
      ========================================== -->
-<div class="row g-3 mb-4">
+<div class="row g-2 g-md-3 mb-4">
     <!-- Pillar 1: Today's Collection -->
-    <div class="col-12 col-sm-6 col-xl-3">
+    <div class="col-6 col-xl-3">
         <div class="kpi-card h-100">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
@@ -561,7 +563,7 @@ include 'sidebar.php';
     </div>
 
     <!-- Pillar 2: Month Collection -->
-    <div class="col-12 col-sm-6 col-xl-3">
+    <div class="col-6 col-xl-3">
         <div class="kpi-card h-100">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
@@ -583,7 +585,7 @@ include 'sidebar.php';
     </div>
 
     <!-- Pillar 3: Total Outstanding -->
-    <div class="col-12 col-sm-6 col-xl-3">
+    <div class="col-6 col-xl-3">
         <div class="kpi-card h-100">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
@@ -605,7 +607,7 @@ include 'sidebar.php';
     </div>
 
     <!-- Pillar 4: Overdue Delinquency -->
-    <div class="col-12 col-sm-6 col-xl-3">
+    <div class="col-6 col-xl-3">
         <div class="kpi-card h-100">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
@@ -633,14 +635,14 @@ include 'sidebar.php';
      PAYMENT METHOD RECONCILIATION MATRIX
      ========================================== -->
 <div class="mature-card mb-4">
-    <div class="mature-card-header">
-        <div>
+    <div class="mature-card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <div style="min-width: 0; flex: 1 1 240px;">
             <h3 class="mature-card-title">
                 <i class="fa-solid fa-chart-pie text-secondary"></i> Zonal Payment Channel Breakdown
             </h3>
             <p style="margin: 0.2rem 0 0; font-size: 0.8rem; color: var(--text-muted);">Realized collections across electronic channels, zonal cash desk, POS machines, and direct bank transfers.</p>
         </div>
-        <button type="button" onclick="openPaymentMethodsModal()" class="btn btn-sm btn-outline-secondary" style="font-size: 0.8rem;">
+        <button type="button" onclick="openPaymentMethodsModal()" class="btn btn-sm btn-outline-secondary btn-no-wrap flex-shrink-0" style="font-size: 0.8rem;">
             <i class="fa-solid fa-plus me-1"></i> Manage Types
         </button>
     </div>

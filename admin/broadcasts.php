@@ -29,6 +29,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])
 
 // Handle Form Submission: Create / Dispatch Broadcast
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['dispatch_broadcast'])) {
+    if (function_exists('set_time_limit')) {
+        @set_time_limit(180);
+    }
     $scope = $_POST['scope'] ?? 'estate';
     $zone_id = ($scope === 'zone' && !empty($_POST['target_zone_id'])) ? intval($_POST['target_zone_id']) : null;
     $title = trim($_POST['title'] ?? '');
@@ -36,8 +39,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['dispatch_broadcast'])
     $target_audience = $_POST['target_audience'] ?? 'all';
     $priority = $_POST['priority'] ?? 'normal';
     $pin_to_top = isset($_POST['pin_to_top']) ? 1 : 0;
-    $dispatch_notification = isset($_POST['channel_in_app']);
+    $dispatch_notification = false; // Broadcasts stay strictly in broadcasts, not merged into notifications
     $dispatch_email = isset($_POST['channel_email']);
+    $dispatch_whatsapp = isset($_POST['channel_whatsapp']);
 
     if (empty($title) || empty($content)) {
         $error = "Subject / Title and Notice content cannot be blank.";
@@ -54,7 +58,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['dispatch_broadcast'])
             'created_by' => $_SESSION['user_id'] ?? 1,
             'pin_to_top' => $pin_to_top,
             'dispatch_notification' => $dispatch_notification,
-            'dispatch_email' => $dispatch_email
+            'dispatch_email' => $dispatch_email,
+            'dispatch_whatsapp' => $dispatch_whatsapp
         ]);
 
         if ($result['success']) {
@@ -64,6 +69,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['dispatch_broadcast'])
             }
             if ($result['emails_sent'] > 0) {
                 $msg_parts[] = "{$result['emails_sent']} broadcast email(s) sent.";
+            }
+            if (!empty($result['whatsapp_sent']) && $result['whatsapp_sent'] > 0) {
+                $msg_parts[] = "{$result['whatsapp_sent']} WhatsApp broadcast(s) delivered via Kapso.";
             }
             $message = implode(" ", $msg_parts);
         } else {
@@ -144,6 +152,9 @@ include '../includes/sidebar.php';
         <a href="email_logs" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1">
             <i class="fa-solid fa-envelope-open-text"></i> Email Logs
         </a>
+        <a href="whatsapp_logs" class="btn btn-sm btn-outline-success d-flex align-items-center gap-1">
+            <i class="fa-brands fa-whatsapp"></i> WhatsApp Logs
+        </a>
         <button type="button" onclick="openBroadcastModal()" class="btn btn-sm btn-primary d-flex align-items-center gap-2 fw-semibold shadow-sm">
             <i class="fa-solid fa-paper-plane"></i> Dispatch New Broadcast
         </button>
@@ -165,55 +176,55 @@ include '../includes/sidebar.php';
     <?php endif; ?>
 
     <!-- KPI Metric Cards -->
-    <div class="row g-3 mb-4">
-        <div class="col-12 col-sm-6 col-xl-3">
-            <div class="kpi-card h-100 p-3 bg-white rounded-3 border" style="border-color: #e2e8f0;">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <span class="text-secondary small fw-semibold text-uppercase">Total Dispatched</span>
+    <div class="row g-2 g-md-3 mb-4">
+        <div class="col-6 col-xl-3">
+            <div class="kpi-card h-100 p-3 bg-white rounded-4 border shadow-sm" style="border-color: #e2e8f0; overflow: hidden;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div style="flex: 1; min-width: 0;">
+                        <span class="text-secondary small fw-semibold text-uppercase text-truncate d-block">Total Dispatched</span>
                         <div class="fs-3 fw-bold text-slate-900 mt-1"><?php echo number_format($total_broadcasts); ?></div>
                     </div>
-                    <div class="p-2 rounded-2" style="background: rgba(59, 130, 246, 0.1); color: #2563eb;">
-                        <i class="fa-solid fa-bullhorn fs-5"></i>
+                    <div class="glass-icon-circle glass-icon-light-blue" style="width: 44px; height: 44px; min-width: 44px; min-height: 44px; font-size: 1.15rem;">
+                        <i class="fa-solid fa-bullhorn"></i>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-12 col-sm-6 col-xl-3">
-            <div class="kpi-card h-100 p-3 bg-white rounded-3 border" style="border-color: #e2e8f0;">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <span class="text-secondary small fw-semibold text-uppercase">Estate-Wide Broadcasts</span>
+        <div class="col-6 col-xl-3">
+            <div class="kpi-card h-100 p-3 bg-white rounded-4 border shadow-sm" style="border-color: #e2e8f0; overflow: hidden;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div style="flex: 1; min-width: 0;">
+                        <span class="text-secondary small fw-semibold text-uppercase text-truncate d-block">Estate-Wide Broadcasts</span>
                         <div class="fs-3 fw-bold text-slate-900 mt-1"><?php echo number_format($estate_wide_cnt); ?></div>
                     </div>
-                    <div class="p-2 rounded-2" style="background: rgba(16, 185, 129, 0.1); color: #059669;">
-                        <i class="fa-solid fa-globe fs-5"></i>
+                    <div class="glass-icon-circle glass-icon-light-emerald" style="width: 44px; height: 44px; min-width: 44px; min-height: 44px; font-size: 1.15rem;">
+                        <i class="fa-solid fa-globe"></i>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-12 col-sm-6 col-xl-3">
-            <div class="kpi-card h-100 p-3 bg-white rounded-3 border" style="border-color: #e2e8f0;">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <span class="text-secondary small fw-semibold text-uppercase">Zonal Notices</span>
+        <div class="col-6 col-xl-3">
+            <div class="kpi-card h-100 p-3 bg-white rounded-4 border shadow-sm" style="border-color: #e2e8f0; overflow: hidden;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div style="flex: 1; min-width: 0;">
+                        <span class="text-secondary small fw-semibold text-uppercase text-truncate d-block">Zonal Notices</span>
                         <div class="fs-3 fw-bold text-slate-900 mt-1"><?php echo number_format($zonal_notices_cnt); ?></div>
                     </div>
-                    <div class="p-2 rounded-2" style="background: rgba(168, 85, 247, 0.1); color: #9333ea;">
-                        <i class="fa-solid fa-layer-group fs-5"></i>
+                    <div class="glass-icon-circle glass-icon-light-purple" style="width: 44px; height: 44px; min-width: 44px; min-height: 44px; font-size: 1.15rem;">
+                        <i class="fa-solid fa-layer-group"></i>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-12 col-sm-6 col-xl-3">
-            <div class="kpi-card h-100 p-3 bg-white rounded-3 border" style="border-color: #e2e8f0;">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <span class="text-secondary small fw-semibold text-uppercase">Urgent Advisories</span>
+        <div class="col-6 col-xl-3">
+            <div class="kpi-card h-100 p-3 bg-white rounded-4 border shadow-sm" style="border-color: #e2e8f0; overflow: hidden;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div style="flex: 1; min-width: 0;">
+                        <span class="text-secondary small fw-semibold text-uppercase text-truncate d-block">Urgent Advisories</span>
                         <div class="fs-3 fw-bold text-danger mt-1"><?php echo number_format($urgent_cnt); ?></div>
                     </div>
-                    <div class="p-2 rounded-2" style="background: rgba(239, 68, 68, 0.1); color: #dc2626;">
-                        <i class="fa-solid fa-triangle-exclamation fs-5"></i>
+                    <div class="glass-icon-circle glass-icon-rose" style="width: 44px; height: 44px; min-width: 44px; min-height: 44px; font-size: 1.15rem;">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
                     </div>
                 </div>
             </div>
@@ -225,9 +236,9 @@ include '../includes/sidebar.php';
         <div class="card-body p-3">
             <form method="GET" class="row g-2 align-items-center">
                 <div class="col-12 col-md-4">
-                    <div class="input-group input-group-sm">
-                        <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
-                        <input type="text" name="search" class="form-control border-start-0" placeholder="Search notices by title or keywords..." value="<?php echo htmlspecialchars($search); ?>">
+                    <div class="search-integrated-wrap">
+                        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                        <input type="text" name="search" class="form-control" placeholder="Search notices by title or keywords..." value="<?php echo htmlspecialchars($search); ?>">
                     </div>
                 </div>
                 <div class="col-6 col-md-2">
@@ -332,7 +343,7 @@ include '../includes/sidebar.php';
                                 </td>
                                 <td style="text-align: right;">
                                     <div class="btn-group btn-group-sm">
-                                        <button type="button" class="btn btn-outline-primary" onclick='viewNotice(<?php echo json_encode($ann); ?>)' title="View Full Notice">
+                                        <button type="button" class="btn btn-outline-primary btn-view-notice" data-notice="<?php echo htmlspecialchars(json_encode($ann, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8'); ?>" title="View Full Notice">
                                             <i class="fa-regular fa-eye"></i>
                                         </button>
                                         <a href="broadcasts?action=delete&id=<?php echo $ann['id']; ?>" class="btn btn-outline-danger" onclick="return confirm('Are you sure you want to delete this broadcast notice?');" title="Delete Notice">
@@ -357,17 +368,17 @@ include '../includes/sidebar.php';
     </div>
 
 <!-- Compose Broadcast Modal -->
-<div id="broadcastModal" class="modal-backdrop" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); z-index: 1050; align-items: center; justify-content: center; backdrop-filter: blur(8px);">
-    <div class="modal-dialog modal-dialog-centered" style="max-width: 650px; width: 95%;">
-        <div class="modal-content bg-white rounded-3 shadow-lg border-0 overflow-hidden">
-            <form method="POST" action="broadcasts">
-                <div class="modal-header bg-light px-4 py-3 border-bottom d-flex justify-content-between align-items-center">
+<div id="broadcastModal" class="custom-modal-overlay" onclick="if(event.target === this) closeBroadcastModal()" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); z-index: 1060; backdrop-filter: blur(8px); overflow-y: auto; padding: 1.5rem 1rem;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 680px; width: 100%; margin: auto;">
+        <div class="modal-content bg-white rounded-4 shadow-lg border-0" style="max-height: calc(100vh - 3rem); display: flex; flex-direction: column; overflow: hidden;">
+            <form method="POST" action="broadcasts" style="display: flex; flex-direction: column; height: 100%; margin: 0; overflow: hidden;">
+                <div class="modal-header bg-light px-4 py-3 border-bottom d-flex justify-content-between align-items-center flex-shrink-0">
                     <h5 class="modal-title fw-bold text-slate-900 m-0" style="font-size: 1.1rem;">
                         <i class="fa-solid fa-bullhorn text-primary me-2"></i>Dispatch Estate Broadcast / Notice
                     </h5>
                     <button type="button" onclick="closeBroadcastModal()" class="btn-close" style="font-size: 0.8rem;"></button>
                 </div>
-                <div class="modal-body p-4">
+                <div class="modal-body p-4" style="overflow-y: auto; flex: 1 1 auto; -webkit-overflow-scrolling: touch;">
                     <div class="row g-3">
                         <!-- Target Scope -->
                         <div class="col-12 col-sm-6">
@@ -420,7 +431,7 @@ include '../includes/sidebar.php';
                         <!-- Content Body -->
                         <div class="col-12">
                             <label class="form-label small fw-bold text-secondary">Announcement Message Content <span class="text-danger">*</span></label>
-                            <textarea name="content" class="form-control" rows="5" required placeholder="Enter the complete advisory, guidelines, or notice details here..."></textarea>
+                            <textarea name="content" class="form-control" rows="4" style="min-height: 95px;" required placeholder="Enter the complete advisory, guidelines, or notice details here..."></textarea>
                         </div>
 
                         <!-- Dispatch Channels -->
@@ -430,19 +441,19 @@ include '../includes/sidebar.php';
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" name="channel_feed" id="chFeed" checked disabled>
                                     <label class="form-check-label small fw-semibold" for="chFeed">
-                                        <i class="fa-solid fa-bullhorn text-primary me-1"></i> Resident Portal Noticeboard &amp; Live Feed (Default)
+                                        <i class="fa-solid fa-bullhorn text-primary me-1"></i> Resident Portal Noticeboard &amp; Live Broadcast Feed (Default)
                                     </label>
                                 </div>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="channel_in_app" id="chInApp" value="1" checked>
-                                    <label class="form-check-label small" for="chInApp">
-                                        <i class="fa-solid fa-bell text-warning me-1"></i> Send Direct In-App Notification Alerts to Target Users
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="channel_email" id="chEmail" value="1">
+                                    <input class="form-check-input" type="checkbox" name="channel_email" id="chEmail" value="1" checked>
                                     <label class="form-check-label small" for="chEmail">
-                                        <i class="fa-solid fa-envelope text-success me-1"></i> Dispatch Outbound Broadcast Email (via SMTP)
+                                        <i class="fa-solid fa-envelope text-secondary me-1"></i> Dispatch Outbound Broadcast Email (via SMTP)
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="channel_whatsapp" id="chWhatsApp" value="1" checked>
+                                    <label class="form-check-label small" for="chWhatsApp">
+                                        <i class="fa-brands fa-whatsapp text-success me-1"></i> Dispatch Direct WhatsApp Broadcast (via Kapso)
                                     </label>
                                 </div>
                                 <div class="form-check mt-1 pt-1 border-top">
@@ -455,9 +466,9 @@ include '../includes/sidebar.php';
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer bg-light px-4 py-3 border-top d-flex justify-content-between">
-                    <button type="button" onclick="closeBroadcastModal()" class="btn btn-sm btn-outline-secondary">Cancel</button>
-                    <button type="submit" name="dispatch_broadcast" class="btn btn-sm btn-primary px-4 fw-semibold">
+                <div class="modal-footer bg-light px-4 py-3 border-top d-flex justify-content-between align-items-center flex-shrink-0">
+                    <button type="button" onclick="closeBroadcastModal()" class="btn btn-sm btn-outline-secondary px-3">Cancel</button>
+                    <button type="submit" name="dispatch_broadcast" class="btn btn-sm btn-primary px-4 fw-semibold shadow-sm">
                         <i class="fa-solid fa-paper-plane me-1"></i> Confirm &amp; Dispatch
                     </button>
                 </div>
@@ -467,17 +478,17 @@ include '../includes/sidebar.php';
 </div>
 
 <!-- View Notice Modal -->
-<div id="viewNoticeModal" class="modal-backdrop" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); z-index: 1050; align-items: center; justify-content: center; backdrop-filter: blur(8px);">
-    <div class="modal-dialog modal-dialog-centered" style="max-width: 600px; width: 95%;">
-        <div class="modal-content bg-white rounded-3 shadow-lg border-0 overflow-hidden">
-            <div class="modal-header bg-light px-4 py-3 border-bottom d-flex justify-content-between align-items-center">
+<div id="viewNoticeModal" class="custom-modal-overlay" onclick="if(event.target === this) closeViewNoticeModal()" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); z-index: 9999; backdrop-filter: blur(8px); overflow-y: auto; padding: 1.5rem 1rem;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 600px; width: 100%; margin: auto;">
+        <div class="modal-content bg-white rounded-4 shadow-lg border-0" style="max-height: calc(100vh - 3rem); display: flex; flex-direction: column; overflow: hidden;">
+            <div class="modal-header bg-light px-4 py-3 border-bottom d-flex justify-content-between align-items-center flex-shrink-0">
                 <div class="d-flex align-items-center gap-2">
                     <span id="viewPriorityBadge"></span>
                     <span id="viewScopeBadge"></span>
                 </div>
                 <button type="button" onclick="closeViewNoticeModal()" class="btn-close" style="font-size: 0.8rem;"></button>
             </div>
-            <div class="modal-body p-4">
+            <div class="modal-body p-4" style="overflow-y: auto; flex: 1 1 auto; -webkit-overflow-scrolling: touch;">
                 <h4 id="viewNoticeTitle" class="fw-bold text-slate-900 mb-2"></h4>
                 <div class="d-flex align-items-center gap-3 text-secondary small pb-3 mb-3 border-bottom">
                     <span><i class="fa-regular fa-user me-1"></i><span id="viewNoticeAuthor"></span></span>
@@ -486,8 +497,8 @@ include '../includes/sidebar.php';
                 </div>
                 <div id="viewNoticeContent" class="text-slate-800" style="line-height: 1.7; white-space: pre-wrap;"></div>
             </div>
-            <div class="modal-footer bg-light px-4 py-2 border-top">
-                <button type="button" onclick="closeViewNoticeModal()" class="btn btn-sm btn-secondary">Close</button>
+            <div class="modal-footer bg-light px-4 py-2 border-top flex-shrink-0">
+                <button type="button" onclick="closeViewNoticeModal()" class="btn btn-sm btn-secondary px-3">Close</button>
             </div>
         </div>
     </div>
@@ -496,9 +507,11 @@ include '../includes/sidebar.php';
 <script>
 function openBroadcastModal() {
     document.getElementById('broadcastModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
 }
 function closeBroadcastModal() {
     document.getElementById('broadcastModal').style.display = 'none';
+    document.body.style.overflow = '';
 }
 function toggleZoneDropdown(scope) {
     const zoneWrapper = document.getElementById('zoneSelectWrapper');
@@ -512,13 +525,22 @@ function toggleZoneDropdown(scope) {
     }
 }
 function viewNotice(ann) {
-    document.getElementById('viewNoticeTitle').innerText = ann.title;
-    document.getElementById('viewNoticeContent').innerText = ann.content;
+    if (!ann) return;
+    document.getElementById('viewNoticeTitle').innerText = ann.title || 'Untitled Notice';
+    document.getElementById('viewNoticeContent').innerText = ann.content || '';
     document.getElementById('viewNoticeAuthor').innerText = ann.sender_name || ann.author_name || 'Central Administration';
-    document.getElementById('viewNoticeDate').innerText = new Date(ann.created_at).toLocaleDateString(undefined, {
-        month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
-    });
-    document.getElementById('viewNoticeAudience').innerText = 'Audience: ' + ann.target_audience;
+    
+    let dateStr = ann.created_at || '';
+    if (dateStr) {
+        const safeDate = new Date(dateStr.replace(' ', 'T'));
+        if (!isNaN(safeDate)) {
+            dateStr = safeDate.toLocaleDateString(undefined, {
+                month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
+            });
+        }
+    }
+    document.getElementById('viewNoticeDate').innerText = dateStr;
+    document.getElementById('viewNoticeAudience').innerText = 'Audience: ' + (ann.target_audience || 'All');
 
     // Scope Badge
     const scopeEl = document.getElementById('viewScopeBadge');
@@ -539,10 +561,34 @@ function viewNotice(ann) {
     }
 
     document.getElementById('viewNoticeModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
 }
 function closeViewNoticeModal() {
     document.getElementById('viewNoticeModal').style.display = 'none';
+    document.body.style.overflow = '';
 }
+
+// Click listener for view notice buttons (safe delegation)
+document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.btn-view-notice');
+    if (!btn) return;
+    try {
+        const raw = btn.getAttribute('data-notice');
+        if (!raw) return;
+        const ann = JSON.parse(raw);
+        viewNotice(ann);
+    } catch(err) {
+        console.error('Error opening notice:', err);
+    }
+});
+
+// Close modals on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeBroadcastModal();
+        closeViewNoticeModal();
+    }
+});
 </script>
 
 <?php include '../includes/footer.php'; ?>

@@ -258,16 +258,13 @@ include 'sidebar.php';
             <?php endforeach; ?>
         </select>
 
-        <div class="input-group input-group-sm" style="width: 220px;">
+        <div class="search-integrated-wrap" style="width: 220px;">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
             <input type="text" name="search" class="form-control" placeholder="Search rules, fines..." value="<?php echo htmlspecialchars($search); ?>">
-            <button class="btn btn-outline-secondary" type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+            <?php if (!empty($search)): ?>
+                <a href="?tab=<?php echo htmlspecialchars($active_tab); ?>" class="search-clear-btn" title="Clear search"><i class="fa-solid fa-xmark"></i></a>
+            <?php endif; ?>
         </div>
-
-        <?php if (!empty($search) || !empty($filter_category)): ?>
-            <a href="?tab=<?php echo htmlspecialchars($active_tab); ?>" class="btn btn-sm btn-light border text-danger" title="Clear Filters">
-                <i class="fa-solid fa-xmark"></i>
-            </a>
-        <?php endif; ?>
     </form>
 </div>
 
@@ -275,19 +272,23 @@ include 'sidebar.php';
 <!-- TAB 1: MY ZONE BYLAWS (FULL CRUD FOR ZONE ADMIN)              -->
 <!-- ============================================================= -->
 <?php if ($active_tab === 'zonal'): ?>
-    <div class="alert alert-purple rounded-4 p-3 mb-4 d-flex align-items-center justify-content-between" style="background: rgba(168, 85, 247, 0.08); border: 1px solid rgba(168, 85, 247, 0.25);">
-        <div class="d-flex align-items-center gap-3">
-            <div class="text-white rounded-3 p-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background: #9333ea;">
-                <i class="fa-solid fa-sliders fs-5"></i>
+    <div class="alert alert-purple rounded-3 p-2.5 p-sm-3 mb-3" style="background: rgba(168, 85, 247, 0.08); border: 1px solid rgba(168, 85, 247, 0.25);">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-2.5 min-w-0" style="flex: 1 1 240px;">
+                <div class="text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 32px; height: 32px; background: #9333ea; font-size: 0.85rem;">
+                    <i class="fa-solid fa-sliders"></i>
+                </div>
+                <div class="min-w-0">
+                    <span class="fw-bold d-block text-truncate" style="color: #7e22ce; font-size: 0.88rem;">Local Sector Authority: <?php echo htmlspecialchars($zone_name); ?></span>
+                    <span class="text-secondary small d-none d-md-inline" style="font-size: 0.78rem;">Define localized fines, curbside hours, and sector protocols.</span>
+                </div>
             </div>
-            <div>
-                <strong class="d-block" style="color: #7e22ce;">Local Sector Authority: <?php echo htmlspecialchars($zone_name); ?></strong>
-                <span class="text-secondary small">These bylaws apply exclusively within <?php echo htmlspecialchars($zone_name); ?>. You can define localized fines, specific trash collection curbside hours, crescent parking rules, and neighborhood protocols.</span>
+            <div class="d-flex align-items-center gap-2 ms-auto">
+                <button type="button" class="btn btn-sm text-white px-2.5 py-1 rounded-pill shadow-sm" style="background: #9333ea; font-size: 0.75rem;" onclick="openZonalModal()">
+                    <i class="fa-solid fa-plus me-1"></i> New Bylaw
+                </button>
             </div>
         </div>
-        <button type="button" class="btn btn-sm text-white px-3 py-2 rounded-pill shadow-sm" style="background: #9333ea;" onclick="openZonalModal()">
-            <i class="fa-solid fa-plus me-1"></i> New Local Bylaw
-        </button>
     </div>
 
     <?php if (empty($my_zonal_policies)): ?>
@@ -307,28 +308,29 @@ include 'sidebar.php';
         <div class="row g-4">
             <?php foreach ($my_zonal_policies as $pol): ?>
                 <div class="col-12 col-lg-6">
-                    <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden d-flex flex-column" style="border: 1px solid rgba(168, 85, 247, 0.25) !important;">
-                        <div class="card-header bg-white p-3.5 border-bottom d-flex align-items-start justify-content-between gap-2">
-                            <div>
-                                <div class="d-flex align-items-center gap-2 flex-wrap mb-1.5">
-                                    <span class="badge px-2 py-0.5 rounded-pill font-monospace" style="background: rgba(168, 85, 247, 0.15); color: #7e22ce; border: 1px solid rgba(168, 85, 247, 0.3); font-size: 0.72rem;">
-                                        <i class="fa-solid fa-layer-group me-1"></i> <?php echo htmlspecialchars($zone_name); ?>
+                    <div class="card policy-card border-0 shadow-sm rounded-4 h-100 overflow-hidden d-flex flex-column" style="border: 1px solid rgba(168, 85, 247, 0.25) !important;">
+                        <!-- Card Header -->
+                        <div class="card-header p-3 p-sm-3.5 pb-2 border-bottom d-flex align-items-start justify-content-between gap-2">
+                            <div class="flex-grow-1 min-w-0">
+                                <!-- Horizontal Badges Row (Spacious & Clean) -->
+                                <div class="d-flex align-items-center gap-2 flex-wrap mb-2" style="row-gap: 6px; column-gap: 8px;">
+                                    <span class="badge bg-light text-dark border font-monospace px-2.5 py-1" style="font-size: 0.72rem; font-weight: 700;"><?php echo htmlspecialchars($pol['code'] ?: 'ZN-' . $pol['id']); ?></span>
+                                    <span class="badge px-2.5 py-1 rounded-pill" style="background: rgba(168, 85, 247, 0.12); color: #7e22ce; border: 1px solid rgba(168, 85, 247, 0.25); font-size: 0.7rem; font-weight: 600;">
+                                        <i class="fa-solid fa-layer-group me-1"></i><?php echo htmlspecialchars($zone_name); ?>
                                     </span>
-                                    <span class="badge px-2 py-0.5 rounded-pill" style="background: <?php echo htmlspecialchars($pol['category_color'] ?: '#3b82f6'); ?>18; color: <?php echo htmlspecialchars($pol['category_color'] ?: '#3b82f6'); ?>; border: 1px solid <?php echo htmlspecialchars($pol['category_color'] ?: '#3b82f6'); ?>33; font-size: 0.72rem;">
-                                        <i class="fa-solid <?php echo htmlspecialchars($pol['category_icon'] ?: 'fa-gavel'); ?> me-1"></i>
-                                        <?php echo htmlspecialchars($pol['category_name'] ?: ucfirst($pol['category_slug'])); ?>
+                                    <span class="badge badge-policy-cat px-2.5 py-1 rounded-pill" style="font-size: 0.7rem; font-weight: 500;">
+                                        <i class="fa-solid <?php echo htmlspecialchars($pol['category_icon'] ?: 'fa-gavel'); ?> me-1 text-secondary"></i><?php echo htmlspecialchars($pol['category_name'] ?: ucfirst($pol['category_slug'])); ?>
                                     </span>
                                     <?php echo formatSeverityBadge($pol['severity']); ?>
                                 </div>
-                                <h5 class="fw-bold text-slate-800 mb-0 d-flex align-items-center gap-2">
-                                    <span class="text-secondary small font-monospace"><?php echo htmlspecialchars($pol['code'] ?: 'ZN-' . $pol['id']); ?>:</span>
+                                <h5 class="fw-bold text-slate-900 mb-0" style="font-size: 0.95rem; line-height: 1.35;">
                                     <?php echo htmlspecialchars($pol['title']); ?>
                                 </h5>
                             </div>
 
-                            <!-- Actions -->
-                            <div class="dropdown">
-                                <button class="btn btn-sm btn-light border-0 rounded-circle" type="button" data-bs-toggle="dropdown" style="width: 32px; height: 32px;">
+                            <!-- Actions Dropdown -->
+                            <div class="dropdown flex-shrink-0">
+                                <button class="btn btn-sm btn-light border-0 rounded-circle" type="button" data-bs-toggle="dropdown" style="width: 30px; height: 30px;" aria-label="Bylaw Actions">
                                     <i class="fa-solid fa-ellipsis-vertical text-secondary"></i>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3">
@@ -361,54 +363,46 @@ include 'sidebar.php';
                             </div>
                         </div>
 
-                        <div class="card-body p-3.5 flex-grow-1">
-                            <div class="mb-3">
-                                <div class="text-secondary small fw-bold text-uppercase mb-1" style="font-size: 0.72rem; letter-spacing: 0.04em;">Bylaw Clause:</div>
-                                <p class="text-slate-700 small mb-0" style="line-height: 1.55;"><?php echo nl2br(htmlspecialchars($pol['description'])); ?></p>
-                            </div>
+                        <!-- Card Body (Compact & Smart) -->
+                        <div class="card-body p-3 flex-grow-1 d-flex flex-column justify-content-between gap-2">
+                            <p class="text-slate-600 mb-1" style="font-size: 0.83rem; line-height: 1.5;"><?php echo nl2br(htmlspecialchars($pol['description'])); ?></p>
 
-                            <div class="p-2.5 rounded-3 mb-3" style="background: #fff1f2; border-left: 3px solid #f43f5e;">
-                                <div class="d-flex align-items-center gap-1.5 text-danger fw-bold small mb-1" style="font-size: 0.75rem;">
-                                    <i class="fa-solid fa-circle-exclamation"></i> Breach Definition:
-                                </div>
-                                <div class="text-slate-700 small" style="font-size: 0.8rem; line-height: 1.45;">
-                                    <?php echo nl2br(htmlspecialchars($pol['offence_definition'] ?: 'Any infraction of the above bylaw.')); ?>
-                                </div>
-                            </div>
-
-                            <div class="p-2.5 rounded-3 mb-2" style="background: #faf5ff; border: 1px solid rgba(168, 85, 247, 0.2);">
-                                <div class="d-flex align-items-center justify-content-between mb-1.5 flex-wrap gap-1">
-                                    <div class="d-flex align-items-center gap-1.5">
-                                        <span class="text-secondary small fw-bold" style="font-size: 0.75rem;">Sanction:</span>
-                                        <?php echo formatPunishmentTypeBadge($pol['punishment_type']); ?>
+                            <!-- Offence & Surcharge Summary Strip -->
+                            <div class="policy-offence-summary rounded-3 p-2.5">
+                                <div class="d-flex align-items-start justify-content-between gap-2 mb-1.5">
+                                    <div class="min-w-0">
+                                        <span class="text-muted fw-bold text-uppercase d-block" style="font-size: 0.65rem; letter-spacing: 0.04em;">
+                                            <i class="fa-solid fa-circle-exclamation text-amber-500 me-1"></i> Breach Definition
+                                        </span>
+                                        <div class="text-slate-700" style="font-size: 0.79rem; line-height: 1.4;">
+                                            <?php echo nl2br(htmlspecialchars($pol['offence_definition'] ?: 'Any infraction of the above bylaw.')); ?>
+                                        </div>
                                     </div>
                                     <?php if ($pol['fine_amount'] > 0): ?>
-                                        <div class="text-end">
-                                            <span class="text-secondary small" style="font-size: 0.72rem;">Zone Surcharge:</span>
-                                            <span class="fw-bold text-danger font-monospace fs-6 ms-1">₦<?php echo number_format($pol['fine_amount'], 2); ?></span>
+                                        <div class="text-end flex-shrink-0">
+                                            <span class="text-muted fw-bold text-uppercase d-block" style="font-size: 0.65rem;">Zone Surcharge</span>
+                                            <span class="fw-bold text-slate-900 font-monospace" style="font-size: 0.88rem;">₦<?php echo number_format($pol['fine_amount'], 2); ?></span>
                                         </div>
                                     <?php endif; ?>
                                 </div>
-                                <?php if (!empty($pol['punishment_details'])): ?>
-                                    <div class="text-secondary small" style="font-size: 0.78rem;">
-                                        <strong>Enforcement:</strong> <?php echo htmlspecialchars($pol['punishment_details']); ?>
-                                    </div>
-                                <?php endif; ?>
-                                <?php if (!empty($pol['repeat_offence_penalty'])): ?>
-                                    <div class="text-danger small mt-1" style="font-size: 0.75rem;">
-                                        <i class="fa-solid fa-arrow-trend-up me-1"></i> <strong>Repeat Offence:</strong> <?php echo htmlspecialchars($pol['repeat_offence_penalty']); ?>
-                                    </div>
-                                <?php endif; ?>
+                                <div class="d-flex align-items-center gap-2 flex-wrap pt-1.5 border-top" style="font-size: 0.74rem;">
+                                    <span class="text-muted">Sanction:</span>
+                                    <?php echo formatPunishmentTypeBadge($pol['punishment_type']); ?>
+                                    <?php if (!empty($pol['repeat_offence_penalty'])): ?>
+                                        <span class="text-muted ms-auto"><i class="fa-solid fa-arrow-trend-up me-1 text-amber-600"></i>Repeat: <strong class="text-slate-700"><?php echo htmlspecialchars($pol['repeat_offence_penalty']); ?></strong></span>
+                                    <?php endif; ?>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="card-footer bg-light bg-opacity-50 p-2.5 px-3.5 border-top d-flex align-items-center justify-content-between text-secondary small" style="font-size: 0.72rem;">
+                        <!-- Card Footer -->
+                        <div class="card-footer bg-light bg-opacity-40 p-2.5 px-3 border-top d-flex align-items-center justify-content-between text-muted" style="font-size: 0.72rem;">
                             <div>
                                 <i class="fa-solid fa-shield me-1" style="color: #9333ea;"></i>
-                                Enforced by: <strong><?php echo htmlspecialchars($pol['enforcement_entity'] ?: $zone_name . ' Sector Security'); ?></strong>
+                                Enforced by: <strong class="text-slate-700"><?php echo htmlspecialchars($pol['enforcement_entity'] ?: $zone_name . ' Sector Security'); ?></strong>
                             </div>
-                            <div class="text-muted">
-                                Ref: #<?php echo $pol['id']; ?>
+                            <div class="text-muted font-monospace">
+                                Ref #<?php echo $pol['id']; ?>
                             </div>
                         </div>
                     </div>
@@ -421,92 +415,87 @@ include 'sidebar.php';
 <!-- TAB 2: CENTRAL GOVERNING LAWS (READ-ONLY)                     -->
 <!-- ============================================================= -->
 <?php elseif ($active_tab === 'central'): ?>
-    <div class="alert alert-primary bg-primary bg-opacity-10 border-primary border-opacity-25 rounded-4 p-3 mb-4 d-flex align-items-center justify-content-between">
-        <div class="d-flex align-items-center gap-3">
-            <div class="bg-primary text-white rounded-3 p-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                <i class="fa-solid fa-lock fs-5"></i>
+    <div class="alert alert-primary bg-primary bg-opacity-10 border-primary border-opacity-25 rounded-3 p-2.5 p-sm-3 mb-3">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-2.5 min-w-0" style="flex: 1 1 240px;">
+                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 32px; height: 32px; font-size: 0.85rem;">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <div class="min-w-0">
+                    <span class="fw-bold text-primary d-block text-truncate" style="font-size: 0.88rem;">Central Estate Regulations (Read-Only)</span>
+                    <span class="text-secondary small d-none d-md-inline" style="font-size: 0.78rem;">Supreme policies enacted centrally and enforced across all zones.</span>
+                </div>
             </div>
-            <div>
-                <strong class="d-block text-primary">Central Estate Governing Regulations (Read-Only)</strong>
-                <span class="text-secondary small">These supreme policies are enacted centrally by Estate Management and apply uniformly across all sectors. Zonal administrations enforce these policies alongside their own local bylaws.</span>
-            </div>
+            <span class="badge bg-primary rounded-pill font-monospace px-2.5 py-1 flex-shrink-0 ms-auto" style="font-size: 0.68rem; letter-spacing: 0.04em;">ESTATE-WIDE</span>
         </div>
-        <span class="badge bg-primary px-3 py-2 rounded-pill font-monospace" style="letter-spacing: 0.05em;">ESTATE-WIDE JURISDICTION</span>
     </div>
 
     <div class="row g-4">
         <?php foreach ($central_policies as $pol): ?>
             <div class="col-12 col-lg-6">
-                <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden d-flex flex-column" style="border: 1px solid rgba(226, 232, 240, 0.8) !important;">
-                    <div class="card-header bg-white p-3.5 border-bottom d-flex align-items-start justify-content-between gap-2">
-                        <div>
-                            <div class="d-flex align-items-center gap-2 flex-wrap mb-1.5">
-                                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-0.5 rounded-pill font-monospace" style="font-size: 0.72rem;">
-                                    <i class="fa-solid fa-globe me-1"></i> Central Estate
+                <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden d-flex flex-column" style="border: 1px solid rgba(226, 232, 240, 0.85) !important;">
+                    <!-- Card Header -->
+                    <div class="card-header p-3 p-sm-3.5 pb-2 border-bottom d-flex align-items-start justify-content-between gap-2">
+                        <div class="flex-grow-1 min-w-0">
+                            <!-- Horizontal Badges Row (Spacious & Clean) -->
+                            <div class="d-flex align-items-center gap-2 flex-wrap mb-2" style="row-gap: 6px; column-gap: 8px;">
+                                <span class="badge bg-light text-dark border font-monospace px-2.5 py-1" style="font-size: 0.72rem; font-weight: 700;"><?php echo htmlspecialchars($pol['code'] ?: 'POL-' . $pol['id']); ?></span>
+                                <span class="badge badge-policy-scope px-2.5 py-1 rounded-pill" style="font-size: 0.7rem; font-weight: 600;">
+                                    <i class="fa-solid fa-globe me-1 text-primary"></i>Central
                                 </span>
-                                <span class="badge px-2 py-0.5 rounded-pill" style="background: <?php echo htmlspecialchars($pol['category_color'] ?: '#3b82f6'); ?>18; color: <?php echo htmlspecialchars($pol['category_color'] ?: '#3b82f6'); ?>; border: 1px solid <?php echo htmlspecialchars($pol['category_color'] ?: '#3b82f6'); ?>33; font-size: 0.72rem;">
-                                    <i class="fa-solid <?php echo htmlspecialchars($pol['category_icon'] ?: 'fa-gavel'); ?> me-1"></i>
-                                    <?php echo htmlspecialchars($pol['category_name'] ?: ucfirst($pol['category_slug'])); ?>
+                                <span class="badge badge-policy-cat px-2.5 py-1 rounded-pill" style="font-size: 0.7rem; font-weight: 500;">
+                                    <i class="fa-solid <?php echo htmlspecialchars($pol['category_icon'] ?: 'fa-gavel'); ?> me-1 text-secondary"></i><?php echo htmlspecialchars($pol['category_name'] ?: ucfirst($pol['category_slug'])); ?>
                                 </span>
                                 <?php echo formatSeverityBadge($pol['severity']); ?>
                             </div>
-                            <h5 class="fw-bold text-slate-800 mb-0 d-flex align-items-center gap-2">
-                                <span class="text-secondary small font-monospace"><?php echo htmlspecialchars($pol['code'] ?: 'POL-' . $pol['id']); ?>:</span>
+                            <h5 class="fw-bold text-slate-900 mb-0" style="font-size: 0.95rem; line-height: 1.35;">
                                 <?php echo htmlspecialchars($pol['title']); ?>
                             </h5>
                         </div>
-                        <span class="badge bg-light text-secondary border px-2 py-1" title="Managed centrally by Estate Administration">
-                            <i class="fa-solid fa-lock me-1"></i> Central Law
+                        <span class="badge bg-light text-secondary border px-2 py-0.5 rounded-pill flex-shrink-0" style="font-size: 0.7rem;">
+                            <i class="fa-solid fa-lock me-1"></i>Central
                         </span>
                     </div>
 
-                    <div class="card-body p-3.5 flex-grow-1">
-                        <div class="mb-3">
-                            <div class="text-secondary small fw-bold text-uppercase mb-1" style="font-size: 0.72rem; letter-spacing: 0.04em;">Regulation Description:</div>
-                            <p class="text-slate-700 small mb-0" style="line-height: 1.55;"><?php echo nl2br(htmlspecialchars($pol['description'])); ?></p>
-                        </div>
+                    <!-- Card Body (Compact & Smart) -->
+                    <div class="card-body p-3 flex-grow-1 d-flex flex-column justify-content-between gap-2">
+                        <p class="text-slate-600 mb-1" style="font-size: 0.83rem; line-height: 1.5;"><?php echo nl2br(htmlspecialchars($pol['description'])); ?></p>
 
-                        <div class="p-2.5 rounded-3 mb-3" style="background: #fff1f2; border-left: 3px solid #f43f5e;">
-                            <div class="d-flex align-items-center gap-1.5 text-danger fw-bold small mb-1" style="font-size: 0.75rem;">
-                                <i class="fa-solid fa-circle-exclamation"></i> Breach Definition:
-                            </div>
-                            <div class="text-slate-700 small" style="font-size: 0.8rem; line-height: 1.45;">
-                                <?php echo nl2br(htmlspecialchars($pol['offence_definition'] ?: 'Any non-compliance with central guidelines.')); ?>
-                            </div>
-                        </div>
-
-                        <div class="p-2.5 rounded-3 mb-2" style="background: #f8fafc; border: 1px solid #e2e8f0;">
-                            <div class="d-flex align-items-center justify-content-between mb-1.5 flex-wrap gap-1">
-                                <div class="d-flex align-items-center gap-1.5">
-                                    <span class="text-secondary small fw-bold" style="font-size: 0.75rem;">Sanction:</span>
-                                    <?php echo formatPunishmentTypeBadge($pol['punishment_type']); ?>
+                        <!-- Offence & Penalty Summary Strip -->
+                        <div class="policy-offence-summary rounded-3 p-2.5">
+                            <div class="d-flex align-items-start justify-content-between gap-2 mb-1.5">
+                                <div class="min-w-0">
+                                    <span class="text-muted fw-bold text-uppercase d-block" style="font-size: 0.65rem; letter-spacing: 0.04em;">
+                                        <i class="fa-solid fa-circle-exclamation text-amber-500 me-1"></i> Breach Definition
+                                    </span>
+                                    <div class="text-slate-700" style="font-size: 0.79rem; line-height: 1.4;">
+                                        <?php echo nl2br(htmlspecialchars($pol['offence_definition'] ?: 'Any non-compliance with central guidelines.')); ?>
+                                    </div>
                                 </div>
                                 <?php if ($pol['fine_amount'] > 0): ?>
-                                    <div class="text-end">
-                                        <span class="text-secondary small" style="font-size: 0.72rem;">Fine Amount:</span>
-                                        <span class="fw-bold text-danger font-monospace fs-6 ms-1">₦<?php echo number_format($pol['fine_amount'], 2); ?></span>
+                                    <div class="text-end flex-shrink-0">
+                                        <span class="text-muted fw-bold text-uppercase d-block" style="font-size: 0.65rem;">Fine</span>
+                                        <span class="fw-bold text-danger font-monospace" style="font-size: 0.88rem;">₦<?php echo number_format($pol['fine_amount'], 2); ?></span>
                                     </div>
                                 <?php endif; ?>
                             </div>
-                            <?php if (!empty($pol['punishment_details'])): ?>
-                                <div class="text-secondary small" style="font-size: 0.78rem;">
-                                    <strong>Details:</strong> <?php echo htmlspecialchars($pol['punishment_details']); ?>
-                                </div>
-                            <?php endif; ?>
-                            <?php if (!empty($pol['repeat_offence_penalty'])): ?>
-                                <div class="text-danger small mt-1" style="font-size: 0.75rem;">
-                                    <i class="fa-solid fa-arrow-trend-up me-1"></i> <strong>Repeat Penalty:</strong> <?php echo htmlspecialchars($pol['repeat_offence_penalty']); ?>
-                                </div>
-                            <?php endif; ?>
+                            <div class="d-flex align-items-center gap-2 flex-wrap pt-1.5 border-top" style="font-size: 0.74rem;">
+                                <span class="text-muted">Sanction:</span>
+                                <?php echo formatPunishmentTypeBadge($pol['punishment_type']); ?>
+                                <?php if (!empty($pol['repeat_offence_penalty'])): ?>
+                                    <span class="text-muted ms-auto"><i class="fa-solid fa-arrow-trend-up me-1 text-amber-600"></i>Repeat: <strong class="text-slate-700"><?php echo htmlspecialchars($pol['repeat_offence_penalty']); ?></strong></span>
+                                <?php endif; ?>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="card-footer bg-light bg-opacity-50 p-2.5 px-3.5 border-top d-flex align-items-center justify-content-between text-secondary small" style="font-size: 0.72rem;">
+                    <!-- Card Footer -->
+                    <div class="card-footer bg-light bg-opacity-40 p-2.5 px-3 border-top d-flex align-items-center justify-content-between text-muted" style="font-size: 0.72rem;">
                         <div>
-                            <i class="fa-solid fa-building-shield me-1 text-primary"></i>
-                            Enforcing Entity: <strong><?php echo htmlspecialchars($pol['enforcement_entity'] ?: 'Estate Security Command'); ?></strong>
+                            <i class="fa-solid fa-building-shield me-1 text-slate-500"></i>
+                            Enforcing Entity: <strong class="text-slate-700"><?php echo htmlspecialchars($pol['enforcement_entity'] ?: 'Estate Security Command'); ?></strong>
                         </div>
-                        <div class="text-muted">
+                        <div class="text-muted font-monospace">
                             Mandatory Clause
                         </div>
                     </div>

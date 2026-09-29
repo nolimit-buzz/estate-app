@@ -6,6 +6,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/auth_guard.php';
+require_once __DIR__ . '/Mailer.php';
 
 /**
  * Reusable user authentication handler
@@ -22,18 +23,33 @@ function authenticatePortalUser($conn, $email, $password, $portal = null) {
             return ['success' => false, 'error' => 'Database connection unavailable. Please ensure MySQL is running in your XAMPP Control Panel.'];
         }
 
+        // Auto-ensure required tables and columns exist
+        if (class_exists('EstateMailer')) {
+            EstateMailer::ensureDatabaseTables($conn);
+        }
+
         $email = trim($conn->real_escape_string($email));
         
         if (empty($email) || empty($password)) {
             return ['success' => false, 'error' => 'Please enter both email and password.'];
         }
         
-        $res = $conn->query("SELECT id, role, estate_id, zone_id, password, name, first_name FROM users WHERE email = '$email'");
+        $res = $conn->query("SELECT id, role, estate_id, zone_id, password, name, first_name, status, force_password_change FROM users WHERE email = '$email'");
         if (!$res || $res->num_rows === 0) {
             return ['success' => false, 'error' => 'Invalid email or password.'];
         }
         
         $user = $res->fetch_assoc();
+
+        // 1. Check if user account is deactivated
+        if (isset($user['status']) && in_array(strtolower($user['status']), ['disabled', 'suspended', 'inactive'])) {
+            return [
+                'success' => false,
+                'error' => 'This account has been deactivated. Please contact Estate Central Administration.'
+            ];
+        }
+
+        // 2. Validate Password
         if (!password_verify($password, $user['password'])) {
             return ['success' => false, 'error' => 'Invalid email or password.'];
         }
@@ -123,6 +139,7 @@ function authenticatePortalUser($conn, $email, $password, $portal = null) {
         $_SESSION['role'] = $user['role'];
         $_SESSION['estate_id'] = $user['estate_id'];
         $_SESSION['name'] = $user['name'];
+        $_SESSION['force_password_change'] = intval($user['force_password_change'] ?? 0);
 
         // Check and populate estate_staff details in session
         $st_chk = $conn->query("SELECT id, role, role_id FROM estate_staff WHERE user_id = " . intval($user['id']) . " AND status = 'active' LIMIT 1");
@@ -136,8 +153,10 @@ function authenticatePortalUser($conn, $email, $password, $portal = null) {
         logAudit($conn, "User Login", "Auth", "Logged in via $portal_name successfully.");
         
         // Determine destination
-        if ($role === 'zone_admin') {
-            $redirect = 'zone/index';
+        if (!empty($_SESSION['force_password_change'])) {
+            $redirect = ($portal ? '../' : '') . 'change_password';
+        } elseif ($role === 'zone_admin') {
+            $redirect = ($portal === 'zone') ? 'index' : 'zone/index';
         } elseif ($portal === 'resident' && in_array($role, ['resident', 'admin', 'superadmin', 'manager'])) {
             $redirect = 'resident/index';
         } elseif ($portal === 'staff' || (!empty($_SESSION['is_staff']) && $role !== 'superadmin' && $role !== 'admin' && $role !== 'manager')) {
@@ -157,6 +176,7 @@ function authenticatePortalUser($conn, $email, $password, $portal = null) {
         return [
             'success' => true, 
             'redirect' => $redirect, 
+            'force_password_change' => !empty($_SESSION['force_password_change']),
             'role' => $role, 
             'name' => $user['name']
         ];

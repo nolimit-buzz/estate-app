@@ -1,297 +1,1129 @@
 /* ==========================================================================
-   ESTATE ENTERPRISE GLASSMORPHISM DESIGN SYSTEM
-   Modern frosted-glass UI components for Panic, Emergency & Duty Roster Hubs
+   ESTATE MANAGEMENT ENTERPRISE GLASSMORPHISM DESIGN SYSTEM
+   Modern, mature, spacious, polished enterprise property-management SaaS UI
+   Inspired by restrained modern glass interfaces (Desktop + Tablet + Mobile)
    ========================================================================== */
 
 :root {
-    --glass-bg-light: rgba(255, 255, 255, 0.88);
-    --glass-bg-dark: rgba(15, 23, 42, 0.92);
-    --glass-border-light: rgba(255, 255, 255, 0.7);
-    --glass-border-subtle: rgba(226, 232, 240, 0.6);
-    --glass-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(226, 232, 240, 0.4);
-    --glass-shadow-hover: 0 25px 50px -12px rgba(0, 0, 0, 0.09), 0 0 0 1px rgba(203, 213, 225, 0.6);
-    --glass-radius: 1.25rem;
-    --glass-radius-sm: 0.85rem;
-    --glass-radius-pill: 9999px;
+    /* -------------------------------------------------------------
+       1. REFINED COLOR PALETTE (Restrained Enterprise Blue/Navy)
+       ------------------------------------------------------------- */
+    --color-navy-950: #080d1a;
+    --color-navy-900: #0f172a;
+    --color-navy-800: #1e293b;
+    --color-navy-700: #334155;
+    --color-navy-600: #475569;
+    --color-navy-500: #64748b;
+    --color-navy-400: #94a3b8;
+    --color-navy-300: #cbd5e1;
+    --color-navy-200: #e2e8f0;
+    --color-navy-100: #f1f5f9;
+    --color-navy-50:  #f8fafc;
+
+    /* Enterprise Brand Primary */
+    --color-primary: #2563eb;
+    --color-primary-hover: #1d4ed8;
+    --color-primary-light: rgba(37, 99, 235, 0.08);
+    --color-primary-border: rgba(37, 99, 235, 0.22);
+    --color-primary-glow: rgba(37, 99, 235, 0.18);
+
+    /* Semantic States (Restrained, Not Neon) */
+    --color-success: #059669;
+    --color-success-bg: rgba(16, 185, 129, 0.08);
+    --color-success-border: rgba(16, 185, 129, 0.2);
+
+    --color-warning: #d97706;
+    --color-warning-bg: rgba(245, 158, 11, 0.08);
+    --color-warning-border: rgba(245, 158, 11, 0.22);
+
+    --color-danger: #dc2626;
+    --color-danger-bg: rgba(239, 68, 68, 0.08);
+    --color-danger-border: rgba(239, 68, 68, 0.2);
+
+    --color-info: #0284c7;
+    --color-info-bg: rgba(2, 132, 199, 0.08);
+    --color-info-border: rgba(2, 132, 199, 0.2);
+
+    /* -------------------------------------------------------------
+       2. GLASS SURFACE TOKENS (Light Mode Default)
+       ------------------------------------------------------------- */
+    --glass-surface: rgba(255, 255, 255, 0.82);
+    --glass-surface-hover: rgba(255, 255, 255, 0.94);
+    --glass-surface-subtle: rgba(248, 250, 252, 0.75);
+    --glass-blur: 14px;
+    --glass-border: rgba(226, 232, 240, 0.85);
+    --glass-border-focus: rgba(37, 99, 235, 0.35);
+
+    /* Soft, Gentle Shadows */
+    --shadow-subtle: 0 1px 3px rgba(15, 23, 42, 0.03), 0 4px 16px -2px rgba(15, 23, 42, 0.04);
+    --shadow-card: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 0 0 1px rgba(226, 232, 240, 0.6);
+    --shadow-card-hover: 0 10px 28px -4px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(203, 213, 225, 0.7);
+    --shadow-dropdown: 0 14px 34px -4px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(226, 232, 240, 0.8);
+
+    /* -------------------------------------------------------------
+       3. SPACING & RADIUS SYSTEM (8px / 12px / 16px / 24px / 32px / 40px)
+       ------------------------------------------------------------- */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-8: 32px;
+    --space-10: 40px;
+    --space-12: 48px;
+
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    --radius-pill: 9999px;
 }
 
-/* -------------------------------------------------------------
-   1. CORE GLASS PANELS & CARDS
-   ------------------------------------------------------------- */
-.glass-panel {
-    background: var(--glass-bg-light);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid var(--glass-border-subtle);
-    border-radius: var(--glass-radius);
-    box-shadow: var(--glass-shadow);
+/* Dark Mode Tokens */
+[data-theme="dark"], body.dark-mode {
+    --glass-surface: rgba(15, 23, 42, 0.78);
+    --glass-surface-hover: rgba(22, 34, 61, 0.88);
+    --glass-surface-subtle: rgba(15, 23, 42, 0.6);
+    --glass-border: rgba(255, 255, 255, 0.09);
+    --glass-border-focus: rgba(56, 189, 248, 0.35);
+
+    --shadow-subtle: 0 4px 20px -2px rgba(0, 0, 0, 0.35);
+    --shadow-card: 0 8px 24px -4px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.07);
+    --shadow-card-hover: 0 14px 34px -4px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+/* ==========================================================================
+   2. REFINED GLASS CARDS & SURFACES
+   ========================================================================== */
+.glass-panel,
+.glass-card,
+.mature-card,
+.card:not(.bg-transparent):not(.border-danger) {
+    background: var(--glass-surface) !important;
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border) !important;
+    border-radius: var(--radius-lg) !important;
+    box-shadow: var(--shadow-card) !important;
     transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     position: relative;
-    overflow: hidden;
+    box-sizing: border-box;
 }
 
-.glass-panel:hover {
-    box-shadow: var(--glass-shadow-hover);
+.glass-panel:hover,
+.glass-card:hover,
+.mature-card:hover {
+    box-shadow: var(--shadow-card-hover) !important;
 }
 
-.glass-panel-interactive {
-    cursor: pointer;
+/* Subtle flat container when glass layering is not desired */
+.surface-flat {
+    background: #ffffff !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-subtle);
 }
 
-.glass-panel-interactive:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 25px 50px -10px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(37, 99, 235, 0.2);
-    border-color: rgba(37, 99, 235, 0.3);
+[data-theme="dark"] .surface-flat,
+body.dark-mode .surface-flat {
+    background: #0f172a !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
-/* Dark Glass Hero Panel */
-.glass-panel-dark {
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.92) 100%);
+/* Hero / Header Glass Accent */
+.glass-panel-hero {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.92) 100%) !important;
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: var(--glass-radius);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
-    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: var(--radius-xl) !important;
+    color: #ffffff !important;
+    box-shadow: 0 18px 40px -10px rgba(15, 23, 42, 0.25) !important;
+}
+
+/* ==========================================================================
+   3. SOPHISTICATED STATS & KPI WIDGETS
+   ========================================================================== */
+.glass-kpi-card,
+.kpi-card {
+    background: var(--glass-surface);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5) var(--space-6);
+    box-shadow: var(--shadow-card);
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 128px;
+    text-decoration: none;
+    color: inherit;
     position: relative;
     overflow: hidden;
 }
 
-/* Emergency Red Glass Panel */
-.glass-panel-danger {
-    background: linear-gradient(135deg, rgba(220, 38, 38, 0.92) 0%, rgba(153, 27, 27, 0.96) 100%);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: var(--glass-radius);
-    box-shadow: 0 20px 45px -10px rgba(220, 38, 38, 0.35);
-    color: #ffffff;
-    position: relative;
-    overflow: hidden;
+.glass-kpi-card:hover,
+.kpi-card:hover {
+    background: var(--glass-surface-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-card-hover);
+    color: inherit;
 }
 
-/* Emerald Glass Panel */
-.glass-panel-emerald {
-    background: linear-gradient(135deg, rgba(5, 150, 105, 0.92) 0%, rgba(4, 120, 87, 0.96) 100%);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: var(--glass-radius);
-    box-shadow: 0 20px 45px -10px rgba(5, 150, 105, 0.35);
-    color: #ffffff;
-    position: relative;
-    overflow: hidden;
-}
-
-/* Subtle Glass Decorative Sheen */
-.glass-panel-sheen::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
-}
-
-/* -------------------------------------------------------------
-   2. GLASS STATS / KPI WIDGETS
-   ------------------------------------------------------------- */
-.glass-kpi-card {
-    background: rgba(255, 255, 255, 0.75);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(226, 232, 240, 0.6);
-    border-radius: 1rem;
-    padding: 1.25rem 1.5rem;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.03);
-    transition: all 0.2s ease;
+.kpi-header-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
+    gap: var(--space-3);
+    margin-bottom: var(--space-2);
 }
 
-.glass-kpi-card:hover {
-    background: rgba(255, 255, 255, 0.95);
-    transform: translateY(-2px);
-    box-shadow: 0 15px 30px -8px rgba(0, 0, 0, 0.06);
-}
-
-.glass-kpi-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 0.85rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.35rem;
-    flex-shrink: 0;
-    box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.06);
-}
-
-.glass-kpi-value {
-    font-size: 1.65rem;
-    font-weight: 800;
-    font-family: 'Outfit', sans-serif;
-    color: #0f172a;
-    line-height: 1.1;
-}
-
+.kpi-label,
 .glass-kpi-label {
     font-size: 0.78rem;
     font-weight: 600;
+    color: var(--color-navy-500);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: #64748b;
-    margin-top: 0.2rem;
+    margin: 0;
+    line-height: 1.3;
 }
 
-/* -------------------------------------------------------------
-   3. FROSTED PILL NAVIGATION & TABS
-   ------------------------------------------------------------- */
-.glass-nav-pills {
-    background: rgba(241, 245, 249, 0.8);
-    backdrop-filter: blur(10px);
-    padding: 0.35rem;
-    border-radius: var(--glass-radius-pill);
-    border: 1px solid rgba(226, 232, 240, 0.7);
-    display: inline-flex;
-    flex-wrap: wrap;
-    gap: 0.3rem;
+.kpi-val,
+.kpi-value,
+.glass-kpi-value {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--color-navy-900);
+    line-height: 1.15;
+    margin: var(--space-1) 0;
+    font-family: 'Outfit', -apple-system, sans-serif;
 }
 
-.glass-nav-pills .nav-link {
-    border-radius: var(--glass-radius-pill);
-    padding: 0.55rem 1.25rem;
-    font-size: 0.88rem;
-    font-weight: 600;
-    color: #475569;
-    transition: all 0.2s ease;
-    border: 1px solid transparent;
+[data-theme="dark"] .kpi-val,
+[data-theme="dark"] .kpi-value,
+[data-theme="dark"] .glass-kpi-value {
+    color: #f8fafc !important;
 }
 
-.glass-nav-pills .nav-link:hover {
-    color: #0f172a;
-    background: rgba(255, 255, 255, 0.6);
-}
-
-.glass-nav-pills .nav-link.active {
-    background: #ffffff;
-    color: #0f172a;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.04);
-    border-color: rgba(226, 232, 240, 0.8);
-}
-
-/* -------------------------------------------------------------
-   4. GLASS BADGES & NEON STATUS PULSES
-   ------------------------------------------------------------- */
-.glass-badge {
+.kpi-trend {
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
-    padding: 0.3rem 0.75rem;
-    border-radius: var(--glass-radius-pill);
+    gap: 4px;
     font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-    border: 1px solid transparent;
-    backdrop-filter: blur(8px);
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    line-height: 1.4;
 }
 
-.glass-badge-danger {
-    background: rgba(239, 68, 68, 0.12);
-    color: #dc2626;
-    border-color: rgba(239, 68, 68, 0.25);
+.kpi-trend-positive {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+    border: 1px solid var(--color-success-border);
 }
 
-.glass-badge-success {
-    background: rgba(16, 185, 129, 0.12);
-    color: #059669;
-    border-color: rgba(16, 185, 129, 0.25);
+.kpi-trend-warning {
+    background: var(--color-warning-bg);
+    color: var(--color-warning);
+    border: 1px solid var(--color-warning-border);
 }
 
-.glass-badge-warning {
-    background: rgba(245, 158, 11, 0.12);
-    color: #d97706;
-    border-color: rgba(245, 158, 11, 0.25);
+.kpi-trend-neutral {
+    background: rgba(148, 163, 184, 0.12);
+    color: var(--color-navy-600);
+    border: 1px solid rgba(148, 163, 184, 0.2);
 }
 
-.glass-badge-primary {
-    background: rgba(59, 130, 246, 0.12);
-    color: #2563eb;
-    border-color: rgba(59, 130, 246, 0.25);
+/* Subtle, restrained icon container (36-40px, non-intrusive) */
+.kpi-subtle-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-md);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: var(--color-navy-600);
+    background: var(--color-navy-100);
+    flex-shrink: 0;
 }
 
-.glass-badge-purple {
-    background: rgba(147, 51, 234, 0.12);
-    color: #7e22ce;
-    border-color: rgba(147, 51, 234, 0.25);
+[data-theme="dark"] .kpi-subtle-icon {
+    background: rgba(255, 255, 255, 0.08);
+    color: #94a3b8;
 }
 
-.neon-pulse-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    display: inline-block;
-    position: relative;
+/* ==========================================================================
+   4. SEARCH & FILTER BARS (Desktop + Mobile Clean Component)
+   Reference: Image 1 & Image 3 Search Systems
+   ========================================================================== */
+.glass-search-container {
+    background: var(--glass-surface);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-subtle);
+    padding: var(--space-3) var(--space-4);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.neon-pulse-dot.danger {
-    background: #ef4444;
-    box-shadow: 0 0 10px #ef4444;
-    animation: neon-pulse 1.8s infinite;
+.glass-search-container:focus-within {
+    border-color: var(--color-primary-border);
+    box-shadow: 0 0 0 3px var(--color-primary-light), var(--shadow-subtle);
 }
 
-.neon-pulse-dot.success {
-    background: #10b981;
-    box-shadow: 0 0 10px #10b981;
-    animation: neon-pulse 1.8s infinite;
+.glass-search-input {
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    font-size: 0.92rem;
+    color: var(--color-navy-900);
+    flex: 1;
+    min-width: 0;
+    padding: 0.4rem 0.25rem;
 }
 
-@keyframes neon-pulse {
-    0% { transform: scale(0.95); opacity: 0.8; }
-    50% { transform: scale(1.3); opacity: 1; }
-    100% { transform: scale(0.95); opacity: 0.8; }
+.glass-search-input::placeholder {
+    color: var(--color-navy-400);
+    font-size: 0.9rem;
 }
 
-/* -------------------------------------------------------------
-   5. MODERN GLASS TABLE STYLING
-   ------------------------------------------------------------- */
+[data-theme="dark"] .glass-search-input {
+    color: #f1f5f9;
+}
+
+/* Clean Search Action Button */
+.btn-glass-search {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: #ffffff !important;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 0.55rem 1.4rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    box-shadow: 0 3px 10px -1px rgba(217, 119, 6, 0.35);
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.btn-glass-search:hover {
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 5px 14px -1px rgba(217, 119, 6, 0.45);
+}
+
+/* Primary Enterprise Action Button */
+.btn-primary,
+.btn-enterprise {
+    background: var(--color-primary) !important;
+    border-color: var(--color-primary) !important;
+    color: #ffffff !important;
+    border-radius: var(--radius-md) !important;
+    padding: 0.55rem 1.25rem !important;
+    font-weight: 600 !important;
+    font-size: 0.88rem !important;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2) !important;
+    transition: all 0.2s ease !important;
+}
+
+.btn-primary:hover,
+.btn-enterprise:hover {
+    background: var(--color-primary-hover) !important;
+    border-color: var(--color-primary-hover) !important;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3) !important;
+    transform: translateY(-1px);
+}
+
+.btn-secondary,
+.btn-outline-secondary {
+    background: var(--glass-surface) !important;
+    border: 1px solid var(--glass-border) !important;
+    color: var(--color-navy-700) !important;
+    border-radius: var(--radius-md) !important;
+    padding: 0.55rem 1.15rem !important;
+    font-weight: 500 !important;
+    font-size: 0.88rem !important;
+    transition: all 0.2s ease !important;
+}
+
+.btn-secondary:hover,
+.btn-outline-secondary:hover {
+    background: #ffffff !important;
+    color: var(--color-navy-900) !important;
+    border-color: var(--color-navy-300) !important;
+    transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   5. MODERN GLASS TABLES & DATA PRESENTATION
+   ========================================================================== */
 .glass-table-container {
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(16px);
-    border-radius: var(--glass-radius);
-    border: 1px solid rgba(226, 232, 240, 0.6);
-    box-shadow: var(--glass-shadow);
+    background: var(--glass-surface);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-card);
     overflow: hidden;
+    margin-bottom: var(--space-6);
 }
 
-.glass-table {
-    margin-bottom: 0;
+.glass-table,
+.table-modern {
     width: 100%;
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0;
 }
 
-.glass-table thead th {
-    background: rgba(248, 250, 252, 0.85);
+.glass-table thead th,
+.table-modern thead th {
+    background: rgba(248, 250, 252, 0.9);
     font-size: 0.72rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: #64748b;
-    padding: 1rem 1.25rem;
-    border-bottom: 1px solid #e2e8f0;
+    color: var(--color-navy-500);
+    padding: var(--space-4) var(--space-5);
+    border-bottom: 1px solid var(--color-navy-200);
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
-.glass-table tbody td {
-    padding: 1rem 1.25rem;
+[data-theme="dark"] .glass-table thead th,
+[data-theme="dark"] .table-modern thead th {
+    background: rgba(15, 23, 42, 0.95);
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+    color: var(--color-navy-400);
+}
+
+.glass-table tbody td,
+.table-modern tbody td {
+    padding: var(--space-4) var(--space-5);
     vertical-align: middle;
-    border-bottom: 1px solid rgba(241, 245, 249, 0.9);
+    border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+    font-size: 0.88rem;
+    color: var(--color-navy-800);
     transition: background-color 0.15s ease;
 }
 
-.glass-table tbody tr:hover td {
-    background-color: rgba(248, 250, 252, 0.75);
+[data-theme="dark"] .glass-table tbody td,
+[data-theme="dark"] .table-modern tbody td {
+    border-bottom-color: rgba(255, 255, 255, 0.05);
+    color: #e2e8f0;
 }
 
-.glass-table tbody tr:last-child td {
+.glass-table tbody tr:hover td,
+.table-modern tbody tr:hover td {
+    background-color: rgba(241, 245, 249, 0.75);
+}
+
+[data-theme="dark"] .glass-table tbody tr:hover td,
+[data-theme="dark"] .table-modern tbody tr:hover td {
+    background-color: rgba(30, 41, 59, 0.5);
+}
+
+.glass-table tbody tr:last-child td,
+.table-modern tbody tr:last-child td {
     border-bottom: none;
 }
+
+/* ==========================================================================
+   6. ENTERPRISE FORMS & SPACIOUS INPUTS
+   ========================================================================== */
+.form-control,
+.form-select {
+    background-color: #ffffff !important;
+    border: 1px solid var(--color-navy-300) !important;
+    border-radius: var(--radius-md) !important;
+    padding: 0.65rem 0.95rem !important;
+    font-size: 0.9rem !important;
+    color: var(--color-navy-900) !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--color-primary) !important;
+    box-shadow: 0 0 0 3px var(--color-primary-light) !important;
+    outline: none !important;
+}
+
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select {
+    background-color: rgba(15, 23, 42, 0.8) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #f1f5f9 !important;
+}
+
+.form-label {
+    font-size: 0.82rem !important;
+    font-weight: 600 !important;
+    color: var(--color-navy-700) !important;
+    margin-bottom: var(--space-1) !important;
+    display: block;
+}
+
+[data-theme="dark"] .form-label {
+    color: #cbd5e1 !important;
+}
+
+/* ==========================================================================
+   7. RESTRAINED BADGES & STATUS INDICATORS
+   Only for Status, Alerts, and Categories (No Decorative Spam)
+   ========================================================================== */
+.mature-badge,
+.badge-clean {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px;
+    border-radius: var(--radius-pill);
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: 0.01em;
+}
+
+.mature-badge-emerald,
+.badge-clean-success {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+    border: 1px solid var(--color-success-border);
+}
+
+.mature-badge-amber,
+.badge-clean-warning {
+    background: var(--color-warning-bg);
+    color: var(--color-warning);
+    border: 1px solid var(--color-warning-border);
+}
+
+.mature-badge-rose,
+.badge-clean-danger {
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+    border: 1px solid var(--color-danger-border);
+}
+
+.mature-badge-primary,
+.badge-clean-primary {
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+    border: 1px solid var(--color-primary-border);
+}
+
+.mature-badge-slate,
+.badge-clean-neutral {
+    background: rgba(148, 163, 184, 0.12);
+    color: var(--color-navy-600);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+/* Status Dot Indicator */
+.status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.status-dot.success { background-color: var(--color-success); }
+.status-dot.warning { background-color: var(--color-warning); }
+.status-dot.danger  { background-color: var(--color-danger); }
+.status-dot.info    { background-color: var(--color-primary); }
+
+/* ==========================================================================
+   8. NOTICES & ANNOUNCEMENT BANNERS (Spacious, Breathable)
+   ========================================================================== */
+.glass-notice-card,
+.glass-notice-banner {
+    background: var(--glass-surface);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-subtle);
+    padding: var(--space-4) var(--space-5);
+    margin-bottom: var(--space-5);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.glass-notice-card:hover,
+.glass-notice-banner:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-card);
+}
+
+/* ==========================================================================
+   9. RESPONSIVE BREAKPOINT BEHAVIORS
+   Desktop: 1024px+
+   Tablet:  768px - 1023px
+   Mobile:  320px - 767px
+   ========================================================================== */
+@media (min-width: 1024px) {
+    .content-wrapper {
+        padding: var(--space-6) var(--space-8) var(--space-10) var(--space-8) !important;
+        max-width: 1600px;
+        margin: 0 auto;
+        box-sizing: border-box;
+    }
+
+    .dashboard-grid-hero {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: var(--space-5);
+        margin-bottom: var(--space-6);
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+    .content-wrapper {
+        padding: var(--space-5) var(--space-5) var(--space-8) var(--space-5) !important;
+    }
+
+    .dashboard-grid-hero {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-4);
+        margin-bottom: var(--space-5);
+    }
+}
+
+@media (max-width: 767px) {
+    .content-wrapper {
+        padding: var(--space-4) var(--space-3) 90px var(--space-3) !important;
+    }
+
+    .dashboard-grid-hero {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: var(--space-3);
+        margin-bottom: var(--space-4);
+    }
+}
+
+/* ==========================================================================
+   10. IMAGE 3 DESKTOP TOPBAR SEARCH & ENTERPRISE HEADER SUITE
+   ========================================================================== */
+.desktop-topbar-search {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    background: rgba(241, 245, 249, 0.85);
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    border-radius: var(--radius-pill);
+    padding: 0.42rem 1.1rem;
+    width: 320px;
+    max-width: 440px;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.desktop-topbar-search:focus-within {
+    background: #ffffff;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12), var(--shadow-subtle);
+    width: 380px;
+}
+
+[data-theme="dark"] .desktop-topbar-search,
+body.dark-mode .desktop-topbar-search {
+    background: rgba(15, 23, 42, 0.65);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="dark"] .desktop-topbar-search:focus-within,
+body.dark-mode .desktop-topbar-search:focus-within {
+    background: rgba(30, 41, 59, 0.85);
+    border-color: var(--color-primary);
+}
+
+.desktop-topbar-search i {
+    color: var(--color-navy-400);
+    font-size: 0.82rem;
+    flex-shrink: 0;
+}
+
+.desktop-topbar-search input {
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    font-size: 0.84rem;
+    color: var(--color-navy-900);
+    width: 100%;
+    padding: 0;
+    line-height: 1.4;
+}
+
+[data-theme="dark"] .desktop-topbar-search input,
+body.dark-mode .desktop-topbar-search input {
+    color: #f1f5f9;
+}
+
+.desktop-topbar-search input::placeholder {
+    color: var(--color-navy-400);
+    font-size: 0.82rem;
+}
+
+@media (max-width: 991px) {
+    .desktop-topbar-search {
+        display: none !important;
+    }
+}
+
+/* Enterprise Hero Dashboard Header (Image 3 Style) */
+.hero-header-enterprise {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin-bottom: 1.75rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+}
+
+@media (min-width: 768px) {
+    .hero-header-enterprise {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+}
+
+[data-theme="dark"] .hero-header-enterprise,
+body.dark-mode .hero-header-enterprise {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.hero-title-group h1 {
+    font-size: 1.55rem;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    color: var(--color-navy-900);
+    margin: 0 0 0.25rem 0;
+    line-height: 1.2;
+}
+
+[data-theme="dark"] .hero-title-group h1,
+body.dark-mode .hero-title-group h1 {
+    color: #f8fafc;
+}
+
+.hero-meta-strip {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+    color: var(--color-navy-500);
+}
+
+.hero-actions-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+/* Timeframe Pill Dropdown */
+.pill-timeframe-dropdown {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--glass-surface);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-pill);
+    padding: 0.45rem 1rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--color-navy-700);
+    box-shadow: var(--shadow-subtle);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.pill-timeframe-dropdown:hover {
+    background: #ffffff;
+    border-color: var(--color-navy-300);
+    color: var(--color-navy-900);
+}
+
+[data-theme="dark"] .pill-timeframe-dropdown,
+body.dark-mode .pill-timeframe-dropdown {
+    background: rgba(15, 23, 42, 0.7);
+    color: #cbd5e1;
+}
+
+/* Ghost Export CSV Button */
+.btn-export-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    background: var(--glass-surface);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-pill);
+    padding: 0.45rem 1.1rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--color-navy-700);
+    box-shadow: var(--shadow-subtle);
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.btn-export-ghost:hover {
+    background: #ffffff;
+    color: var(--color-navy-900);
+    border-color: var(--color-navy-300);
+    transform: translateY(-1px);
+}
+
+[data-theme="dark"] .btn-export-ghost,
+body.dark-mode .btn-export-ghost {
+    background: rgba(15, 23, 42, 0.7);
+    color: #cbd5e1;
+}
+
+/* Primary Enterprise Action Pill */
+.btn-primary-action-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    border: none;
+    border-radius: var(--radius-pill);
+    padding: 0.48rem 1.35rem;
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px -2px rgba(37, 99, 235, 0.4);
+    text-decoration: none;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-primary-action-pill:hover {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+    box-shadow: 0 6px 18px -2px rgba(37, 99, 235, 0.5);
+    transform: translateY(-1px);
+    color: #ffffff !important;
+}
+
+/* Image 3 Summary Metrics Pill Row */
+.summary-metrics-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.summary-metric-item {
+    background: var(--glass-surface);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: var(--shadow-subtle);
+    transition: all 0.2s ease;
+}
+
+.summary-metric-item:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-card);
+    background: var(--glass-surface-hover);
+}
+
+.summary-metric-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    flex-shrink: 0;
+}
+
+.summary-metric-icon.blue { background: rgba(37, 99, 235, 0.1); color: #2563eb; }
+.summary-metric-icon.emerald { background: rgba(5, 150, 105, 0.1); color: #059669; }
+.summary-metric-icon.amber { background: rgba(217, 119, 6, 0.1); color: #d97706; }
+.summary-metric-icon.purple { background: rgba(147, 51, 234, 0.1); color: #9333ea; }
+.summary-metric-icon.rose { background: rgba(220, 38, 38, 0.1); color: #dc2626; }
+
+.summary-metric-content {
+    min-width: 0;
+    flex: 1;
+}
+
+.summary-metric-top {
+    display: flex;
+    align-items: baseline;
+    gap: 0.45rem;
+    margin-bottom: 0.15rem;
+}
+
+.summary-metric-num {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--color-navy-900);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    font-family: 'Outfit', sans-serif;
+}
+
+[data-theme="dark"] .summary-metric-num,
+body.dark-mode .summary-metric-num {
+    color: #f8fafc;
+}
+
+.summary-metric-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: var(--radius-pill);
+    line-height: 1.3;
+}
+
+.summary-metric-badge.positive {
+    background: rgba(16, 185, 129, 0.12);
+    color: #059669;
+}
+
+.summary-metric-badge.neutral {
+    background: rgba(148, 163, 184, 0.12);
+    color: #64748b;
+}
+
+.summary-metric-label {
+    font-size: 0.78rem;
+    color: var(--color-navy-500);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Analytic View & Chart Cards (Image 3 Style) */
+.analytic-glass-card {
+    background: var(--glass-surface);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-card);
+    position: relative;
+}
+
+.analytic-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+}
+
+.analytic-card-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--color-navy-900);
+    margin: 0;
+    letter-spacing: -0.01em;
+}
+
+[data-theme="dark"] .analytic-card-title,
+body.dark-mode .analytic-card-title {
+    color: #f8fafc;
+}
+
+.analytic-card-tabs {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: rgba(241, 245, 249, 0.8);
+    border-radius: var(--radius-pill);
+    padding: 3px;
+}
+
+[data-theme="dark"] .analytic-card-tabs,
+body.dark-mode .analytic-card-tabs {
+    background: rgba(15, 23, 42, 0.6);
+}
+
+.analytic-tab-pill {
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-pill);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-navy-600);
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.analytic-tab-pill.active {
+    background: #ffffff;
+    color: var(--color-primary);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="dark"] .analytic-tab-pill.active,
+body.dark-mode .analytic-tab-pill.active {
+    background: #1e293b;
+    color: #38bdf8;
+}
+
+/* ==========================================================================
+   11. IMAGE 1 & 2 ARTISAN / UNIVERSAL SEARCH PILL SUITE
+   ========================================================================== */
+.artisan-search-hero-bar {
+    background: #ffffff;
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    border-radius: 14px;
+    padding: 0.5rem 0.65rem 0.5rem 0.65rem;
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.04);
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .artisan-search-hero-bar,
+body.dark-mode .artisan-search-hero-bar {
+    background: rgba(30, 41, 59, 0.85);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.artisan-search-inner-input {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.55rem 0.95rem;
+    flex: 1;
+    min-width: 0;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.artisan-search-inner-input:focus-within {
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.12);
+}
+
+[data-theme="dark"] .artisan-search-inner-input,
+body.dark-mode .artisan-search-inner-input {
+    background: rgba(15, 23, 42, 0.6);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.artisan-search-inner-input i {
+    color: #94a3b8;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.artisan-search-inner-input input {
+    border: none !important;
+    background: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    font-size: 0.88rem;
+    color: var(--color-navy-900);
+    width: 100%;
+}
+
+[data-theme="dark"] .artisan-search-inner-input input,
+body.dark-mode .artisan-search-inner-input input {
+    color: #f8fafc;
+}
+
+.artisan-search-inner-input input::placeholder {
+    color: #94a3b8;
+    font-size: 0.86rem;
+}
+
+.artisan-search-toggle-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+    padding: 0 0.5rem;
+}
+
+.artisan-search-toggle-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: #dc2626;
+    font-size: 0.82rem;
+    font-weight: 700;
+    white-space: nowrap;
+    margin: 0;
+    cursor: pointer;
+    user-select: none;
+}
+
+.artisan-search-submit-btn {
+    background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
+    color: #ffffff !important;
+    border: none;
+    border-radius: 10px;
+    padding: 0.6rem 2.25rem;
+    font-size: 0.92rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    box-shadow: 0 4px 14px rgba(234, 88, 12, 0.35);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.artisan-search-submit-btn:hover {
+    background: linear-gradient(135deg, #d97706 0%, #c2410c 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(234, 88, 12, 0.45);
+}
+
+@media (max-width: 767px) {
+    .artisan-search-hero-bar {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 0.75rem;
+        gap: 0.65rem;
+    }
+    .artisan-search-toggle-wrap {
+        justify-content: flex-start;
+        padding: 0.25rem 0;
+    }
+    .artisan-search-submit-btn {
+        width: 100%;
+        text-align: center;
+        padding: 0.65rem 1rem;
+    }
+}
+
+

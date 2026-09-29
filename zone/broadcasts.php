@@ -44,13 +44,17 @@ if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])
 
 // Handle Form Submission: Create / Dispatch Zonal Notice
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['dispatch_zone_notice'])) {
+    if (function_exists('set_time_limit')) {
+        @set_time_limit(180);
+    }
     $title = trim($_POST['title'] ?? '');
     $content = trim($_POST['content'] ?? '');
     $target_audience = $_POST['target_audience'] ?? 'all';
     $priority = $_POST['priority'] ?? 'normal';
     $pin_to_top = isset($_POST['pin_to_top']) ? 1 : 0;
-    $dispatch_notification = isset($_POST['channel_in_app']);
+    $dispatch_notification = false; // Zonal broadcasts stay strictly in broadcasts, not in notifications table
     $dispatch_email = isset($_POST['channel_email']);
+    $dispatch_whatsapp = isset($_POST['channel_whatsapp']);
 
     if (empty($title) || empty($content)) {
         $error = "Subject / Title and Notice content cannot be blank.";
@@ -67,7 +71,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['dispatch_zone_notice'
             'created_by' => $_SESSION['user_id'] ?? 1,
             'pin_to_top' => $pin_to_top,
             'dispatch_notification' => $dispatch_notification,
-            'dispatch_email' => $dispatch_email
+            'dispatch_email' => $dispatch_email,
+            'dispatch_whatsapp' => $dispatch_whatsapp
         ]);
 
         if ($result['success']) {
@@ -77,6 +82,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['dispatch_zone_notice'
             }
             if ($result['emails_sent'] > 0) {
                 $msg_parts[] = "{$result['emails_sent']} zonal email(s) sent.";
+            }
+            if (!empty($result['whatsapp_sent']) && $result['whatsapp_sent'] > 0) {
+                $msg_parts[] = "{$result['whatsapp_sent']} WhatsApp broadcast(s) sent via Kapso.";
             }
             $message = implode(" ", $msg_parts);
         } else {
@@ -167,55 +175,55 @@ include 'sidebar.php';
     <?php endif; ?>
 
     <!-- Zone KPI Ribbon -->
-    <div class="row g-3 mb-4">
-        <div class="col-12 col-sm-6 col-xl-3">
-            <div class="card h-100 p-3 bg-white rounded-3 border shadow-sm" style="border-color: #e2e8f0;">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <span class="text-secondary small fw-semibold text-uppercase">Total Zonal Notices</span>
+    <div class="row g-2 g-md-3 mb-4">
+        <div class="col-6 col-xl-3">
+            <div class="kpi-card h-100 p-3 bg-white rounded-4 border shadow-sm" style="border-color: #e2e8f0; overflow: hidden;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div style="flex: 1; min-width: 0;">
+                        <span class="text-secondary small fw-semibold text-uppercase text-truncate d-block">Total Zonal Notices</span>
                         <div class="fs-3 fw-bold text-slate-900 mt-1"><?php echo number_format($total_zone_notices); ?></div>
                     </div>
-                    <div class="p-2 rounded-2" style="background: rgba(168, 85, 247, 0.12); color: #9333ea;">
-                        <i class="fa-solid fa-bullhorn fs-5"></i>
+                    <div class="glass-icon-circle glass-icon-light-purple" style="width: 44px; height: 44px; min-width: 44px; min-height: 44px; font-size: 1.15rem;">
+                        <i class="fa-solid fa-bullhorn"></i>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-12 col-sm-6 col-xl-3">
-            <div class="card h-100 p-3 bg-white rounded-3 border shadow-sm" style="border-color: #e2e8f0;">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <span class="text-secondary small fw-semibold text-uppercase">Target Zone Reach</span>
+        <div class="col-6 col-xl-3">
+            <div class="kpi-card h-100 p-3 bg-white rounded-4 border shadow-sm" style="border-color: #e2e8f0; overflow: hidden;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div style="flex: 1; min-width: 0;">
+                        <span class="text-secondary small fw-semibold text-uppercase text-truncate d-block">Target Zone Reach</span>
                         <div class="fs-3 fw-bold text-slate-900 mt-1"><?php echo number_format($active_residents_cnt); ?> <span class="fs-6 fw-normal text-muted">Residents</span></div>
                     </div>
-                    <div class="p-2 rounded-2" style="background: rgba(59, 130, 246, 0.1); color: #2563eb;">
-                        <i class="fa-solid fa-users fs-5"></i>
+                    <div class="glass-icon-circle glass-icon-light-blue" style="width: 44px; height: 44px; min-width: 44px; min-height: 44px; font-size: 1.15rem;">
+                        <i class="fa-solid fa-users"></i>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-12 col-sm-6 col-xl-3">
-            <div class="card h-100 p-3 bg-white rounded-3 border shadow-sm" style="border-color: #e2e8f0;">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <span class="text-secondary small fw-semibold text-uppercase">Covered Streets</span>
+        <div class="col-6 col-xl-3">
+            <div class="kpi-card h-100 p-3 bg-white rounded-4 border shadow-sm" style="border-color: #e2e8f0; overflow: hidden;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div style="flex: 1; min-width: 0;">
+                        <span class="text-secondary small fw-semibold text-uppercase text-truncate d-block">Covered Streets</span>
                         <div class="fs-3 fw-bold text-slate-900 mt-1"><?php echo number_format($active_streets_cnt); ?> <span class="fs-6 fw-normal text-muted">Streets</span></div>
                     </div>
-                    <div class="p-2 rounded-2" style="background: rgba(16, 185, 129, 0.1); color: #059669;">
-                        <i class="fa-solid fa-road fs-5"></i>
+                    <div class="glass-icon-circle glass-icon-light-emerald" style="width: 44px; height: 44px; min-width: 44px; min-height: 44px; font-size: 1.15rem;">
+                        <i class="fa-solid fa-road"></i>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-12 col-sm-6 col-xl-3">
-            <div class="card h-100 p-3 bg-white rounded-3 border shadow-sm" style="border-color: #e2e8f0;">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <span class="text-secondary small fw-semibold text-uppercase">Urgent Advisories</span>
+        <div class="col-6 col-xl-3">
+            <div class="kpi-card h-100 p-3 bg-white rounded-4 border shadow-sm" style="border-color: #e2e8f0; overflow: hidden;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div style="flex: 1; min-width: 0;">
+                        <span class="text-secondary small fw-semibold text-uppercase text-truncate d-block">Urgent Advisories</span>
                         <div class="fs-3 fw-bold text-danger mt-1"><?php echo number_format($urgent_zone_cnt); ?></div>
                     </div>
-                    <div class="p-2 rounded-2" style="background: rgba(239, 68, 68, 0.1); color: #dc2626;">
-                        <i class="fa-solid fa-triangle-exclamation fs-5"></i>
+                    <div class="glass-icon-circle glass-icon-rose" style="width: 44px; height: 44px; min-width: 44px; min-height: 44px; font-size: 1.15rem;">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
                     </div>
                 </div>
             </div>
@@ -227,9 +235,9 @@ include 'sidebar.php';
         <div class="card-body p-3">
             <form method="GET" class="row g-2 align-items-center">
                 <div class="col-12 col-md-6">
-                    <div class="input-group input-group-sm">
-                        <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
-                        <input type="text" name="search" class="form-control border-start-0" placeholder="Search zonal notices by title or keywords..." value="<?php echo htmlspecialchars($search); ?>">
+                    <div class="search-integrated-wrap">
+                        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                        <input type="text" name="search" class="form-control" placeholder="Search zonal notices by title or keywords..." value="<?php echo htmlspecialchars($search); ?>">
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
@@ -305,7 +313,7 @@ include 'sidebar.php';
                                 </td>
                                 <td style="text-align: right;">
                                     <div class="btn-group btn-group-sm">
-                                        <button type="button" class="btn btn-outline-secondary" onclick='viewZoneNotice(<?php echo json_encode($ann); ?>)' title="View Full Notice">
+                                        <button type="button" class="btn btn-outline-secondary btn-view-zone-notice" data-notice="<?php echo htmlspecialchars(json_encode($ann, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8'); ?>" title="View Full Notice">
                                             <i class="fa-regular fa-eye"></i>
                                         </button>
                                         <a href="broadcasts?action=delete&id=<?php echo $ann['id']; ?>" class="btn btn-outline-danger" onclick="return confirm('Are you sure you want to remove this notice?');" title="Delete Notice">
@@ -382,19 +390,19 @@ include 'sidebar.php';
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" name="channel_feed" id="zChFeed" checked disabled>
                                     <label class="form-check-label small fw-semibold" for="zChFeed">
-                                        <i class="fa-solid fa-bullhorn me-1" style="color: #9333ea;"></i> Display under "Notices From the Zone" in Resident Portal (Default)
+                                        <i class="fa-solid fa-bullhorn me-1" style="color: #9333ea;"></i> Display under "Notices From the Zone" in Resident Portal Noticeboard (Default)
                                     </label>
                                 </div>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="channel_in_app" id="zChInApp" value="1" checked>
-                                    <label class="form-check-label small" for="zChInApp">
-                                        <i class="fa-solid fa-bell text-warning me-1"></i> Send In-App Alerts to Zone Residents
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="channel_email" id="zChEmail" value="1">
+                                    <input class="form-check-input" type="checkbox" name="channel_email" id="zChEmail" value="1" checked>
                                     <label class="form-check-label small" for="zChEmail">
-                                        <i class="fa-solid fa-envelope text-success me-1"></i> Send Outbound Broadcast Email to Zone Residents
+                                        <i class="fa-solid fa-envelope text-secondary me-1"></i> Send Outbound Broadcast Email to Zone Residents (via SMTP)
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="channel_whatsapp" id="zChWhatsApp" value="1" checked>
+                                    <label class="form-check-label small" for="zChWhatsApp">
+                                        <i class="fa-brands fa-whatsapp text-success me-1"></i> Send Direct WhatsApp Broadcast to Zone Residents (via Kapso)
                                     </label>
                                 </div>
                                 <div class="form-check mt-1 pt-1 border-top">
@@ -419,14 +427,14 @@ include 'sidebar.php';
 </div>
 
 <!-- View Notice Modal -->
-<div id="viewZoneNoticeModal" class="modal-backdrop" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); z-index: 1050; align-items: center; justify-content: center; backdrop-filter: blur(8px);">
-    <div class="modal-dialog modal-dialog-centered" style="max-width: 600px; width: 95%;">
+<div id="viewZoneNoticeModal" class="modal-backdrop" onclick="if(event.target === this) closeViewZoneNoticeModal()" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(8px); padding: 1rem;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 600px; width: 95%; margin: auto;">
         <div class="modal-content bg-white rounded-3 shadow-lg border-0 overflow-hidden">
             <div class="modal-header bg-light px-4 py-3 border-bottom d-flex justify-content-between align-items-center">
                 <span id="viewZPriorityBadge"></span>
                 <button type="button" onclick="closeViewZoneNoticeModal()" class="btn-close" style="font-size: 0.8rem;"></button>
             </div>
-            <div class="modal-body p-4">
+            <div class="modal-body p-4" style="max-height: calc(85vh - 120px); overflow-y: auto;">
                 <h4 id="viewZNoticeTitle" class="fw-bold text-slate-900 mb-2"></h4>
                 <div class="d-flex align-items-center gap-3 text-secondary small pb-3 mb-3 border-bottom">
                     <span><i class="fa-regular fa-clock me-1"></i><span id="viewZNoticeDate"></span></span>
@@ -449,12 +457,21 @@ function closeZoneNoticeModal() {
     document.getElementById('zoneNoticeModal').style.display = 'none';
 }
 function viewZoneNotice(ann) {
-    document.getElementById('viewZNoticeTitle').innerText = ann.title;
-    document.getElementById('viewZNoticeContent').innerText = ann.content;
-    document.getElementById('viewZNoticeDate').innerText = new Date(ann.created_at).toLocaleDateString(undefined, {
-        month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
-    });
-    document.getElementById('viewZNoticeAudience').innerText = 'Audience: ' + ann.target_audience;
+    if (!ann) return;
+    document.getElementById('viewZNoticeTitle').innerText = ann.title || 'Untitled Notice';
+    document.getElementById('viewZNoticeContent').innerText = ann.content || '';
+    
+    let dateStr = ann.created_at || '';
+    if (dateStr) {
+        const safeDate = new Date(dateStr.replace(' ', 'T'));
+        if (!isNaN(safeDate)) {
+            dateStr = safeDate.toLocaleDateString(undefined, {
+                month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
+            });
+        }
+    }
+    document.getElementById('viewZNoticeDate').innerText = dateStr;
+    document.getElementById('viewZNoticeAudience').innerText = 'Audience: ' + (ann.target_audience || 'All');
 
     const prioEl = document.getElementById('viewZPriorityBadge');
     if (ann.priority === 'urgent') {
@@ -470,6 +487,28 @@ function viewZoneNotice(ann) {
 function closeViewZoneNoticeModal() {
     document.getElementById('viewZoneNoticeModal').style.display = 'none';
 }
+
+// Click listener for view notice buttons (safe delegation)
+document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.btn-view-zone-notice');
+    if (!btn) return;
+    try {
+        const raw = btn.getAttribute('data-notice');
+        if (!raw) return;
+        const ann = JSON.parse(raw);
+        viewZoneNotice(ann);
+    } catch(err) {
+        console.error('Error opening zonal notice:', err);
+    }
+});
+
+// Close modals on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeZoneNoticeModal();
+        closeViewZoneNoticeModal();
+    }
+});
 </script>
 
 <?php include 'footer.php'; ?>

@@ -26,6 +26,7 @@
         }
         localStorage.setItem('estate_app_theme', theme);
         updateToggleIcons(theme);
+        window.dispatchEvent(new CustomEvent('estateThemeChanged', { detail: { theme } }));
     }
 
     function updateToggleIcons(theme) {
@@ -43,17 +44,25 @@
                 btn.setAttribute('title', 'Switch to Dark Mode');
             }
         });
+
+        // Also update any drawer theme subtitle description
+        const themeDesc = document.querySelector('.mobile-drawer-theme-desc');
+        if (themeDesc) {
+            themeDesc.textContent = (theme === 'dark') ? 'Night mode active (OLED calm)' : 'Day mode active (Clear daylight)';
+        }
     }
 
     function bindThemeToggleButtons() {
-        const toggleBtns = document.querySelectorAll('.theme-toggle-btn');
-        toggleBtns.forEach(btn => {
-            btn.addEventListener('click', (e) => {
+        // Direct event delegation for all existing & dynamic theme toggle buttons
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('.theme-toggle-btn');
+            if (btn) {
                 e.preventDefault();
+                e.stopPropagation();
                 const currentTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
                 const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
                 applyTheme(newTheme);
-            });
+            }
         });
     }
 

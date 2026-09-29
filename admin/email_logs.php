@@ -409,8 +409,8 @@ include '../includes/sidebar.php';
 </div>
 
 <!-- Broadcast Email Modal -->
-<div id="broadcastModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); z-index: 1050; align-items: center; justify-content: center; backdrop-filter: blur(8px);">
-    <div class="mature-card p-4 rounded-4" style="width: 100%; max-width: 560px; margin: auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);">
+<div id="broadcastModal" onclick="if(event.target === this) this.style.display='none'" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); z-index: 1060; align-items: center; justify-content: center; backdrop-filter: blur(8px); overflow-y: auto; padding: 1.5rem 1rem;">
+    <div class="mature-card p-4 rounded-4" style="width: 100%; max-width: 560px; margin: auto; max-height: calc(100vh - 3rem); overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h3 class="mature-card-title">
                 <i class="fa-solid fa-bullhorn text-primary"></i> Send Estate Broadcast Email

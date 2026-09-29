@@ -9,16 +9,6 @@ require_once __DIR__ . '/../includes/NoticeManager.php';
 
 header('Content-Type: application/json');
 
-if (!isset($_SESSION['user_id'])) {
-    echo json_encode(['success' => false, 'error' => 'Authentication required']);
-    exit;
-}
-
-$estate_id = get_estate_id();
-$user_id = intval($_SESSION['user_id']);
-$user_role = $_SESSION['role'] ?? 'resident';
-$action = $_GET['action'] ?? ($_POST['action'] ?? '');
-
 // Helper to snapshot active guards on duty
 function snapshotGuardsOnDuty($conn, $estate_id) {
     $now = date('Y-m-d H:i:s');
@@ -53,6 +43,46 @@ function getEmergencySetting($conn, $estate_id, $key, $default = '') {
     }
     return $default;
 }
+
+$action = $_GET['action'] ?? ($_POST['action'] ?? '');
+
+// -------------------------------------------------------------
+// PUBLIC/GLOBAL ACTION: GET DIRECT EMERGENCY HOTLINES (No Alarm Trigger)
+// -------------------------------------------------------------
+if ($action === 'get_hotlines') {
+    $estate_id = get_estate_id();
+    if (function_exists('initEmergencyAndRosterTables')) {
+        initEmergencyAndRosterTables($conn);
+    }
+    $con_res = $conn->query("SELECT id, label, phone_number, contact_type, is_primary 
+                             FROM estate_emergency_contacts 
+                             WHERE estate_id = $estate_id AND is_active = 1 
+                             ORDER BY is_primary DESC, display_order ASC");
+    $contacts = [];
+    if ($con_res) {
+        while ($ct = $con_res->fetch_assoc()) {
+            $contacts[] = $ct;
+        }
+    }
+
+    $active_guards = snapshotGuardsOnDuty($conn, $estate_id);
+
+    echo json_encode([
+        'success' => true,
+        'contacts' => $contacts,
+        'guards_on_duty' => $active_guards
+    ]);
+    exit;
+}
+
+if (!isset($_SESSION['user_id'])) {
+    echo json_encode(['success' => false, 'error' => 'Authentication required']);
+    exit;
+}
+
+$estate_id = get_estate_id();
+$user_id = intval($_SESSION['user_id']);
+$user_role = $_SESSION['role'] ?? 'resident';
 
 // -------------------------------------------------------------
 // 1. TRIGGER PANIC / EMERGENCY ALERT
@@ -286,6 +316,16 @@ if ($action === 'trigger_panic' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                   "Security team mobilized. Direct hotlines & guard gates have been dispatched.";
         
         $wa_url = "https://api.whatsapp.com/send?text=" . urlencode($wa_msg);
+
+        // Direct WhatsApp & Email dispatch to guards and emergency stakeholders
+        $wa_dispatched_cnt = 0;
+        $emergency_desc = !empty($note) ? $note : (!empty($headline) ? $headline : "Emergency reported at $unit_display by $sender_name");
+        if (class_exists('EstateMailer')) {
+            EstateMailer::sendEmergencyAlertEmail($conn, $category_name, $emergency_desc, $unit_display, $estate_id, $alert_code);
+        }
+        if (class_exists('EstateWhatsApp')) {
+            $wa_dispatched_cnt = EstateWhatsApp::sendEmergencyAlertWhatsApp($conn, $category_name, $emergency_desc, $unit_display, $estate_id, $alert_code);
+        }
 
         // Fetch estate emergency hotlines to return for immediate click-to-dial
         $hotlines_res = $conn->query("SELECT label, phone_number, contact_type, is_primary FROM estate_emergency_contacts WHERE estate_id = $estate_id AND is_active = 1 ORDER BY display_order ASC");

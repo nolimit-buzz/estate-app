@@ -693,24 +693,29 @@ include 'header.php';
 include 'sidebar.php';
 ?>
 
-<div class="page-header-futuristic mb-4">
-    <div>
-        <div class="header-breadcrumbs">
-            <span><?php echo htmlspecialchars($_SESSION['zone_name'] ?? 'Zone'); ?></span>
-            <i class="fa-solid fa-chevron-right separator"></i>
-            <span>Community</span>
-            <i class="fa-solid fa-chevron-right separator"></i>
-            <span class="active">Resident Registry</span>
+<!-- Enterprise Hero Header (Image 3 Style) -->
+<div class="hero-header-enterprise">
+    <div class="hero-title-group">
+        <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+            <h1>Zonal Residents Registry</h1>
+            <span class="mature-badge mature-badge-purple">
+                <i class="fa-solid fa-layer-group me-1"></i> Zone <?php echo htmlspecialchars($_SESSION['zone_name'] ?? 'Sector'); ?>
+            </span>
         </div>
-        <h1 class="header-title">Zonal Residents & Multi-Entity Registry</h1>
-        <p class="header-subtitle">Strictly isolated to your assigned sector. Register and manage households, family dependents, domestic staff, and vehicle units.</p>
+        <div class="hero-meta-strip">
+            <span><i class="fa-solid fa-users me-1"></i> Isolated Sector Scope</span>
+            <span>•</span>
+            <span><i class="fa-solid fa-house-chimney me-1"></i> Households &amp; Dependents</span>
+            <span>•</span>
+            <span class="text-success"><i class="fa-solid fa-circle me-1" style="font-size: 0.5rem;"></i> Active Ledger</span>
+        </div>
     </div>
-    <div class="d-flex align-items-center gap-2 flex-wrap">
-        <a href="archives?tab=residents" class="btn btn-outline-secondary rounded-pill px-3 py-2 fw-semibold d-inline-flex align-items-center gap-2 shadow-sm" style="background: white;">
-            <i class="fa-solid fa-box-archive text-warning"></i> Zonal Archives Vault
+    <div class="hero-actions-group">
+        <a href="archives?tab=residents" class="btn-export-ghost" title="Zonal Archives Vault">
+            <i class="fa-solid fa-box-archive text-warning"></i> Archives Vault
         </a>
-        <button type="button" class="btn btn-primary rounded-pill px-3 py-2 fw-semibold d-inline-flex align-items-center gap-2 shadow-sm" onclick="openResidentModal()">
-            <i class="fa-solid fa-user-plus"></i> Onboard Resident
+        <button type="button" class="btn-primary-action-pill" style="background: linear-gradient(135deg, #7e22ce 0%, #6b21a8 100%); box-shadow: 0 4px 14px -2px rgba(126, 34, 206, 0.4);" onclick="openResidentModal()">
+            <i class="fa-solid fa-user-plus"></i> + Onboard Resident
         </button>
     </div>
 </div>
@@ -728,9 +733,9 @@ include 'sidebar.php';
 <!-- ==========================================
      EXECUTIVE KPI METRICS RIBBON (4 PILLARS)
      ========================================== -->
-<div class="row g-3 mb-4">
+<div class="row g-2 g-md-3 mb-4">
     <!-- Pillar 1: Active Resident Population -->
-    <div class="col-12 col-sm-6 col-xl-3">
+    <div class="col-6 col-xl-3">
         <div class="kpi-card h-100">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
@@ -752,7 +757,7 @@ include 'sidebar.php';
     </div>
 
     <!-- Pillar 2: Heads of Household -->
-    <div class="col-12 col-sm-6 col-xl-3">
+    <div class="col-6 col-xl-3">
         <div class="kpi-card h-100">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
@@ -774,7 +779,7 @@ include 'sidebar.php';
     </div>
 
     <!-- Pillar 3: Dependents & Families -->
-    <div class="col-12 col-sm-6 col-xl-3">
+    <div class="col-6 col-xl-3">
         <div class="kpi-card h-100">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
@@ -796,7 +801,7 @@ include 'sidebar.php';
     </div>
 
     <!-- Pillar 4: Registered Ancillaries -->
-    <div class="col-12 col-sm-6 col-xl-3">
+    <div class="col-6 col-xl-3">
         <div class="kpi-card h-100">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
@@ -818,30 +823,59 @@ include 'sidebar.php';
     </div>
 </div>
 
+<?php if ($pending_contact_reqs_count > 0): ?>
+    <div class="alert mature-card p-3 mb-4 shadow-sm" style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 0.75rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+        <div class="d-flex align-items-center gap-3">
+            <div style="width: 40px; height: 40px; border-radius: 10px; background: #fef3c7; display: flex; align-items: center; justify-content: center; color: #d97706; font-size: 1.15rem; flex-shrink: 0; box-shadow: 0 2px 4px rgba(217, 119, 6, 0.15);">
+                <i class="fa-solid fa-id-card-clip"></i>
+            </div>
+            <div>
+                <strong style="color: #92400e; font-size: 0.95rem;">Pending Zonal Contact Change Requests</strong>
+                <div style="font-size: 0.85rem; color: #78350f;">
+                    You have <strong class="text-danger"><?php echo $pending_contact_reqs_count; ?></strong> resident contact details change request(s) in your zone awaiting approval.
+                </div>
+            </div>
+        </div>
+        <button type="button" onclick="openTab(event, 'contact_requests')" class="btn btn-sm text-white px-3 py-1.5 fw-semibold rounded-pill shadow-sm" style="background: #d97706;">
+            <i class="fa-solid fa-list-check me-1"></i> Review Requests Now
+        </button>
+    </div>
+<?php endif; ?>
+
 <!-- Futuristic Tabs -->
 <div class="futuristic-tabs">
-    <button class="futuristic-tab-btn tab-btn active" onclick="openTab(event, 'residents')">
+    <button class="futuristic-tab-btn tab-btn <?php echo (!isset($_GET['tab']) || $_GET['tab'] === 'residents') ? 'active' : ''; ?>" onclick="openTab(event, 'residents')">
         <i class="fa-solid fa-users"></i> Residents 
         <span class="tech-chip" style="padding: 1px 6px;"><?php echo $total_pop_count; ?></span>
     </button>
-    <button class="futuristic-tab-btn tab-btn" onclick="openTab(event, 'vehicles')">
+    <button class="futuristic-tab-btn tab-btn <?php echo (isset($_GET['tab']) && $_GET['tab'] === 'vehicles') ? 'active' : ''; ?>" onclick="openTab(event, 'vehicles')">
         <i class="fa-solid fa-car"></i> Vehicles 
         <span class="tech-chip" style="padding: 1px 6px;"><?php echo $vehicles_count; ?></span>
     </button>
-    <button class="futuristic-tab-btn tab-btn" onclick="openTab(event, 'pets')">
+    <button class="futuristic-tab-btn tab-btn <?php echo (isset($_GET['tab']) && $_GET['tab'] === 'pets') ? 'active' : ''; ?>" onclick="openTab(event, 'pets')">
         <i class="fa-solid fa-paw"></i> Pets 
         <span class="tech-chip" style="padding: 1px 6px;"><?php echo $pets_count; ?></span>
     </button>
-    <button class="futuristic-tab-btn tab-btn" onclick="openTab(event, 'staff')">
+    <button class="futuristic-tab-btn tab-btn <?php echo (isset($_GET['tab']) && $_GET['tab'] === 'staff') ? 'active' : ''; ?>" onclick="openTab(event, 'staff')">
         <i class="fa-solid fa-user-shield"></i> Domestic Staff 
         <span class="tech-chip" style="padding: 1px 6px;"><?php echo $dom_staff_count; ?></span>
+    </button>
+    <button class="futuristic-tab-btn tab-btn <?php echo (isset($_GET['tab']) && $_GET['tab'] === 'contact_requests') ? 'active' : ''; ?>" onclick="openTab(event, 'contact_requests')">
+        <i class="fa-solid fa-id-card-clip"></i> Contact Update Requests 
+        <?php if ($pending_contact_reqs_count > 0): ?>
+            <span class="badge bg-warning text-dark rounded-pill fw-bold ms-1" style="padding: 3px 8px; font-size: 0.72rem;">
+                <i class="fa-solid fa-clock me-1"></i><?php echo $pending_contact_reqs_count; ?> Pending
+            </span>
+        <?php else: ?>
+            <span class="tech-chip ms-1" style="padding: 1px 6px;">0</span>
+        <?php endif; ?>
     </button>
 </div>
 
 <!-- ==========================================
      TAB 1: RESIDENTS DIRECTORY
      ========================================== -->
-<div id="residents" class="tab-content">
+<div id="residents" class="tab-content" style="<?php echo (isset($_GET['tab']) && $_GET['tab'] !== 'residents') ? 'display: none;' : ''; ?>">
     <!-- Filter Toolbar -->
     <div class="futuristic-filter-bar mb-3">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-stretch align-items-md-center gap-3">
@@ -1242,7 +1276,7 @@ include 'sidebar.php';
 </div>
 
 <!-- Contact Requests Tab -->
-<div id="contact_requests" class="tab-content" style="display: none;">
+<div id="contact_requests" class="tab-content" style="<?php echo (isset($_GET['tab']) && $_GET['tab'] === 'contact_requests') ? 'display: block;' : 'display: none;'; ?>">
     <div class="mature-card mb-4">
         <div class="mature-card-header">
             <div>
@@ -1734,8 +1768,22 @@ function openTab(evt, tabName) {
     }
     if (evt && evt.currentTarget) {
         evt.currentTarget.classList.add("active");
+    } else {
+        var activeBtn = document.querySelector(`button[onclick*="'${tabName}'"]`);
+        if (activeBtn) activeBtn.classList.add("active");
+    }
+    if (history.replaceState) {
+        history.replaceState(null, null, '#' + tabName);
     }
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    var urlParams = new URLSearchParams(window.location.search);
+    var tabParam = urlParams.get('tab') || window.location.hash.replace('#', '');
+    if (tabParam && document.getElementById(tabParam)) {
+        openTab(null, tabParam);
+    }
+});
 
 // Image Preview Helper
 function previewImage(input, previewId) {

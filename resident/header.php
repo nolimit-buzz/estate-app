@@ -76,6 +76,8 @@ $primary_rgb = hex2rgb($primary);
     <link rel="stylesheet" href="../css/style.css?v=<?php echo time(); ?>">
     <link rel="stylesheet" href="../css/estate_notifications.css?v=<?php echo time(); ?>">
     <link rel="stylesheet" href="../css/estate_glassmorphism.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="../css/mobile_app.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="../css/hotline.css?v=<?php echo time(); ?>">
     
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -85,10 +87,15 @@ $primary_rgb = hex2rgb($primary);
     <!-- Global Theme Switcher Script -->
     <script src="../js/theme.js"></script>
     <script src="../js/searchable_select.js?v=<?php echo time(); ?>" defer></script>
+    <script src="../js/mobile_app.js?v=<?php echo time(); ?>" defer></script>
     <!-- Real-time Emergency & Panic Alarm Engine -->
     <script>window.ESTATE_IS_STAFF_OR_ADMIN = false; window.ESTATE_EMERGENCY_URL = 'emergency';</script>
     <script src="../js/emergency_alarm.js?v=<?php echo time(); ?>"></script>
     <script src="../js/panic_dispatcher.js?v=<?php echo time(); ?>"></script>
+    <!-- Direct Emergency Hotline Modal Engine -->
+    <script src="../js/hotline_modal.js?v=<?php echo time(); ?>" defer></script>
+
+    <?php require_once __DIR__ . '/../includes/mobile_nav.php'; ?>
 
     <style>
         :root {
@@ -132,6 +139,18 @@ $primary_rgb = hex2rgb($primary);
             0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
             70% { box-shadow: 0 0 0 14px rgba(220, 38, 38, 0); }
             100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+        }
+
+        @media (max-width: 991px) {
+            .floating-panic-btn {
+                bottom: calc(var(--mob-nav-height, 62px) + env(safe-area-inset-bottom, 16px) + 12px) !important;
+                right: 14px !important;
+                padding: 7px 13px !important;
+                font-size: 0.78rem !important;
+                gap: 6px !important;
+                z-index: 1040 !important;
+                box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4) !important;
+            }
         }
     </style>
 </head>

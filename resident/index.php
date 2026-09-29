@@ -42,6 +42,10 @@ $finance_stats = $conn->query("SELECT
     MIN(CASE WHEN status != 'paid' THEN due_date ELSE NULL END) as next_due_date
     FROM invoices WHERE user_id = $user_id AND estate_id = $estate_id")->fetch_assoc();
 
+$outstanding_balance = floatval($finance_stats['outstanding_balance'] ?? 0);
+$total_paid = floatval($finance_stats['total_paid'] ?? 0);
+$next_due_date = $finance_stats['next_due_date'] ?? null;
+
 $total_payments_res = $conn->query("SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE user_id = $user_id AND status = 'paid'");
 $total_paid_payments = $total_payments_res->fetch_assoc()['total'] ?? 0;
 
@@ -83,11 +87,207 @@ $resident_zone_name = $notice_data['resident_zone_name'] ?? ($resident_info['zon
 
 // Outstanding Invoices count
 $unpaid_invoices_cnt = $conn->query("SELECT COUNT(id) as cnt FROM invoices WHERE user_id = $user_id AND status != 'paid'")->fetch_assoc()['cnt'] ?? 0;
+
+// Pending Contact Change Request & Unread Contact Decision Notifications
+$pending_contact_req = $conn->query("SELECT * FROM contact_change_requests WHERE user_id = $user_id AND estate_id = $estate_id AND status = 'pending' LIMIT 1")->fetch_assoc();
+$recent_contact_update_notif = $conn->query("SELECT * FROM notifications WHERE user_id = $user_id AND estate_id = $estate_id AND is_read = 0 AND type IN ('contact_approved', 'contact_rejected') ORDER BY id DESC LIMIT 1")->fetch_assoc();
+
+// Fetch Recent Activities for Native Mobile Feed (Image 1 Screen 2)
+$mobile_activities = [];
+$act_q1 = $conn->query("SELECT 'payment' as type, amount, COALESCE(paid_at, created_at) as created_at, 'Payment Settled' as title, 'Verified via Paystack/Bank' as subtitle FROM payments WHERE user_id = $user_id AND estate_id = $estate_id AND status = 'paid' ORDER BY COALESCE(paid_at, created_at) DESC LIMIT 2");
+if ($act_q1) while($r = $act_q1->fetch_assoc()) $mobile_activities[] = $r;
+
+$act_q2 = $conn->query("SELECT 'visitor' as type, 0 as amount, name as title, CONCAT('Pass: ', status) as subtitle, created_at FROM visitors WHERE resident_id = $user_id AND estate_id = $estate_id ORDER BY id DESC LIMIT 2");
+if ($act_q2) while($r = $act_q2->fetch_assoc()) $mobile_activities[] = $r;
+
+$act_q3 = $conn->query("SELECT 'maintenance' as type, 0 as amount, title as title, CONCAT('Ticket: ', status) as subtitle, created_at FROM maintenance_requests WHERE user_id = $user_id AND estate_id = $estate_id ORDER BY id DESC LIMIT 2");
+if ($act_q3) while($r = $act_q3->fetch_assoc()) $mobile_activities[] = $r;
+
+if (!empty($mobile_activities)) {
+    usort($mobile_activities, function($a, $b) {
+        return strtotime($b['created_at']) - strtotime($a['created_at']);
+    });
+    $mobile_activities = array_slice($mobile_activities, 0, 4);
+}
+
 include 'header.php';
 include 'sidebar.php';
 ?>
 
-<div class="d-flex flex-column gap-4">
+<!-- ==========================================
+     NATIVE MOBILE APP DASHBOARD (< 992px)
+     Matching User Provided UI Reference Designs
+     ========================================== -->
+<div class="mobile-only mb-4">
+    <!-- Contact Change Request Mobile Banner -->
+    <?php if ($pending_contact_req): ?>
+        <a href="notifications" class="px-3 py-2 mb-2 glass-notice-banner d-flex align-items-center gap-2.5 text-decoration-none" style="border-left: 4px solid #d97706 !important;">
+            <div class="glass-icon-circle hero-icon-circle glass-icon-light-amber" style="width: 32px; height: 32px; min-width: 32px; min-height: 32px; font-size: 0.85rem;">
+                <i class="fa-solid fa-hourglass-half"></i>
+            </div>
+            <div style="flex: 1; min-width: 0; overflow: hidden;">
+                <div class="d-flex justify-content-between align-items-center gap-2 mb-0.5">
+                    <span class="text-uppercase fw-bold text-warning-emphasis" style="font-size: 0.65rem; letter-spacing: 0.05em;">Contact Update</span>
+                    <span class="badge bg-warning text-dark" style="font-size: 0.65rem;">Pending</span>
+                </div>
+                <div class="fw-bold text-slate-900 small text-truncate">Awaiting Admin Approval</div>
+                <div class="text-muted small text-truncate" style="font-size: 0.75rem;">Under review by Central &amp; Zonal Admins &rarr;</div>
+            </div>
+        </a>
+    <?php elseif ($recent_contact_update_notif): ?>
+        <a href="notifications" class="px-3 py-2 mb-2 glass-notice-banner d-flex align-items-center gap-2.5 text-decoration-none" style="border-left: 4px solid <?php echo ($recent_contact_update_notif['type'] === 'contact_approved') ? '#059669' : '#dc2626'; ?> !important;">
+            <div class="glass-icon-circle hero-icon-circle <?php echo ($recent_contact_update_notif['type'] === 'contact_approved') ? 'glass-icon-light-emerald' : 'glass-icon-rose'; ?>" style="width: 32px; height: 32px; min-width: 32px; min-height: 32px; font-size: 0.85rem;">
+                <i class="fa-solid <?php echo ($recent_contact_update_notif['type'] === 'contact_approved') ? 'fa-check' : 'fa-xmark'; ?>"></i>
+            </div>
+            <div style="flex: 1; min-width: 0; overflow: hidden;">
+                <div class="d-flex justify-content-between align-items-center gap-2 mb-0.5">
+                    <span class="text-uppercase fw-bold text-muted" style="font-size: 0.65rem; letter-spacing: 0.05em;">Contact Update</span>
+                    <span class="badge <?php echo ($recent_contact_update_notif['type'] === 'contact_approved') ? 'bg-success' : 'bg-danger'; ?>" style="font-size: 0.65rem;">
+                        <?php echo ($recent_contact_update_notif['type'] === 'contact_approved') ? 'Approved' : 'Declined'; ?>
+                    </span>
+                </div>
+                <div class="fw-bold text-slate-900 small text-truncate"><?= htmlspecialchars($recent_contact_update_notif['title']) ?></div>
+                <div class="text-muted small text-truncate" style="font-size: 0.75rem;"><?= htmlspecialchars($recent_contact_update_notif['message']) ?></div>
+            </div>
+        </a>
+    <?php endif; ?>
+
+    <!-- 1. Notification Pill Banner (Image 1 Fixed & Modernized) -->
+    <?php if ($announcements && $announcements->num_rows > 0): 
+        $latest_ann = $announcements->fetch_assoc();
+        $announcements->data_seek(0);
+    ?>
+        <div class="px-3 py-2 mb-2 glass-notice-banner d-flex align-items-center gap-2.5" style="border-left: 4px solid var(--mob-primary) !important; cursor: pointer;" onclick='openNoticeModal(<?php echo json_encode($latest_ann); ?>)'>
+            <div class="glass-icon-circle hero-icon-circle glass-icon-light-orange" style="width: 32px; height: 32px; min-width: 32px; min-height: 32px; font-size: 0.85rem;">
+                <i class="fa-solid fa-bullhorn"></i>
+            </div>
+            <div style="flex: 1; min-width: 0; max-width: calc(100% - 44px); overflow: hidden;">
+                <div class="d-flex justify-content-between align-items-center gap-2 mb-0.5">
+                    <span class="text-uppercase fw-bold text-muted" style="font-size: 0.64rem; letter-spacing: 0.05em;">Estate Notice</span>
+                    <span class="text-muted small flex-shrink-0" style="font-size: 0.68rem;"><?= date('M j', strtotime($latest_ann['created_at'])) ?></span>
+                </div>
+                <div class="fw-bold text-slate-900 small text-truncate" style="font-size: 0.82rem;"><?= htmlspecialchars($latest_ann['title']) ?></div>
+                <div class="text-muted small text-truncate" style="font-size: 0.72rem;"><?= htmlspecialchars($latest_ann['content']) ?></div>
+            </div>
+        </div>
+    <?php endif; ?>
+
+    <!-- 2. Property & Account Summary (Clean, Minimal, Spacious) -->
+    <div class="mobile-section-header">
+        <h3 class="mobile-section-title">My Residence</h3>
+        <a href="property" class="mobile-section-link">Details &rarr;</a>
+    </div>
+    <div class="mobile-kpi-grid">
+        <a href="property" class="mobile-kpi-card">
+            <span class="mobile-kpi-label">Unit Number</span>
+            <div class="mobile-kpi-val"><?= htmlspecialchars($resident_info['flat_number'] ?? '101') ?></div>
+            <span class="mobile-kpi-sub"><?= htmlspecialchars($resident_info['building_name'] ?? 'Flat Unit') ?></span>
+        </a>
+
+        <a href="property" class="mobile-kpi-card">
+            <span class="mobile-kpi-label">Tenancy Status</span>
+            <div class="mobile-kpi-val text-success" style="font-size: 1.25rem;"><?= htmlspecialchars(ucfirst($tenancy['status'] ?? 'Active')) ?></div>
+            <span class="mobile-kpi-sub">Verified Resident</span>
+        </a>
+
+        <a href="finance" class="mobile-kpi-card">
+            <span class="mobile-kpi-label">Payments Made</span>
+            <div class="mobile-kpi-val">₦<?= number_format($total_paid_payments / 1000, 1) ?>k</div>
+            <span class="mobile-kpi-sub"><?= ($outstanding_balance > 0) ? '₦' . number_format($outstanding_balance) . ' Due' : 'All Settled' ?></span>
+        </a>
+
+        <a href="report_issue" class="mobile-kpi-card">
+            <span class="mobile-kpi-label">Active Requests</span>
+            <div class="mobile-kpi-val"><?= $conn->query("SELECT COUNT(id) as cnt FROM maintenance_requests WHERE user_id = $user_id AND status IN ('open','in_progress')")->fetch_assoc()['cnt'] ?? 0 ?></div>
+            <span class="mobile-kpi-sub">Maintenance Tickets</span>
+        </a>
+    </div>
+
+    <!-- 3. Occupancy Rates / Collection Velocity Bar Chart (Image 1 Screen 2) -->
+    <div class="mobile-chart-card">
+        <div class="mobile-chart-header">
+            <h4 class="mobile-chart-title">Payment Velocity</h4>
+            <div class="mobile-pill-dropdown">
+                <span>Monthly</span>
+                <i class="fa-solid fa-chevron-down" style="font-size: 0.65rem;"></i>
+            </div>
+        </div>
+        <div class="mobile-bar-chart-body">
+            <?php 
+            $months_short = ['Feb','Mar','Apr','May','Jun','Jul'];
+            for ($m_idx = 2; $m_idx <= 7; $m_idx++):
+                $val = $monthly_payments[$m_idx] ?? 0;
+                $pct = ($val / $max_monthly) * 100;
+                if ($pct < 12 && $val > 0) $pct = 12;
+                if ($val == 0) $pct = 10;
+            ?>
+                <div class="mobile-bar-col">
+                    <div class="mobile-bar-track">
+                        <div class="mobile-bar-fill" style="height: <?= max(8, min(100, $pct)) ?>%;"></div>
+                    </div>
+                    <span class="mobile-bar-month"><?= $months_short[$m_idx - 2] ?></span>
+                </div>
+            <?php endfor; ?>
+        </div>
+    </div>
+
+    <!-- 4. ALL RESIDENT SIDEBAR ICONS DOWN BELOW (Image 2 Style Grid) -->
+    <?php 
+    if (function_exists('renderMobileSidebarIconsGrid')) {
+        renderMobileSidebarIconsGrid('resident');
+    }
+    ?>
+
+    <!-- 5. Recent Activity Feed (Image 1 Screen 2) -->
+    <div class="mobile-section-header">
+        <h3 class="mobile-section-title">Recent Activity</h3>
+        <a href="finance" class="mobile-section-link">View all <i class="fa-solid fa-chevron-right" style="font-size: 0.7rem;"></i></a>
+    </div>
+    <div class="mobile-activity-list">
+        <?php if (!empty($mobile_activities)): ?>
+            <?php foreach ($mobile_activities as $act): ?>
+                <?php 
+                $icon = 'fa-solid fa-receipt';
+                $icon_bg = 'rgba(16, 185, 129, 0.12)';
+                $icon_c = '#059669';
+                $link = 'finance';
+                if ($act['type'] === 'visitor') {
+                    $icon = 'fa-solid fa-id-badge';
+                    $icon_bg = 'rgba(37, 99, 235, 0.12)';
+                    $icon_c = '#2563eb';
+                    $link = 'visitors';
+                } elseif ($act['type'] === 'maintenance') {
+                    $icon = 'fa-solid fa-screwdriver-wrench';
+                    $icon_bg = 'rgba(217, 119, 6, 0.12)';
+                    $icon_c = '#d97706';
+                    $link = 'report_issue';
+                }
+                ?>
+                <a href="<?= $link ?>" class="mobile-activity-item">
+                    <div class="mobile-activity-left">
+                        <div class="mobile-activity-icon" style="background: <?= $icon_bg ?>; color: <?= $icon_c ?>;">
+                            <i class="<?= $icon ?>"></i>
+                        </div>
+                        <div class="mobile-activity-text">
+                            <h5 class="mobile-activity-title"><?= htmlspecialchars($act['title']) ?></h5>
+                            <div class="mobile-activity-meta">
+                                <span><?= htmlspecialchars(ucfirst($act['subtitle'])) ?></span> &bull; 
+                                <span><?= date('M j, g:i a', strtotime($act['created_at'])) ?></span>
+                            </div>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right mobile-activity-chevron"></i>
+                </a>
+            <?php endforeach; ?>
+        <?php else: ?>
+            <div class="p-3 text-center text-muted small mobile-activity-empty rounded-3 border">
+                No recent activity recorded yet.
+            </div>
+        <?php endif; ?>
+    </div>
+</div>
+
+<div class="d-flex flex-column gap-4 desktop-only">
     <!-- ==========================================
          FUTURISTIC RESIDENT HERO IDENTITY BANNER
          ========================================== -->
@@ -137,7 +337,17 @@ include 'sidebar.php';
                 </div>
             </div>
         </div>
-        <div>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            <div class="pill-timeframe-dropdown d-none d-lg-inline-flex" style="background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.25); color: #ffffff;" title="Billing Month">
+                <i class="fa-regular fa-calendar-days text-white"></i>
+                <span><?= date('M Y') ?></span>
+            </div>
+            <a href="receipts" class="btn btn-outline-light rounded-pill px-3 py-2 fw-semibold d-inline-flex align-items-center gap-1 shadow-sm" style="backdrop-filter: blur(6px); font-size: 0.85rem;">
+                <i class="fa-solid fa-receipt me-1"></i> Receipts
+            </a>
+            <a href="visitors" class="btn btn-outline-light rounded-pill px-3 py-2 fw-semibold d-inline-flex align-items-center gap-1 shadow-sm" style="backdrop-filter: blur(6px); font-size: 0.85rem;">
+                <i class="fa-solid fa-id-card-clip me-1"></i> + Guest Pass
+            </a>
             <a href="finance" class="hero-btn-action">
                 <i class="fa-solid fa-credit-card"></i>
                 <span>Pay Bills & Invoices</span>
@@ -145,6 +355,39 @@ include 'sidebar.php';
             </a>
         </div>
     </div>
+
+    <!-- Active Contact Request or Recent Decision Notification Alert -->
+    <?php if ($pending_contact_req): ?>
+        <div class="alert alert-warning border-0 rounded-4 shadow-sm p-3 mb-4 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 overflow-hidden" style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border-left: 5px solid #d97706 !important;">
+            <div class="d-flex align-items-center gap-3" style="flex: 1; min-width: 0;">
+                <div class="glass-icon-circle hero-icon-circle glass-icon-light-amber" style="width: 44px; height: 44px; min-width: 44px; min-height: 44px; font-size: 1.25rem;">
+                    <i class="fa-solid fa-hourglass-half fa-spin"></i>
+                </div>
+                <div style="flex: 1; min-width: 0;">
+                    <div class="fw-bold text-dark" style="font-size: 0.98rem;">Contact Information Change Request Under Review</div>
+                    <div class="text-secondary small">Your request to update phone/email is awaiting approval by Central Estate Management or your Zonal Administration.</div>
+                </div>
+            </div>
+            <a href="notifications" class="btn btn-sm btn-outline-dark rounded-pill px-3 py-1.5 fw-semibold flex-shrink-0">
+                Track in Notification Hub &rarr;
+            </a>
+        </div>
+    <?php elseif ($recent_contact_update_notif): ?>
+        <div class="alert <?php echo ($recent_contact_update_notif['type'] === 'contact_approved') ? 'alert-success' : 'alert-danger'; ?> border-0 rounded-4 shadow-sm p-3 mb-4 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 overflow-hidden" style="border-left: 5px solid <?php echo ($recent_contact_update_notif['type'] === 'contact_approved') ? '#059669' : '#dc2626'; ?> !important;">
+            <div class="d-flex align-items-center gap-3" style="flex: 1; min-width: 0;">
+                <div class="glass-icon-circle hero-icon-circle <?php echo ($recent_contact_update_notif['type'] === 'contact_approved') ? 'glass-icon-light-emerald' : 'glass-icon-rose'; ?>" style="width: 44px; height: 44px; min-width: 44px; min-height: 44px; font-size: 1.25rem;">
+                    <i class="fa-solid <?php echo ($recent_contact_update_notif['type'] === 'contact_approved') ? 'fa-circle-check text-success' : 'fa-circle-xmark text-danger'; ?>"></i>
+                </div>
+                <div style="flex: 1; min-width: 0;">
+                    <div class="fw-bold text-dark" style="font-size: 0.98rem;"><?php echo htmlspecialchars($recent_contact_update_notif['title']); ?></div>
+                    <div class="text-secondary small"><?php echo htmlspecialchars($recent_contact_update_notif['message']); ?></div>
+                </div>
+            </div>
+            <a href="notifications" class="btn btn-sm btn-primary rounded-pill px-3 py-1.5 fw-semibold flex-shrink-0">
+                View in Notification Hub &rarr;
+            </a>
+        </div>
+    <?php endif; ?>
 
     <!-- ==========================================
          FUTURISTIC KPI CARDS (4 PILLARS)
@@ -313,9 +556,9 @@ include 'sidebar.php';
                     <?php if ($announcements && $announcements->num_rows > 0): ?>
                         <div class="d-flex flex-column gap-3">
                             <?php while ($ann = $announcements->fetch_assoc()): ?>
-                                <div class="p-3 rounded-3 border bg-white-subtle notice-card-item position-relative" style="border-color: rgba(226, 232, 240, 0.8) !important; cursor: pointer; transition: all 0.2s ease;" onclick='openNoticeModal(<?php echo json_encode($ann); ?>)'>
+                                <div class="p-3 rounded-4 border bg-white-subtle notice-card-item position-relative" style="border-color: rgba(226, 232, 240, 0.85) !important; cursor: pointer; transition: all 0.2s ease; overflow: hidden; box-sizing: border-box;" onclick='openNoticeModal(<?php echo json_encode($ann); ?>)'>
                                     <div class="d-flex flex-wrap justify-content-between align-items-center gap-1 mb-1.5">
-                                        <div class="d-flex align-items-center gap-1">
+                                        <div class="d-flex align-items-center gap-1 flex-wrap">
                                             <?php if (!empty($ann['zone_id'])): ?>
                                                 <span class="mature-badge" style="background: rgba(168, 85, 247, 0.12); color: #7e22ce; font-size: 0.68rem; padding: 0.15rem 0.45rem;">
                                                     <i class="fa-solid fa-layer-group me-1"></i><?= htmlspecialchars($ann['zone_name'] ?? 'Zonal Notice') ?>
@@ -336,11 +579,11 @@ include 'sidebar.php';
                                                 <i class="fa-solid fa-thumbtack text-primary ms-1" style="font-size: 0.72rem;" title="Pinned Notice"></i>
                                             <?php endif; ?>
                                         </div>
-                                        <span class="small text-secondary" style="font-size: 0.72rem;">
+                                        <span class="small text-secondary flex-shrink-0" style="font-size: 0.72rem;">
                                             <i class="fa-regular fa-clock me-1"></i> <?= date('M j, Y', strtotime($ann['created_at'])) ?>
                                         </span>
                                     </div>
-                                    <h6 class="fw-bold mb-1 text-slate-900" style="font-size: 0.92rem;"><?= htmlspecialchars($ann['title']) ?></h6>
+                                    <h6 class="fw-bold mb-1 text-slate-900 text-truncate" style="font-size: 0.92rem;"><?= htmlspecialchars($ann['title']) ?></h6>
                                     <p class="small text-secondary m-0 text-truncate" style="line-height: 1.4;"><?= htmlspecialchars($ann['content']) ?></p>
                                 </div>
                             <?php endwhile; ?>
@@ -411,7 +654,7 @@ include 'sidebar.php';
                     <span><i class="fa-regular fa-user me-1"></i><span id="resModalSender"></span></span>
                     <span><i class="fa-regular fa-clock me-1"></i><span id="resModalDate"></span></span>
                 </div>
-                <div id="resModalContent" class="text-slate-800" style="line-height: 1.75; font-size: 0.95rem; white-space: pre-wrap;"></div>
+                <div id="resModalContent" class="text-slate-800" style="line-height: 1.75; font-size: 0.95rem; white-space: pre-wrap; overflow-wrap: break-word; word-break: break-word; max-width: 100%;"></div>
             </div>
             <div class="modal-footer px-4 py-3 border-top d-flex justify-content-between" style="background: #f8fafc;">
                 <a href="notices" class="btn btn-sm btn-outline-primary">Open Notices Hub</a>

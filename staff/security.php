@@ -284,17 +284,29 @@ include 'header.php';
 include 'sidebar.php';
 ?>
 
-<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-    <div>
-        <h2 class="h4 font-bold text-slate-800 m-0"><i class="fa-solid fa-shield-halved me-2 text-teal" style="color: #0d9488;"></i> Gate Pass Control &amp; Duty Shift Logs</h2>
-        <p class="text-secondary small mb-0">Security-conscious gate clearance, active guard duty shift binding, and officer audit logs.</p>
+<!-- Enterprise Hero Header (Image 3 Style) -->
+<div class="hero-header-enterprise">
+    <div class="hero-title-group">
+        <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+            <h1>Gate Pass Control &amp; Shift Logs</h1>
+            <span class="mature-badge mature-badge-emerald" style="background: rgba(13, 148, 136, 0.12); color: #0f766e; border-color: rgba(13, 148, 136, 0.25);">
+                <i class="fa-solid fa-shield-halved me-1"></i> Active Gate Post
+            </span>
+        </div>
+        <div class="hero-meta-strip">
+            <span><i class="fa-solid fa-qrcode me-1"></i> Fast Code Verification</span>
+            <span>•</span>
+            <span><i class="fa-solid fa-car me-1"></i> Vehicle Clearance</span>
+            <span>•</span>
+            <span class="text-success"><i class="fa-solid fa-circle me-1" style="font-size: 0.5rem;"></i> Perimeter Live</span>
+        </div>
     </div>
-    <div class="d-flex align-items-center gap-2 flex-wrap">
-        <a href="incidents" class="btn btn-sm btn-outline-danger rounded-pill px-3 shadow-sm">
-            <i class="fa-solid fa-triangle-exclamation me-1 text-danger"></i> Log Incident
+    <div class="hero-actions-group">
+        <a href="incidents" class="btn-export-ghost text-danger" title="Report Security Incident">
+            <i class="fa-solid fa-triangle-exclamation text-danger"></i> Log Incident
         </a>
-        <a href="roster" class="btn btn-sm btn-outline-dark rounded-pill px-3 shadow-sm">
-            <i class="fa-solid fa-calendar-check me-1 text-teal"></i> My Duty Schedule
+        <a href="roster" class="btn-export-ghost" title="My Duty Shifts">
+            <i class="fa-solid fa-calendar-check text-teal" style="color: #0d9488;"></i> Duty Schedule
         </a>
     </div>
 </div>

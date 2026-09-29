@@ -148,7 +148,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             'notify_on_receipt' => isset($_POST['notify_on_receipt']) ? '1' : '0',
             'notify_on_visitor_pass' => isset($_POST['notify_on_visitor_pass']) ? '1' : '0',
             'notify_on_visitor_arrival' => isset($_POST['notify_on_visitor_arrival']) ? '1' : '0',
-            'notify_on_welcome' => isset($_POST['notify_on_welcome']) ? '1' : '0'
+            'notify_on_artisan_pass' => isset($_POST['notify_on_artisan_pass']) ? '1' : '0',
+            'notify_on_penalty' => isset($_POST['notify_on_penalty']) ? '1' : '0',
+            'notify_on_welcome' => isset($_POST['notify_on_welcome']) ? '1' : '0',
+            'notify_on_emergency' => isset($_POST['notify_on_emergency']) ? '1' : '0'
         ];
 
         if (!empty($_POST['smtp_pass'])) {
@@ -178,6 +181,68 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $message = "Test email sent successfully to <strong>" . htmlspecialchars($recipient) . "</strong>! Please check the inbox.";
             } else {
                 $error = "Failed to deliver test email. Please check your SMTP host, port, username, password, or check the Email Logs for error details.";
+            }
+        }
+        
+    } elseif (isset($_POST['update_whatsapp'])) {
+        $estate_id = get_estate_id();
+        $wa_fields = [
+            'whatsapp_enabled' => isset($_POST['whatsapp_enabled']) ? '1' : '0',
+            'whatsapp_provider' => trim($_POST['whatsapp_provider'] ?? 'kapso'),
+            'kapso_phone_number_id' => trim($_POST['kapso_phone_number_id'] ?? ''),
+            'whatsapp_from_name' => trim($_POST['whatsapp_from_name'] ?? ''),
+            'kapso_webhook_verify_token' => trim($_POST['kapso_webhook_verify_token'] ?? ''),
+            'whatsapp_notify_on_invoice' => isset($_POST['whatsapp_notify_on_invoice']) ? '1' : '0',
+            'whatsapp_notify_on_receipt' => isset($_POST['whatsapp_notify_on_receipt']) ? '1' : '0',
+            'whatsapp_notify_on_visitor_pass' => isset($_POST['whatsapp_notify_on_visitor_pass']) ? '1' : '0',
+            'whatsapp_notify_on_visitor_arrival' => isset($_POST['whatsapp_notify_on_visitor_arrival']) ? '1' : '0',
+            'whatsapp_notify_on_artisan_pass' => isset($_POST['whatsapp_notify_on_artisan_pass']) ? '1' : '0',
+            'whatsapp_notify_on_penalty' => isset($_POST['whatsapp_notify_on_penalty']) ? '1' : '0',
+            'whatsapp_notify_on_broadcast' => isset($_POST['whatsapp_notify_on_broadcast']) ? '1' : '0',
+            'whatsapp_notify_on_welcome' => isset($_POST['whatsapp_notify_on_welcome']) ? '1' : '0',
+            'whatsapp_notify_on_emergency' => isset($_POST['whatsapp_notify_on_emergency']) ? '1' : '0'
+        ];
+
+        if (!empty($_POST['kapso_api_key'])) {
+            $wa_fields['kapso_api_key'] = trim($_POST['kapso_api_key']);
+        }
+
+        foreach ($wa_fields as $key => $val) {
+            $val = $conn->real_escape_string($val);
+            $check = $conn->query("SELECT 1 FROM system_settings WHERE setting_key = '$key' AND estate_id = $estate_id");
+            if ($check && $check->num_rows > 0) {
+                $conn->query("UPDATE system_settings SET setting_value = '$val' WHERE setting_key = '$key' AND estate_id = $estate_id");
+            } else {
+                $conn->query("INSERT INTO system_settings (estate_id, setting_key, setting_value) VALUES ($estate_id, '$key', '$val')");
+            }
+        }
+        $active_tab = 'whatsapp_config';
+        $message = "WhatsApp &amp; Kapso direct dispatch settings saved successfully!";
+        
+    } elseif (isset($_POST['send_test_whatsapp'])) {
+        $active_tab = 'whatsapp_config';
+        $estate_id = get_estate_id();
+        $test_phone = trim($_POST['test_phone'] ?? '');
+        if (empty($test_phone)) {
+            $error = "Please provide a valid test phone number (e.g. 08012345678 or +234...).";
+        } else {
+            $test_res = EstateWhatsApp::testKapsoConnection($conn, $estate_id, $test_phone);
+            if ($test_res['success']) {
+                $method = (!empty($test_res['method']) && $test_res['method'] === 'template') ? ' (via Approved Meta Template)' : '';
+                $message = "Test WhatsApp message dispatched successfully$method to <strong>" . htmlspecialchars($test_phone) . "</strong> via Kapso! Check your WhatsApp.";
+            } else {
+                $rawErr = $test_res['error'] ?? 'Unknown error';
+                if (!empty($test_res['action_url']) || stripos($rawErr, '24-hour') !== false || stripos($rawErr, '24-Hour Policy') !== false) {
+                    $sender = $test_res['sender_phone'] ?? '+234 903 647 7098';
+                    $actionUrl = $test_res['action_url'] ?? ('https://wa.me/' . preg_replace('/[^0-9]/', '', $sender) . '?text=Hi');
+                    $error = "<strong>WhatsApp 24-Hour Customer Session Window Required:</strong><br>" .
+                             "Your Kapso credentials and WhatsApp Business Number are <strong>verified and connected</strong>! However, Meta policy requires the recipient phone to message your estate number first before receiving non-template messages.<br><br>" .
+                             "<a href='" . htmlspecialchars($actionUrl) . "' target='_blank' class='btn btn-success btn-sm text-white fw-bold me-2' style='text-decoration: none; display: inline-inline-flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.85rem; border-radius: 0.375rem; background: #25D366;'>" .
+                             "<i class='fa-brands fa-whatsapp'></i> Click to Send 'Hi' to $sender</a>" .
+                             "<div style='margin-top: 0.5rem; font-size: 0.85rem; color: #475569;'>Once you send 'Hi' from your phone, click <strong>Send Test Message</strong> again. (Once Meta approves our registered <code>estate_notice</code> template, messages will deliver automatically without requiring a prior message).</div>";
+                } else {
+                    $error = "WhatsApp test failed: " . htmlspecialchars($rawErr);
+                }
             }
         }
         
@@ -346,9 +411,10 @@ if (!function_exists('renderConfigTable')) {
                         <button type="submit" name="add_type" class="btn btn-primary">Add</button>
                     </form>
                 </div>
-                <table style="width: 100%; border-collapse: collapse;">
-                    <thead><tr style="text-align: left; color: #64748b;"><th style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0;">Name</th><th style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0;">Action</th></tr></thead>
-                    <tbody>';
+                <div class="table-responsive">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead><tr style="text-align: left; color: #64748b;"><th style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0; white-space: nowrap;">Name</th><th style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0; white-space: nowrap;">Action</th></tr></thead>
+                        <tbody>';
         
         if ($result) {
             $result->data_seek(0);
@@ -368,7 +434,7 @@ if (!function_exists('renderConfigTable')) {
             }
         }
         
-        $html .= '</tbody></table></div></div>';
+        $html .= '</tbody></table></div></div></div>';
         return $html;
     }
 }
@@ -381,8 +447,154 @@ if (!function_exists('renderConfigTable')) {
 .settings-group-title:first-child { margin-top: 0; }
 .settings-nav-btn { display: block; width: 100%; text-align: left; padding: 0.75rem 1rem; border-radius: 0.375rem; margin-bottom: 0.25rem; background: transparent; border: none; cursor: pointer; color: #475569; font-weight: 500; transition: all 0.2s; }
 .settings-nav-btn:hover { background: #f1f5f9; color: #0f172a; }
-.settings-nav-btn.active { background: var(--primary-light); color: var(--primary-color); font-weight: 600; }
+.settings-nav-btn.active { background: var(--primary-light, #eff6ff); color: var(--primary-color, #2563eb); font-weight: 600; }
 .settings-nav-btn i { width: 20px; text-align: center; margin-right: 0.5rem; }
+
+/* Mobile Settings Responsive Architecture (Screens <= 991px) */
+@media (max-width: 991px) {
+    .settings-container {
+        display: block !important;
+        width: 100% !important;
+        margin: 0 !important;
+    }
+    .settings-sidebar {
+        display: none !important;
+    }
+    .mobile-settings-nav-bar {
+        display: block !important;
+        margin-bottom: 1.5rem !important;
+    }
+    .tab-content {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+    }
+    .tab-content .glass {
+        padding: 1.25rem 0.85rem !important;
+        border-radius: 14px !important;
+    }
+    /* Collapse all inner grid columns to 1 clean responsive column on mobile */
+    .tab-content div[style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+        gap: 1.25rem !important;
+    }
+    /* Touch friendly form inputs on mobile */
+    .tab-content input[type="text"],
+    .tab-content input[type="email"],
+    .tab-content input[type="password"],
+    .tab-content input[type="number"],
+    .tab-content select,
+    .tab-content textarea {
+        font-size: 16px !important; /* Prevents auto-zoom in Safari iOS */
+        max-width: 100% !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    .tab-content button[type="submit"] {
+        width: 100% !important;
+        justify-content: center !important;
+        padding: 0.85rem 1rem !important;
+        font-size: 1rem !important;
+    }
+    .mobile-settings-quick-pills {
+        display: flex;
+        overflow-x: auto;
+        gap: 0.4rem;
+        padding: 0.25rem 0 0.5rem 0;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    .mobile-settings-quick-pills::-webkit-scrollbar {
+        display: none;
+    }
+    .mobile-cat-pill {
+        white-space: nowrap;
+        background: #f1f5f9;
+        border: 1.5px solid #cbd5e1;
+        color: #475569;
+        padding: 0.45rem 0.85rem;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        flex-shrink: 0;
+        transition: all 0.2s ease;
+    }
+    .mobile-cat-pill.active {
+        background: var(--primary-color, #2563eb) !important;
+        color: #ffffff !important;
+        border-color: var(--primary-color, #2563eb) !important;
+        box-shadow: 0 3px 10px rgba(37, 99, 235, 0.3);
+    }
+}
+
+/* Dark Mode Adaptations for Settings Page */
+[data-theme="dark"] .settings-sidebar,
+body.dark-mode .settings-sidebar {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+[data-theme="dark"] .settings-nav-btn,
+body.dark-mode .settings-nav-btn {
+    color: #cbd5e1 !important;
+}
+[data-theme="dark"] .settings-nav-btn:hover,
+body.dark-mode .settings-nav-btn:hover {
+    background: #334155 !important;
+    color: #ffffff !important;
+}
+[data-theme="dark"] .settings-nav-btn.active,
+body.dark-mode .settings-nav-btn.active {
+    background: rgba(37, 99, 235, 0.2) !important;
+    color: #60a5fa !important;
+}
+[data-theme="dark"] .mobile-settings-nav-bar select,
+body.dark-mode .mobile-settings-nav-bar select {
+    background-color: #1e293b !important;
+    color: #f8fafc !important;
+    border-color: #334155 !important;
+}
+[data-theme="dark"] .mobile-cat-pill,
+body.dark-mode .mobile-cat-pill {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #cbd5e1 !important;
+}
+[data-theme="dark"] .mobile-cat-pill.active,
+body.dark-mode .mobile-cat-pill.active {
+    background: #3b82f6 !important;
+    border-color: #3b82f6 !important;
+    color: #ffffff !important;
+}
+[data-theme="dark"] .tab-content div[style*="background: white"],
+body.dark-mode .tab-content div[style*="background: white"] {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+[data-theme="dark"] .tab-content h4,
+body.dark-mode .tab-content h4 {
+    color: #f8fafc !important;
+}
+[data-theme="dark"] .tab-content label,
+body.dark-mode .tab-content label {
+    color: #e2e8f0 !important;
+}
+[data-theme="dark"] .settings-callout-banner,
+body.dark-mode .settings-callout-banner {
+    background: rgba(59, 130, 246, 0.12) !important;
+    border-color: rgba(59, 130, 246, 0.3) !important;
+}
+[data-theme="dark"] .settings-callout-title,
+body.dark-mode .settings-callout-title {
+    color: #93c5fd !important;
+}
+[data-theme="dark"] .settings-callout-text,
+body.dark-mode .settings-callout-text {
+    color: #cbd5e1 !important;
+}
 </style>
 
 <div class="page-header">
@@ -400,6 +612,69 @@ if (!function_exists('renderConfigTable')) {
         <?php echo $error; ?>
     </div>
 <?php endif; ?>
+
+<!-- Mobile Settings Navigation Switcher (Screens <= 991px) -->
+<div class="mobile-settings-nav-bar d-lg-none mb-3">
+    <label class="form-label small fw-bold text-uppercase text-secondary mb-1">
+        <i class="fa-solid fa-layer-group me-1 text-primary"></i> Settings Category &amp; Section
+    </label>
+    <div class="position-relative">
+        <select id="mobileSettingsSelect" class="form-select form-select-lg fw-semibold shadow-sm" onchange="handleMobileTabChange(this.value)" style="border-radius: 12px; padding: 0.75rem 1rem; font-size: 0.95rem; border: 1.5px solid #cbd5e1;">
+            <optgroup label="⚙️ GENERAL">
+                <option value="general" <?php echo ($active_tab == 'general') ? 'selected' : ''; ?>>General Info &amp; Branding</option>
+            </optgroup>
+            <optgroup label="🪪 ID CARDS">
+                <option value="id_cards" <?php echo ($active_tab == 'id_cards') ? 'selected' : ''; ?>>ID Cards Configuration</option>
+            </optgroup>
+            <optgroup label="🏢 PROPERTIES &amp; UNITS">
+                <option value="building_types" <?php echo ($active_tab == 'building_types') ? 'selected' : ''; ?>>Building Types</option>
+                <option value="building_statuses" <?php echo ($active_tab == 'building_statuses') ? 'selected' : ''; ?>>Building Statuses</option>
+                <option value="building_floor_types" <?php echo ($active_tab == 'building_floor_types') ? 'selected' : ''; ?>>Floor Configs</option>
+                <option value="flat_types" <?php echo ($active_tab == 'flat_types') ? 'selected' : ''; ?>>Flat Types</option>
+                <option value="flat_statuses" <?php echo ($active_tab == 'flat_statuses') ? 'selected' : ''; ?>>Flat Statuses</option>
+                <option value="commercial_config" <?php echo ($active_tab == 'commercial_config') ? 'selected' : ''; ?>>Commercial Config</option>
+            </optgroup>
+            <optgroup label="👥 RESIDENTS &amp; DOMESTIC STAFF">
+                <option value="resident_relationships" <?php echo ($active_tab == 'resident_relationships') ? 'selected' : ''; ?>>Resident Relationships</option>
+                <option value="resident_statuses" <?php echo ($active_tab == 'resident_statuses') ? 'selected' : ''; ?>>Resident Statuses</option>
+                <option value="domestic_staff_roles" <?php echo ($active_tab == 'domestic_staff_roles') ? 'selected' : ''; ?>>Domestic Staff Roles</option>
+                <option value="domestic_staff_status" <?php echo ($active_tab == 'domestic_staff_status') ? 'selected' : ''; ?>>Domestic Status</option>
+            </optgroup>
+            <optgroup label="💳 FINANCE &amp; BILLING">
+                <option value="paystack_api" <?php echo ($active_tab == 'paystack_api') ? 'selected' : ''; ?>>Paystack API Integration</option>
+            </optgroup>
+            <optgroup label="💬 COMMUNICATIONS &amp; LOGS">
+                <option value="smtp_config" <?php echo ($active_tab == 'smtp_config') ? 'selected' : ''; ?>>Email &amp; SMTP Config</option>
+                <option value="whatsapp_config" <?php echo ($active_tab == 'whatsapp_config') ? 'selected' : ''; ?>>WhatsApp &amp; Kapso Config</option>
+                <option value="email_logs_link">📜 Email Logs &rarr;</option>
+                <option value="whatsapp_logs_link">📱 WhatsApp Logs &rarr;</option>
+            </optgroup>
+            <optgroup label="🔑 OWNERSHIP &amp; TRANSFERS">
+                <option value="property_ownership_types" <?php echo ($active_tab == 'property_ownership_types') ? 'selected' : ''; ?>>Ownership Types</option>
+                <option value="property_acquisition_types" <?php echo ($active_tab == 'property_acquisition_types') ? 'selected' : ''; ?>>Acquisition Types</option>
+            </optgroup>
+            <optgroup label="🛡️ GATE &amp; SECURITY">
+                <option value="visitor_settings" <?php echo ($active_tab == 'visitor_settings') ? 'selected' : ''; ?>>Gate &amp; Visitor Passes</option>
+                <option value="incident_types" <?php echo ($active_tab == 'incident_types') ? 'selected' : ''; ?>>Incident Types</option>
+                <option value="incident_severities" <?php echo ($active_tab == 'incident_severities') ? 'selected' : ''; ?>>Severities</option>
+                <option value="incident_statuses" <?php echo ($active_tab == 'incident_statuses') ? 'selected' : ''; ?>>Incident Statuses</option>
+                <option value="incident_entity_types" <?php echo ($active_tab == 'incident_entity_types') ? 'selected' : ''; ?>>Entity Types</option>
+            </optgroup>
+        </select>
+    </div>
+
+    <!-- Quick Category Pill Strip for Mobile -->
+    <div class="mobile-settings-quick-pills mt-2">
+        <button type="button" class="mobile-cat-pill <?php echo ($active_tab == 'general') ? 'active' : ''; ?>" data-category="general" onclick="handleMobileTabChange('general')"><i class="fa-solid fa-sliders"></i> General</button>
+        <button type="button" class="mobile-cat-pill <?php echo ($active_tab == 'id_cards') ? 'active' : ''; ?>" data-category="id_cards" onclick="handleMobileTabChange('id_cards')"><i class="fa-solid fa-id-card"></i> ID Cards</button>
+        <button type="button" class="mobile-cat-pill <?php echo in_array($active_tab, ['building_types','building_statuses','building_floor_types','flat_types','flat_statuses','commercial_config']) ? 'active' : ''; ?>" data-category="properties" onclick="handleMobileTabChange('building_types')"><i class="fa-solid fa-building"></i> Properties</button>
+        <button type="button" class="mobile-cat-pill <?php echo in_array($active_tab, ['resident_relationships','resident_statuses','domestic_staff_roles','domestic_staff_status']) ? 'active' : ''; ?>" data-category="residents" onclick="handleMobileTabChange('resident_relationships')"><i class="fa-solid fa-users"></i> Residents</button>
+        <button type="button" class="mobile-cat-pill <?php echo ($active_tab == 'paystack_api') ? 'active' : ''; ?>" data-category="finance" onclick="handleMobileTabChange('paystack_api')"><i class="fa-solid fa-credit-card"></i> Finance</button>
+        <button type="button" class="mobile-cat-pill <?php echo in_array($active_tab, ['smtp_config','whatsapp_config']) ? 'active' : ''; ?>" data-category="comms" onclick="handleMobileTabChange('smtp_config')"><i class="fa-solid fa-envelope"></i> Comms</button>
+        <button type="button" class="mobile-cat-pill <?php echo in_array($active_tab, ['property_ownership_types','property_acquisition_types']) ? 'active' : ''; ?>" data-category="ownership" onclick="handleMobileTabChange('property_ownership_types')"><i class="fa-solid fa-key"></i> Ownership</button>
+        <button type="button" class="mobile-cat-pill <?php echo in_array($active_tab, ['visitor_settings','incident_types','incident_severities','incident_statuses','incident_entity_types']) ? 'active' : ''; ?>" data-category="security" onclick="handleMobileTabChange('visitor_settings')"><i class="fa-solid fa-shield-halved"></i> Security</button>
+    </div>
+</div>
 
 <div class="settings-container">
     <!-- Sidebar -->
@@ -429,7 +704,9 @@ if (!function_exists('renderConfigTable')) {
 
         <div class="settings-group-title">Communications</div>
         <button class="settings-nav-btn" onclick="openTab(event, 'smtp_config')"><i class="fa-solid fa-envelope"></i> Email &amp; SMTP</button>
+        <button class="settings-nav-btn" onclick="openTab(event, 'whatsapp_config')"><i class="fa-brands fa-whatsapp" style="color: #25D366;"></i> WhatsApp &amp; Kapso</button>
         <a href="email_logs.php" class="settings-nav-btn" style="text-decoration:none;"><i class="fa-solid fa-paper-plane"></i> Email Logs</a>
+        <a href="whatsapp_logs.php" class="settings-nav-btn" style="text-decoration:none;"><i class="fa-brands fa-whatsapp"></i> WhatsApp Logs</a>
 
         <div class="settings-group-title">Ownership & Transfers</div>
         <button class="settings-nav-btn" onclick="openTab(event, 'property_ownership_types')"><i class="fa-solid fa-key"></i> Ownership Types</button>
@@ -451,13 +728,13 @@ if (!function_exists('renderConfigTable')) {
                 <form method="POST" enctype="multipart/form-data">
                     
                     <!-- Multi-Tenant Callout Banner -->
-                    <div style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(147, 51, 234, 0.06) 100%); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 0.75rem; padding: 1.25rem 1.5rem; margin-bottom: 2rem; display: flex; align-items: flex-start; gap: 1rem;">
+                    <div class="settings-callout-banner" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(147, 51, 234, 0.06) 100%); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 0.75rem; padding: 1.25rem 1.5rem; margin-bottom: 2rem; display: flex; align-items: flex-start; gap: 1rem;">
                         <div style="width: 40px; height: 40px; border-radius: 50%; background: #3b82f6; color: white; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 1.15rem; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);">
                             <i class="fa-solid fa-tree-city"></i>
                         </div>
                         <div>
-                            <div style="font-weight: 700; color: #1e293b; font-size: 0.98rem; margin-bottom: 0.25rem;">Multi-Estate Identity &amp; Top-Right Branding</div>
-                            <div style="font-size: 0.85rem; color: #64748b; line-height: 1.5;">
+                            <div class="settings-callout-title" style="font-weight: 700; color: #1e293b; font-size: 0.98rem; margin-bottom: 0.25rem;">Multi-Estate Identity &amp; Top-Right Branding</div>
+                            <div class="settings-callout-text" style="font-size: 0.85rem; color: #64748b; line-height: 1.5;">
                                 Because multiple residential estates use this platform, customize this estate's identity below. The <strong>Estate Name</strong> and <strong>Estate Logo</strong> configured here appear dynamically on the <strong>Top-Right Corner</strong> of all navigation bars, invoices, passes, and receipts. The software producer company information (e.g. platform developer) remains distinct.
                             </div>
                         </div>
@@ -893,36 +1170,38 @@ if (!function_exists('renderConfigTable')) {
                     </form>
                 </div>
 
-                <table style="width: 100%; border-collapse: collapse;">
-                    <thead>
-                        <tr style="text-align: left; color: #64748b; font-size: 0.875rem;">
-                            <th style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0;">Label</th>
-                            <th style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0;">Type</th>
-                            <th style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0;">Options</th>
-                            <th style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0;">Required</th>
-                            <th style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0;">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php while($cf = $commercial_fields->fetch_assoc()): ?>
-                        <tr>
-                            <td style="padding: 0.75rem; border-bottom: 1px solid #f1f5f9; font-weight: 500;"><?php echo htmlspecialchars($cf['field_label']); ?></td>
-                            <td style="padding: 0.75rem; border-bottom: 1px solid #f1f5f9; text-transform: capitalize;"><?php echo htmlspecialchars($cf['field_type']); ?></td>
-                            <td style="padding: 0.75rem; border-bottom: 1px solid #f1f5f9; color: #64748b; font-size: 0.85rem;"><?php echo htmlspecialchars($cf['field_options'] ?: 'N/A'); ?></td>
-                            <td style="padding: 0.75rem; border-bottom: 1px solid #f1f5f9;"><?php echo $cf['is_required'] ? '<span style="color: #10b981;"><i class="fa-solid fa-check"></i></span>' : '<span style="color: #94a3b8;"><i class="fa-solid fa-minus"></i></span>'; ?></td>
-                            <td style="padding: 0.75rem; border-bottom: 1px solid #f1f5f9;">
-                                <form method="POST" onsubmit="return confirm('Remove this field?');" style="display:inline;">
-                                    <input type="hidden" name="id" value="<?php echo $cf['id']; ?>">
-                                    <button type="submit" name="delete_commercial_field" style="background: none; border: none; color: #ef4444; cursor: pointer;"><i class="fa-solid fa-trash"></i></button>
-                                </form>
-                            </td>
-                        </tr>
-                        <?php endwhile; ?>
-                        <?php if($commercial_fields->num_rows == 0): ?>
-                        <tr><td colspan="5" style="padding: 2rem; text-align: center; color: #94a3b8;">No custom fields defined for commercial properties.</td></tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
+                <div class="table-responsive">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="text-align: left; color: #64748b; font-size: 0.875rem;">
+                                <th style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0; white-space: nowrap;">Label</th>
+                                <th style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0; white-space: nowrap;">Type</th>
+                                <th style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0; white-space: nowrap;">Options</th>
+                                <th style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0; white-space: nowrap;">Required</th>
+                                <th style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0; white-space: nowrap;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php while($cf = $commercial_fields->fetch_assoc()): ?>
+                            <tr>
+                                <td style="padding: 0.75rem; border-bottom: 1px solid #f1f5f9; font-weight: 500;"><?php echo htmlspecialchars($cf['field_label']); ?></td>
+                                <td style="padding: 0.75rem; border-bottom: 1px solid #f1f5f9; text-transform: capitalize;"><?php echo htmlspecialchars($cf['field_type']); ?></td>
+                                <td style="padding: 0.75rem; border-bottom: 1px solid #f1f5f9; color: #64748b; font-size: 0.85rem;"><?php echo htmlspecialchars($cf['field_options'] ?: 'N/A'); ?></td>
+                                <td style="padding: 0.75rem; border-bottom: 1px solid #f1f5f9;"><?php echo $cf['is_required'] ? '<span style="color: #10b981;"><i class="fa-solid fa-check"></i></span>' : '<span style="color: #94a3b8;"><i class="fa-solid fa-minus"></i></span>'; ?></td>
+                                <td style="padding: 0.75rem; border-bottom: 1px solid #f1f5f9;">
+                                    <form method="POST" onsubmit="return confirm('Remove this field?');" style="display:inline;">
+                                        <input type="hidden" name="id" value="<?php echo $cf['id']; ?>">
+                                        <button type="submit" name="delete_commercial_field" style="background: none; border: none; color: #ef4444; cursor: pointer;"><i class="fa-solid fa-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <?php endwhile; ?>
+                            <?php if($commercial_fields->num_rows == 0): ?>
+                            <tr><td colspan="5" style="padding: 2rem; text-align: center; color: #94a3b8;">No custom fields defined for commercial properties.</td></tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -1053,6 +1332,18 @@ if (!function_exists('renderConfigTable')) {
                             <span><strong>Gate Arrivals:</strong> Alert resident when visitor arrives at gate</span>
                         </label>
                         <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: #334155; cursor: pointer;">
+                            <input type="checkbox" name="notify_on_artisan_pass" value="1" <?php echo (($sys['notify_on_artisan_pass'] ?? '1') == '1') ? 'checked' : ''; ?>>
+                            <span><strong>Artisan Passes:</strong> Deliver gate pass to artisan &amp; host resident</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: #334155; cursor: pointer;">
+                            <input type="checkbox" name="notify_on_penalty" value="1" <?php echo (($sys['notify_on_penalty'] ?? '1') == '1') ? 'checked' : ''; ?>>
+                            <span><strong>Penalties &amp; Citations:</strong> Email violation citation and fine details</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: #334155; cursor: pointer;">
+                            <input type="checkbox" name="notify_on_emergency" value="1" <?php echo (($sys['notify_on_emergency'] ?? '1') == '1') ? 'checked' : ''; ?>>
+                            <span><strong>Emergency Alerts:</strong> Dispatch panic &amp; security distress emails</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: #334155; cursor: pointer;">
                             <input type="checkbox" name="notify_on_welcome" value="1" <?php echo (($sys['notify_on_welcome'] ?? '1') == '1') ? 'checked' : ''; ?>>
                             <span><strong>Welcome Onboarding:</strong> Email login credentials to new users</span>
                         </label>
@@ -1080,10 +1371,305 @@ if (!function_exists('renderConfigTable')) {
                 </div>
             </div>
         </div>
+
+        <!-- WhatsApp & Kapso Settings Tab -->
+        <?php 
+        $wa_config = EstateWhatsApp::getWhatsAppSettings($conn, $estate_id); 
+        $is_wa_enabled = $wa_config['whatsapp_enabled'];
+        $has_kapso_creds = !empty($wa_config['kapso_api_key']) && !empty($wa_config['kapso_phone_number_id']);
+        ?>
+        <div id="whatsapp_config" class="tab-content" style="display: none;">
+            <div class="glass" style="padding: 2rem; border-radius: 0.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 0.6rem;">
+                            <h3 style="margin: 0; color: #0f172a; font-size: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fa-brands fa-whatsapp" style="color: #25D366; font-size: 1.4rem;"></i>
+                                WhatsApp Direct Dispatch (Kapso)
+                            </h3>
+                            <?php if ($is_wa_enabled && $has_kapso_creds): ?>
+                                <span class="mature-badge mature-badge-emerald"><i class="fa-solid fa-circle" style="font-size: 0.45rem;"></i> Active &amp; Ready</span>
+                            <?php elseif ($is_wa_enabled): ?>
+                                <span class="mature-badge mature-badge-amber"><i class="fa-solid fa-triangle-exclamation"></i> Credentials Needed</span>
+                            <?php else: ?>
+                                <span class="mature-badge mature-badge-slate"><i class="fa-solid fa-power-off"></i> Disabled</span>
+                            <?php endif; ?>
+                        </div>
+                        <p style="margin: 0.25rem 0 0 0; font-size: 0.875rem; color: #64748b;">
+                            Direct automated delivery of invoices, payment receipts, gate passes, and arrival alerts via <a href="https://kapso.com/" target="_blank" style="color: #2563eb; text-decoration: underline;">Kapso.com</a> official WhatsApp Business infrastructure.
+                        </p>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <a href="https://kapso.com/" target="_blank" class="btn btn-sm" style="background: #ecfdf5; color: #047857; border: 1px solid #10b981; text-decoration: none; padding: 0.5rem 1rem; border-radius: 0.375rem; font-size: 0.85rem; font-weight: 600;">
+                            <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Kapso.com Portal
+                        </a>
+                        <a href="whatsapp_logs.php" class="btn btn-sm" style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; text-decoration: none; padding: 0.5rem 1rem; border-radius: 0.375rem; font-size: 0.85rem;">
+                            <i class="fa-solid fa-clock-rotate-left me-1"></i> View WhatsApp Logs
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Kapso Setup Banner / Quick Guide -->
+                <div style="background: linear-gradient(135deg, rgba(37,211,102,0.08) 0%, rgba(15,23,42,0.03) 100%); border: 1px solid rgba(37,211,102,0.25); border-radius: 0.65rem; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;">
+                    <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                        <div style="width: 36px; height: 36px; border-radius: 50%; background: #25D366; color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 1.1rem; box-shadow: 0 4px 6px -1px rgba(37,211,102,0.3);">
+                            <i class="fa-solid fa-bolt"></i>
+                        </div>
+                        <div style="font-size: 0.875rem; color: #334155; line-height: 1.6;">
+                            <strong style="color: #0f172a; font-size: 0.95rem;">Quick Setup with Kapso (Official WhatsApp Business API)</strong>
+                            <ol style="margin: 0.4rem 0 0 0; padding-left: 1.2rem;">
+                                <li>Sign in or create an account at <a href="https://kapso.com/" target="_blank" style="color: #059669; font-weight: 600;">kapso.com</a>.</li>
+                                <li>Go to your Kapso Project Settings to copy your <strong>Project API Key</strong>.</li>
+                                <li>Select or connect your WhatsApp Business number to copy its <strong>Phone Number ID</strong>.</li>
+                                <li>Paste both below and click <strong>Save WhatsApp Settings</strong>, then run a live test with your phone number.</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+
+                <form method="POST">
+                    <!-- Master Toggle -->
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 1.25rem; margin-bottom: 1.5rem;">
+                        <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; font-weight: 600; color: #0f172a;">
+                            <input type="checkbox" name="whatsapp_enabled" value="1" <?php echo $is_wa_enabled ? 'checked' : ''; ?> style="width: 20px; height: 20px; accent-color: #25D366;">
+                            <span style="font-size: 1rem;">Enable WhatsApp Direct Dispatch via Kapso</span>
+                        </label>
+                        <div style="font-size: 0.825rem; color: #64748b; margin-top: 0.35rem; margin-left: 32px;">
+                            When enabled, automated notification messages will be dispatched straight to residents' and visitors' WhatsApp numbers alongside standard emails.
+                        </div>
+                    </div>
+
+                    <!-- API Credentials Grid -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.5rem;">
+                        <div>
+                            <label style="display: flex; justify-content: space-between; margin-bottom: 0.35rem; font-size: 0.875rem; font-weight: 600; color: #1e293b;">
+                                <span>Kapso Project API Key</span>
+                                <span style="font-size: 0.75rem; color: #64748b; font-weight: normal;">Required for authentication</span>
+                            </label>
+                            <div style="position: relative;">
+                                <input type="password" id="kapsoApiKeyInput" name="kapso_api_key" placeholder="<?php echo !empty($wa_config['kapso_api_key']) ? '•••••••••••••••••••••••••••••••• (Leave blank to keep existing)' : 'Paste your Kapso API key here'; ?>" value="" style="width: 100%; padding: 0.65rem 2.5rem 0.65rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-family: monospace; font-size: 0.875rem;">
+                                <button type="button" onclick="togglePasswordVisibility('kapsoApiKeyInput', this)" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #64748b; cursor: pointer; padding: 4px 6px;">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
+                            </div>
+                            <small class="text-muted" style="font-size: 0.75rem; display: block; margin-top: 0.25rem;">Sent in <code style="color: #0f172a;">X-API-Key</code> header to Kapso endpoints.</small>
+                        </div>
+                        <div>
+                            <label style="display: flex; justify-content: space-between; margin-bottom: 0.35rem; font-size: 0.875rem; font-weight: 600; color: #1e293b;">
+                                <span>Kapso WhatsApp Phone Number ID</span>
+                                <span style="font-size: 0.75rem; color: #64748b; font-weight: normal;">From Kapso / Meta dashboard</span>
+                            </label>
+                            <input type="text" name="kapso_phone_number_id" placeholder="e.g. 109847291823749" value="<?php echo htmlspecialchars($wa_config['kapso_phone_number_id']); ?>" style="width: 100%; padding: 0.65rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-family: monospace; font-size: 0.875rem;">
+                            <small class="text-muted" style="font-size: 0.75rem; display: block; margin-top: 0.25rem;">Numeric ID representing your sender WhatsApp number.</small>
+                        </div>
+                    </div>
+
+                    <!-- Sender Name & Webhook Configuration -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.5rem;">
+                        <div>
+                            <label style="display: block; margin-bottom: 0.35rem; font-size: 0.875rem; font-weight: 600; color: #1e293b;">Sender Display Name / Header</label>
+                            <input type="text" name="whatsapp_from_name" placeholder="e.g. <?php echo htmlspecialchars($sys['estate_name'] ?? 'Estate Central Admin'); ?>" value="<?php echo htmlspecialchars($wa_config['whatsapp_from_name']); ?>" style="width: 100%; padding: 0.65rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-size: 0.875rem;">
+                            <small class="text-muted" style="font-size: 0.75rem; display: block; margin-top: 0.25rem;">Used in outgoing announcement headers.</small>
+                        </div>
+                        <div>
+                            <label style="display: flex; justify-content: space-between; margin-bottom: 0.35rem; font-size: 0.875rem; font-weight: 600; color: #1e293b;">
+                                <span>Webhook Verification Token</span>
+                                <span style="font-size: 0.75rem; color: #64748b; font-weight: normal;">For Kapso delivery status updates</span>
+                            </label>
+                            <input type="text" name="kapso_webhook_verify_token" value="<?php echo htmlspecialchars($wa_config['kapso_webhook_verify_token']); ?>" style="width: 100%; padding: 0.65rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-family: monospace; font-size: 0.875rem;">
+                            <small class="text-muted" style="font-size: 0.75rem; display: block; margin-top: 0.25rem;">Paste this token in your Kapso Webhook Settings.</small>
+                        </div>
+                    </div>
+
+                    <!-- Webhook URL Display Card -->
+                    <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 1rem 1.25rem; margin-bottom: 1.75rem;">
+                        <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.35rem;">
+                            <i class="fa-solid fa-link me-1"></i> Kapso Inbound Webhook Callback URL
+                        </label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="text" id="webhookUrlInput" readonly value="<?php echo htmlspecialchars($wa_config['webhook_url']); ?>" style="flex-grow: 1; padding: 0.55rem 0.75rem; background: #fff; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-family: monospace; font-size: 0.825rem; color: #0f172a;">
+                            <button type="button" onclick="copyWebhookUrl()" class="btn btn-sm btn-outline-secondary" style="padding: 0.55rem 1rem; font-weight: 600;">
+                                <i class="fa-solid fa-copy me-1"></i> Copy URL
+                            </button>
+                        </div>
+                        <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.35rem;">
+                            Configure this URL in your Kapso Webhook settings to track live delivery receipts (Sent &rarr; Delivered &rarr; Read).
+                        </div>
+                    </div>
+
+                    <!-- Notification Triggers Toggles -->
+                    <h4 style="margin: 1.5rem 0 0.75rem 0; color: #1e293b; font-size: 1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-sliders text-success"></i> Automatic WhatsApp Dispatch Triggers
+                    </h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
+                        <label style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.875rem; color: #334155; cursor: pointer; padding: 0.5rem; background: #f8fafc; border-radius: 0.375rem; border: 1px solid #e2e8f0;">
+                            <input type="checkbox" name="whatsapp_notify_on_invoice" value="1" <?php echo $wa_config['notify_on_invoice'] ? 'checked' : ''; ?> style="accent-color: #25D366; width: 16px; height: 16px;">
+                            <span><strong>Invoices:</strong> Send WhatsApp bill with direct payment link</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.875rem; color: #334155; cursor: pointer; padding: 0.5rem; background: #f8fafc; border-radius: 0.375rem; border: 1px solid #e2e8f0;">
+                            <input type="checkbox" name="whatsapp_notify_on_receipt" value="1" <?php echo $wa_config['notify_on_receipt'] ? 'checked' : ''; ?> style="accent-color: #25D366; width: 16px; height: 16px;">
+                            <span><strong>Receipts:</strong> Send official WhatsApp receipt on payment</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.875rem; color: #334155; cursor: pointer; padding: 0.5rem; background: #f8fafc; border-radius: 0.375rem; border: 1px solid #e2e8f0;">
+                            <input type="checkbox" name="whatsapp_notify_on_visitor_pass" value="1" <?php echo $wa_config['notify_on_visitor_pass'] ? 'checked' : ''; ?> style="accent-color: #25D366; width: 16px; height: 16px;">
+                            <span><strong>Visitor Passes:</strong> Deliver gate passcode &amp; QR link</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.875rem; color: #334155; cursor: pointer; padding: 0.5rem; background: #f8fafc; border-radius: 0.375rem; border: 1px solid #e2e8f0;">
+                            <input type="checkbox" name="whatsapp_notify_on_visitor_arrival" value="1" <?php echo ($wa_config['notify_on_visitor_arrival'] ?? true) ? 'checked' : ''; ?> style="accent-color: #25D366; width: 16px; height: 16px;">
+                            <span><strong>Gate Arrivals:</strong> Alert resident when visitor reaches gate</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.875rem; color: #334155; cursor: pointer; padding: 0.5rem; background: #f8fafc; border-radius: 0.375rem; border: 1px solid #e2e8f0;">
+                            <input type="checkbox" name="whatsapp_notify_on_artisan_pass" value="1" <?php echo ($wa_config['notify_on_artisan_pass'] ?? true) ? 'checked' : ''; ?> style="accent-color: #25D366; width: 16px; height: 16px;">
+                            <span><strong>Artisan Passes:</strong> Deliver WhatsApp gate pass to artisan &amp; host</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.875rem; color: #334155; cursor: pointer; padding: 0.5rem; background: #f8fafc; border-radius: 0.375rem; border: 1px solid #e2e8f0;">
+                            <input type="checkbox" name="whatsapp_notify_on_penalty" value="1" <?php echo ($wa_config['notify_on_penalty'] ?? true) ? 'checked' : ''; ?> style="accent-color: #25D366; width: 16px; height: 16px;">
+                            <span><strong>Penalties &amp; Citations:</strong> WhatsApp violation citation &amp; fine notice</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.875rem; color: #334155; cursor: pointer; padding: 0.5rem; background: #f8fafc; border-radius: 0.375rem; border: 1px solid #e2e8f0;">
+                            <input type="checkbox" name="whatsapp_notify_on_broadcast" value="1" <?php echo ($wa_config['notify_on_broadcast'] ?? true) ? 'checked' : ''; ?> style="accent-color: #25D366; width: 16px; height: 16px;">
+                            <span><strong>Broadcast Announcements:</strong> WhatsApp estate alerts &amp; newsletters</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.875rem; color: #334155; cursor: pointer; padding: 0.5rem; background: #f8fafc; border-radius: 0.375rem; border: 1px solid #e2e8f0;">
+                            <input type="checkbox" name="whatsapp_notify_on_welcome" value="1" <?php echo ($wa_config['notify_on_welcome'] ?? true) ? 'checked' : ''; ?> style="accent-color: #25D366; width: 16px; height: 16px;">
+                            <span><strong>Welcome Onboarding:</strong> WhatsApp portal credentials to new users</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.875rem; color: #334155; cursor: pointer; padding: 0.5rem; background: #f8fafc; border-radius: 0.375rem; border: 1px solid #e2e8f0;">
+                            <input type="checkbox" name="whatsapp_notify_on_emergency" value="1" <?php echo ($wa_config['notify_on_emergency'] ?? true) ? 'checked' : ''; ?> style="accent-color: #25D366; width: 16px; height: 16px;">
+                            <span><strong>Emergency &amp; Panic Alerts:</strong> Alert guards &amp; emergency teams</span>
+                        </label>
+                    </div>
+
+                    <div style="text-align: right; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
+                        <button type="submit" name="update_whatsapp" class="btn text-white fw-semibold" style="background: #059669; padding: 0.75rem 2rem; border-radius: 0.375rem; border: none; box-shadow: 0 4px 6px -1px rgba(5,150,105,0.25);">
+                            <i class="fa-solid fa-floppy-disk me-1"></i> Save WhatsApp Settings
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Diagnostic Test Tool -->
+                <div style="margin-top: 2.5rem; padding: 1.5rem; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 0.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 0.75rem;">
+                        <h4 style="margin: 0; color: #0f172a; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fa-solid fa-stethoscope" style="color: #059669;"></i> Live Kapso WhatsApp Test Diagnostic
+                        </h4>
+                        <?php 
+                        $sender_phone = $wa_config['kapso_sender_phone'] ?? '+234 903 647 7098';
+                        $clean_sender = preg_replace('/[^0-9]/', '', $sender_phone);
+                        $wa_open_link = "https://wa.me/{$clean_sender}?text=" . urlencode("Hi");
+                        $tpl_stat = EstateWhatsApp::checkTemplateStatus($conn, 'estate_notice', $estate_id);
+                        ?>
+                        <span style="font-size: 0.8rem; color: #64748b;">
+                            Meta Template <code>estate_notice</code>: 
+                            <?php if (!empty($tpl_stat['approved'])): ?>
+                                <span class="badge bg-success" style="font-size: 0.75rem;"><i class="fa-solid fa-check me-1"></i> APPROVED</span>
+                            <?php else: ?>
+                                <span class="badge bg-warning text-dark" style="font-size: 0.75rem;" title="Meta is actively reviewing this utility template"><i class="fa-solid fa-clock me-1"></i> PENDING Review</span>
+                            <?php endif; ?>
+                        </span>
+                    </div>
+
+                    <!-- Meta 24-Hour Policy Notice Card -->
+                    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-left: 4px solid #10b981; border-radius: 0.375rem; padding: 1rem 1.25rem; margin-bottom: 1.25rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                            <div>
+                                <div style="font-weight: 600; color: #0f172a; font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem;">
+                                    <i class="fa-brands fa-whatsapp text-success fs-5"></i>
+                                    Estate Sender Number: <span class="font-monospace text-success fw-bold"><?php echo htmlspecialchars($sender_phone); ?></span>
+                                    <span class="mature-badge mature-badge-emerald" style="font-size: 0.7rem; padding: 2px 8px;">Connected &amp; Verified</span>
+                                </div>
+                                <div style="font-size: 0.8rem; color: #475569; margin-top: 0.4rem; line-height: 1.5; max-width: 650px;">
+                                    <strong>WhatsApp 24-Hour Session Rule:</strong> To receive non-template messages, Meta policy requires the recipient phone to message your estate number once within 24 hours. Send <strong>"Hi"</strong> from your phone to open the session, then test below!
+                                </div>
+                            </div>
+                            <div>
+                                <a href="<?php echo $wa_open_link; ?>" target="_blank" class="btn btn-sm text-white fw-bold" style="background: #25D366; text-decoration: none; padding: 0.5rem 1rem; border-radius: 0.375rem; font-size: 0.825rem; display: inline-flex; align-items: center; gap: 0.4rem; box-shadow: 0 2px 4px rgba(37,211,102,0.3);">
+                                    <i class="fa-brands fa-whatsapp fs-6"></i> Send "Hi" on WhatsApp
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="POST" style="display: flex; gap: 0.75rem; max-width: 650px; flex-wrap: wrap;">
+                        <input type="text" name="test_phone" required placeholder="Enter WhatsApp number (e.g. 08012345678 or 234...)" style="flex-grow: 1; padding: 0.65rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; font-family: monospace;">
+                        <button type="submit" name="send_test_whatsapp" class="btn text-white" style="background: #059669; padding: 0.65rem 1.5rem; border-radius: 0.375rem; border: none; font-weight: 600; cursor: pointer; white-space: nowrap;">
+                            <i class="fa-brands fa-whatsapp me-1"></i> Send Test Message
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <script>
+        function togglePasswordVisibility(inputId, btn) {
+            var input = document.getElementById(inputId);
+            var icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fa-solid fa-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'fa-solid fa-eye';
+            }
+        }
+        function copyWebhookUrl() {
+            var input = document.getElementById('webhookUrlInput');
+            input.select();
+            input.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(input.value);
+            if (window.EstateToast) {
+                EstateToast.success("Webhook URL copied to clipboard!");
+            } else {
+                alert("Webhook URL copied to clipboard!");
+            }
+        }
+        </script>
      </div>
 </div>
 
 <script>
+function handleMobileTabChange(val) {
+    if (val === 'email_logs_link') {
+        window.location.href = 'email_logs.php';
+        return;
+    }
+    if (val === 'whatsapp_logs_link') {
+        window.location.href = 'whatsapp_logs.php';
+        return;
+    }
+    openTab(null, val);
+    var sel = document.getElementById('mobileSettingsSelect');
+    if (sel) sel.value = val;
+    
+    updateMobilePillHighlights(val);
+
+    var target = document.getElementById(val);
+    if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+function updateMobilePillHighlights(tabName) {
+    var propTabs = ['building_types','building_statuses','building_floor_types','flat_types','flat_statuses','commercial_config'];
+    var resTabs = ['resident_relationships','resident_statuses','domestic_staff_roles','domestic_staff_status'];
+    var commTabs = ['smtp_config','whatsapp_config'];
+    var ownerTabs = ['property_ownership_types','property_acquisition_types'];
+    var secTabs = ['visitor_settings','incident_types','incident_severities','incident_statuses','incident_entity_types'];
+
+    document.querySelectorAll('.mobile-cat-pill').forEach(btn => {
+        var cat = btn.getAttribute('data-category');
+        btn.classList.remove('active');
+        if (cat === 'general' && tabName === 'general') btn.classList.add('active');
+        else if (cat === 'id_cards' && tabName === 'id_cards') btn.classList.add('active');
+        else if (cat === 'properties' && propTabs.indexOf(tabName) !== -1) btn.classList.add('active');
+        else if (cat === 'residents' && resTabs.indexOf(tabName) !== -1) btn.classList.add('active');
+        else if (cat === 'finance' && tabName === 'paystack_api') btn.classList.add('active');
+        else if (cat === 'comms' && commTabs.indexOf(tabName) !== -1) btn.classList.add('active');
+        else if (cat === 'ownership' && ownerTabs.indexOf(tabName) !== -1) btn.classList.add('active');
+        else if (cat === 'security' && secTabs.indexOf(tabName) !== -1) btn.classList.add('active');
+    });
+}
+
 function openTab(evt, tabName) {
     var i, tabcontent, tablinks;
     tabcontent = document.getElementsByClassName("tab-content");
@@ -1099,6 +1685,22 @@ function openTab(evt, tabName) {
     if (evt && evt.currentTarget) {
         evt.currentTarget.className += " active";
     }
+    if (!evt || !evt.currentTarget) {
+        for (i = 0; i < tablinks.length; i++) {
+            var onclickAttr = tablinks[i].getAttribute('onclick') || '';
+            if (onclickAttr.indexOf("'" + tabName + "'") !== -1) {
+                tablinks[i].classList.add("active");
+                break;
+            }
+        }
+    }
+    // Sync mobile select
+    var sel = document.getElementById('mobileSettingsSelect');
+    if (sel && sel.value !== tabName) {
+        sel.value = tabName;
+    }
+    updateMobilePillHighlights(tabName);
+
     if (window.history.replaceState) {
         const url = new URL(window.location);
         url.searchParams.set('tab', tabName);
@@ -1110,19 +1712,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const urlParams = new URLSearchParams(window.location.search);
     const activeTab = urlParams.get('tab') || '<?php echo htmlspecialchars($active_tab); ?>';
     if (activeTab && document.getElementById(activeTab)) {
-        var tabcontent = document.getElementsByClassName("tab-content");
-        for (var i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = "none";
-        }
-        var tablinks = document.getElementsByClassName("settings-nav-btn");
-        for (var i = 0; i < tablinks.length; i++) {
-            tablinks[i].classList.remove("active");
-            var onclickAttr = tablinks[i].getAttribute('onclick') || '';
-            if (onclickAttr.indexOf("'" + activeTab + "'") !== -1) {
-                tablinks[i].classList.add("active");
-            }
-        }
-        document.getElementById(activeTab).style.display = "block";
+        openTab(null, activeTab);
     }
 });
 

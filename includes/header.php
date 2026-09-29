@@ -27,6 +27,8 @@ if (!isset($_SESSION['user_id'])) {
     <link rel="stylesheet" href="../css/style.css?v=<?php echo time(); ?>">
     <link rel="stylesheet" href="../css/estate_notifications.css?v=<?php echo time(); ?>">
     <link rel="stylesheet" href="../css/estate_glassmorphism.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="../css/mobile_app.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="../css/hotline.css?v=<?php echo time(); ?>">
     
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -36,11 +38,16 @@ if (!isset($_SESSION['user_id'])) {
     <!-- Global Theme Switcher Script -->
     <script src="../js/theme.js"></script>
     <script src="../js/searchable_select.js?v=<?php echo time(); ?>" defer></script>
+    <script src="../js/mobile_app.js?v=<?php echo time(); ?>" defer></script>
     <!-- Universal Anti-Duplicate & Single-Click Submission Engine -->
     <script src="../js/anti_duplicate.js?v=<?php echo time(); ?>"></script>
     <!-- Real-time Emergency & Panic Alarm Engine -->
     <script>window.ESTATE_IS_STAFF_OR_ADMIN = true; window.ESTATE_EMERGENCY_URL = '../admin/emergency';</script>
     <script src="../js/emergency_alarm.js?v=<?php echo time(); ?>"></script>
+    <!-- Direct Emergency Hotline Modal Engine -->
+    <script src="../js/hotline_modal.js?v=<?php echo time(); ?>" defer></script>
+
+    <?php require_once __DIR__ . '/mobile_nav.php'; ?>
 
     <?php
     // Fetch Theme Color

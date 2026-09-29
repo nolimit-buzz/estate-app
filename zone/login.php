@@ -40,6 +40,8 @@ if (isset($_GET['error'])) {
         $error = "This account is not linked to any active zone. Please contact Central Estate Administration.";
     } elseif ($_GET['error'] === 'unauthorized') {
         $error = "Zone Administrator privileges required to access this portal.";
+    } elseif ($_GET['error'] === 'account_disabled') {
+        $error = "Your account has been deactivated. Please contact Central Estate Administration.";
     }
 }
 
@@ -49,7 +51,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     $result = authenticatePortalUser($conn, $email, $password, 'zone');
     if ($result['success']) {
-        header("Location: index");
+        if (!empty($result['force_password_change'])) {
+            header("Location: ../change_password");
+        } else {
+            header("Location: index");
+        }
         exit;
     } else {
         $error = $result['error'];
@@ -88,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <?php if ($estate_logo): ?>
                         <img src="../<?php echo htmlspecialchars($estate_logo); ?>" alt="Logo" style="height: 48px; border-radius: 8px;">
                     <?php else: ?>
-                        <div style="width: 52px; height: 52px; border-radius: 12px; background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.3); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #c084fc; margin: 0 auto;">
+                        <div class="glass-icon-circle hero-icon-circle glass-icon-purple" style="width: 54px; height: 54px; min-width: 54px; min-height: 54px; font-size: 1.45rem; margin: 0 auto;">
                             <i class="fa-solid fa-layer-group"></i>
                         </div>
                     <?php endif; ?>
@@ -131,7 +137,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <div class="auth-input-group">
-                    <label for="password">Password</label>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                        <label for="password" style="margin-bottom: 0;">Password</label>
+                        <a href="../forgot_password" style="font-size: 0.78rem; color: #a855f7; text-decoration: none; font-weight: 500;">Forgot Password?</a>
+                    </div>
                     <div class="auth-input-wrapper">
                         <i class="fa-solid fa-lock"></i>
                         <input type="password" id="password" name="password" class="auth-input" placeholder="••••••••" required>

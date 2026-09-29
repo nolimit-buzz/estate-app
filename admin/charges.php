@@ -515,15 +515,17 @@ include '../includes/sidebar.php';
 
             <!-- Allow Installments Toggle -->
             <div class="p-3 mb-4 rounded-3 border" style="background: rgba(16, 185, 129, 0.04); border-color: rgba(16, 185, 129, 0.25) !important;">
-                <div class="form-check form-switch d-flex align-items-center gap-3 ps-0 mb-0">
-                    <input class="form-check-input ms-0 me-2" type="checkbox" role="switch" id="add_allow_installments" name="allow_installments" value="1" checked style="width: 2.75rem; height: 1.4rem; cursor: pointer;">
-                    <div>
-                        <label class="form-check-label fw-bold text-dark d-block" for="add_allow_installments" style="cursor: pointer; font-size: 0.9rem;">
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3">
+                    <div style="flex: 1; min-width: 0;">
+                        <label class="form-check-label fw-bold text-dark d-block mb-1" for="add_allow_installments" style="cursor: pointer; font-size: 0.9rem;">
                             Allow Installment Payments
                         </label>
                         <small class="text-muted d-block" style="font-size: 0.75rem;">
                             Permit residents to pay this charge across downpayment & scheduled milestones.
                         </small>
+                    </div>
+                    <div class="form-check form-switch ps-0 mb-0 align-self-end align-self-sm-center flex-shrink-0">
+                        <input class="form-check-input m-0" type="checkbox" role="switch" id="add_allow_installments" name="allow_installments" value="1" checked style="width: 2.75rem; height: 1.4rem; cursor: pointer;">
                     </div>
                 </div>
             </div>
@@ -605,15 +607,17 @@ include '../includes/sidebar.php';
 
             <!-- Allow Installments Toggle -->
             <div class="p-3 mb-4 rounded-3 border" style="background: rgba(16, 185, 129, 0.04); border-color: rgba(16, 185, 129, 0.25) !important;">
-                <div class="form-check form-switch d-flex align-items-center gap-3 ps-0 mb-0">
-                    <input class="form-check-input ms-0 me-2" type="checkbox" role="switch" id="edit_allow_installments" name="allow_installments" value="1" style="width: 2.75rem; height: 1.4rem; cursor: pointer;">
-                    <div>
-                        <label class="form-check-label fw-bold text-dark d-block" for="edit_allow_installments" style="cursor: pointer; font-size: 0.9rem;">
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3">
+                    <div style="flex: 1; min-width: 0;">
+                        <label class="form-check-label fw-bold text-dark d-block mb-1" for="edit_allow_installments" style="cursor: pointer; font-size: 0.9rem;">
                             Allow Installment Payments
                         </label>
                         <small class="text-muted d-block" style="font-size: 0.75rem;">
                             Permit residents to pay this charge across downpayment & scheduled milestones.
                         </small>
+                    </div>
+                    <div class="form-check form-switch ps-0 mb-0 align-self-end align-self-sm-center flex-shrink-0">
+                        <input class="form-check-input m-0" type="checkbox" role="switch" id="edit_allow_installments" name="allow_installments" value="1" style="width: 2.75rem; height: 1.4rem; cursor: pointer;">
                     </div>
                 </div>
             </div>

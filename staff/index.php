@@ -106,31 +106,111 @@ $staff_duty = $conn->query("SELECT sr.*, sp.post_name, sp.phone_extension, ss.na
                            ORDER BY (CASE WHEN sr.status = 'on_duty' THEN 0 ELSE 1 END), sr.start_datetime ASC LIMIT 1")->fetch_assoc();
 ?>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h2 class="h4 font-bold text-slate-800 m-0">Staff Console Dashboard</h2>
-        <p class="text-secondary small mb-0">Welcome back, <strong><?php echo htmlspecialchars($user_name); ?></strong>. Role: <span class="badge bg-teal" style="background: #0f766e;"><?php echo htmlspecialchars($user_role_display); ?></span></p>
+<!-- ==========================================
+     NATIVE MOBILE APP DASHBOARD (< 992px)
+     Image 1 Screen 2 & Image 2 Operational Grid
+     ========================================== -->
+<div class="mobile-only mb-4">
+    <!-- 1. 2x2 Metric Summary Cards -->
+    <div class="mobile-section-header">
+        <h3 class="mobile-section-title">Duty Overview</h3>
+        <a href="roster" class="mobile-section-link">Roster &rarr;</a>
     </div>
-    <div class="d-flex gap-2">
-        <a href="roster" class="btn btn-outline-dark rounded-pill px-3 shadow-sm">
-            <i class="fa-solid fa-calendar-check me-1 text-teal" style="color: #0d9488;"></i> My Duty Roster &amp; Calendar
+    <div class="mobile-kpi-grid">
+        <a href="security" class="mobile-kpi-card">
+            <span class="mobile-kpi-label">Inside Visitors</span>
+            <div class="mobile-kpi-val"><?php echo sprintf('%02d', $today_visitors); ?></div>
+            <span class="mobile-kpi-sub">On-Premises</span>
         </a>
-        <a href="community_chat" class="btn btn-outline-secondary rounded-pill px-3 shadow-sm">
-            <i class="fa-solid fa-comments me-1"></i> Estate Forum
+
+        <a href="security" class="mobile-kpi-card">
+            <span class="mobile-kpi-label">Expected Passes</span>
+            <div class="mobile-kpi-val"><?php echo sprintf('%02d', $pending_checkins); ?></div>
+            <span class="mobile-kpi-sub">Pending Check-in</span>
+        </a>
+
+        <a href="maintenance" class="mobile-kpi-card">
+            <span class="mobile-kpi-label">Work Orders</span>
+            <div class="mobile-kpi-val"><?php echo sprintf('%02d', $assigned_work_orders); ?></div>
+            <span class="mobile-kpi-sub">Assigned Tasks</span>
+        </a>
+
+        <a href="roster" class="mobile-kpi-card">
+            <span class="mobile-kpi-label">Duty Shift</span>
+            <div class="mobile-kpi-val text-primary" style="font-size: 1.35rem;"><?php echo !empty($staff_duty) ? ($staff_duty['status'] === 'on_duty' ? 'Active' : 'Scheduled') : 'Standby'; ?></div>
+            <span class="mobile-kpi-sub"><?php echo htmlspecialchars($staff_duty['shift_name'] ?? 'General Post'); ?></span>
+        </a>
+    </div>
+
+    <!-- 2. ALL STAFF SIDEBAR ICONS DOWN BELOW (Image 2 Style Grid) -->
+    <?php 
+    if (function_exists('renderMobileSidebarIconsGrid')) {
+        renderMobileSidebarIconsGrid('staff');
+    }
+    ?>
+
+    <!-- 3. Recent Gate Entries Activity Feed -->
+    <?php if ($can_gate && $recent_visitors && $recent_visitors->num_rows > 0): ?>
+        <div class="mobile-section-header mt-4">
+            <h3 class="mobile-section-title">Recent Gate Activity</h3>
+            <a href="security" class="mobile-section-link">Log <i class="fa-solid fa-chevron-right"></i></a>
+        </div>
+        <div class="mobile-activity-list">
+            <?php while ($vr = $recent_visitors->fetch_assoc()): ?>
+                <a href="security" class="mobile-activity-item">
+                    <div class="mobile-activity-left">
+                        <div class="mobile-activity-icon" style="background: rgba(37, 99, 235, 0.12); color: #2563eb;">
+                            <i class="fa-solid fa-qrcode"></i>
+                        </div>
+                        <div class="mobile-activity-text">
+                            <div class="mobile-activity-title"><?php echo htmlspecialchars($vr['name']); ?> (<?php echo htmlspecialchars($vr['entry_code'] ?? 'CODE'); ?>)</div>
+                            <div class="mobile-activity-meta">Unit <?php echo htmlspecialchars($vr['flat_number'] ?? 'N/A'); ?> • <?php echo htmlspecialchars(ucfirst($vr['status'])); ?></div>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right mobile-activity-chevron"></i>
+                </a>
+            <?php endwhile; ?>
+        </div>
+    <?php endif; ?>
+</div>
+
+<!-- ==========================================
+     DESKTOP COMMAND CONSOLE
+     ========================================== -->
+<div class="desktop-only">
+<div class="hero-header-enterprise">
+    <div class="hero-title-group">
+        <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+            <h1>Staff Operations Console</h1>
+            <span class="mature-badge mature-badge-emerald" style="background: rgba(13, 148, 136, 0.12); color: #0f766e; border-color: rgba(13, 148, 136, 0.25);">
+                <i class="fa-solid fa-shield-cat me-1"></i> <?php echo htmlspecialchars($user_role_display); ?>
+            </span>
+        </div>
+        <div class="hero-meta-strip">
+            <span><i class="fa-regular fa-calendar me-1"></i> <?php echo date('l, F j, Y'); ?></span>
+            <span>•</span>
+            <span><i class="fa-solid fa-circle-user me-1"></i> Welcome back, <strong><?php echo htmlspecialchars($user_name); ?></strong></span>
+            <span>•</span>
+            <span class="text-success"><i class="fa-solid fa-circle me-1" style="font-size: 0.5rem;"></i> On Duty System Active</span>
+        </div>
+    </div>
+    <div class="hero-actions-group">
+        <div class="pill-timeframe-dropdown" title="Today's Shift Cycle">
+            <i class="fa-regular fa-calendar-check text-teal" style="color: #0d9488;"></i>
+            <span><?php echo date('D, M d'); ?></span>
+            <i class="fa-solid fa-chevron-down" style="font-size: 0.65rem;"></i>
+        </div>
+        <a href="roster" class="btn-export-ghost" title="My Duty Roster & Clock-In Calendar">
+            <i class="fa-solid fa-calendar-day text-teal" style="color: #0d9488;"></i> Duty Calendar
         </a>
         <?php if ($can_gate && hasPermission('visitors.check_in_out')): ?>
-            <a href="security" class="btn btn-primary" style="background: #0d9488; border: none;">
-                <i class="fa-solid fa-qrcode me-1"></i> Verify Visitor Code
+            <a href="security" class="btn-primary-action-pill" style="background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); box-shadow: 0 4px 14px -2px rgba(13, 148, 136, 0.4);">
+                <i class="fa-solid fa-qrcode"></i> Verify Visitor Code
             </a>
         <?php endif; ?>
-        <?php if ($can_finance && hasPermission('finance.view_invoices')): ?>
-            <a href="finance" class="btn btn-success" style="background: #10b981; border: none;">
-                <i class="fa-solid fa-file-invoice-dollar me-1"></i> Billing & Receipts
-            </a>
-        <?php endif; ?>
-        <?php if ($can_residents && hasPermission('residents.manage')): ?>
-            <a href="residents" class="btn btn-primary" style="background: #0284c7; border: none;">
-                <i class="fa-solid fa-user-plus me-1"></i> Resident Onboarding
+        <?php if ($can_maintenance): ?>
+            <a href="maintenance" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-2 fw-semibold">
+                <i class="fa-solid fa-wrench me-1"></i> Work Orders
             </a>
         <?php endif; ?>
     </div>
@@ -499,5 +579,6 @@ $staff_duty = $conn->query("SELECT sr.*, sp.post_name, sp.phone_extension, ss.na
         </div>
     </div>
 </div>
+</div><!-- end .desktop-only -->
 
 <?php include 'footer.php'; ?>

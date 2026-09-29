@@ -90,19 +90,22 @@ include 'sidebar.php';
 ?>
 <script src="https://js.paystack.co/v1/inline.js"></script>
 
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
-    <div>
-        <div class="d-flex align-items-center gap-2 mb-1">
-            <h1 class="h4 font-bold text-slate-900 m-0" style="letter-spacing: -0.02em;">
-                <i class="fa-solid fa-file-invoice-dollar text-primary me-2"></i> Bills & Invoices
-            </h1>
-            <span class="mature-badge mature-badge-sky">Financial Portal</span>
+<!-- Enterprise Hero Header (Image 3 Style) -->
+<div class="hero-header-enterprise">
+    <div class="hero-title-group">
+        <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+            <h1>Bills &amp; Assessment Invoices</h1>
+            <span class="mature-badge mature-badge-sky"><i class="fa-solid fa-wallet me-1"></i> Financial Portal</span>
         </div>
-        <p class="text-secondary small mb-0">Manage estate assessments, settle outstanding invoices, and access official verified receipts.</p>
+        <div class="hero-meta-strip">
+            <span><i class="fa-solid fa-file-invoice-dollar me-1"></i> Estate Dues &amp; Levies</span>
+            <span>•</span>
+            <span><i class="fa-solid fa-shield-check me-1"></i> Secure Settlement Engine</span>
+        </div>
     </div>
-    <div class="d-flex gap-2">
-        <a href="receipts" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
-            <i class="fa-solid fa-receipt me-1"></i> My Receipts
+    <div class="hero-actions-group">
+        <a href="receipts" class="btn-export-ghost">
+            <i class="fa-solid fa-receipt text-success"></i> My Receipts
         </a>
     </div>
 </div>

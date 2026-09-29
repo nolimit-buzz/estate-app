@@ -2,6 +2,7 @@
 // resident/visitors.php
 require_once '../config.php';
 require_once '../includes/Mailer.php';
+require_once '../includes/WhatsApp.php';
 
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../index");
@@ -43,11 +44,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['register_visitor'])) {
     if ($conn->query($sql)) {
         $inserted_pass_id = $conn->insert_id;
         
-        // Dispatch Digital Visitor Pass Email to Resident & Visitor
+        // Dispatch Digital Visitor Pass to Visitor & Host via Email and WhatsApp
         EstateMailer::sendVisitorPassEmail($conn, $inserted_pass_id);
+        EstateWhatsApp::sendVisitorPassWhatsApp($conn, $inserted_pass_id);
 
         logAudit($conn, "Visitor Pre-registered", "Visitors", "Visitor $full_name pre-registered with code: $visitor_code");
-        $message = "Visitor access pass created and delivered to email successfully!";
+        $message = "Visitor access pass created and dispatched to recipient & host via Email and WhatsApp!";
         $new_pass = [
             'id' => $inserted_pass_id,
             'name' => $full_name,
@@ -104,15 +106,18 @@ $visitors_res = $conn->query($query);
 include 'header.php';
 include 'sidebar.php';
 ?>
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
-    <div>
-        <div class="d-flex align-items-center gap-2 mb-1">
-            <h1 class="h4 font-bold text-slate-900 m-0" style="letter-spacing: -0.02em;">
-                <i class="fa-solid fa-id-card-clip text-primary me-2"></i> Visitor Access Passes
-            </h1>
-            <span class="mature-badge mature-badge-emerald"><i class="fa-solid fa-shield-halved me-1"></i>Gate Security</span>
+<!-- Enterprise Hero Header (Image 3 Style) -->
+<div class="hero-header-enterprise">
+    <div class="hero-title-group">
+        <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+            <h1>Visitor Access Passes</h1>
+            <span class="mature-badge mature-badge-emerald"><i class="fa-solid fa-shield-halved me-1"></i> Gate Security</span>
         </div>
-        <p class="text-secondary small mb-0">Pre-register visitors, issue cryptographic gate pass codes, and manage arrival clearances in real time.</p>
+        <div class="hero-meta-strip">
+            <span><i class="fa-solid fa-qrcode me-1"></i> Instant Gate Authorization</span>
+            <span>•</span>
+            <span><i class="fa-solid fa-clock me-1"></i> Real-time Clearance</span>
+        </div>
     </div>
 </div>
 

@@ -31,11 +31,11 @@ body.landing-page [class^="fa-"]::before, body.landing-page [class*=" fa-"]::bef
 }
 
 body.landing-page {
-    background-color: var(--brand-dark);
+    background-color: var(--brand-dark) !important;
     color: #f8fafc;
     overflow-x: hidden;
     margin: 0;
-    padding: 0;
+    padding: 0 !important;
 }
 
 /* Glassmorphic Navbar */
@@ -959,23 +959,503 @@ body.landing-page {
     gap: 0.5rem;
 }
 
-/* Responsive Rules */
+/* ==========================================================================
+   MATURE EXECUTIVE MOBILE SHOWCASE & MULTI-DEVICE RESPONSIVE SUITE
+   Tailored across all phone viewports (320px - 768px+)
+   ========================================================================== */
+
+/* Keyframe for Active Live Pulse Indicator */
+@keyframes livePulseGlow {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    }
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 7px rgba(16, 185, 129, 0);
+    }
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+
+.mobile-hero-wrapper {
+    width: 100%;
+    max-width: 540px;
+    margin: 0 auto;
+    padding: 0.5rem 0.25rem 1.5rem;
+    box-sizing: border-box;
+}
+
+.mobile-hero-showcase {
+    position: relative;
+    background: linear-gradient(165deg, rgba(17, 24, 39, 0.92) 0%, rgba(11, 15, 25, 0.98) 100%);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 26px;
+    padding: 1.85rem 1.4rem;
+    box-shadow: 0 24px 50px -12px rgba(0, 0, 0, 0.75), inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+    overflow: hidden;
+    text-align: left;
+}
+
+/* Subtle Ambient Glow inside Card */
+.mobile-hero-showcase::before {
+    content: '';
+    position: absolute;
+    top: -40px;
+    right: -40px;
+    width: 160px;
+    height: 160px;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.22) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.mobile-hero-showcase > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* 1. Verified Estate Badge */
+.mobile-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.38rem 0.85rem;
+    border-radius: 9999px;
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.28);
+    color: #34d399;
+    font-size: 0.76rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    margin-bottom: 1.15rem;
+}
+
+.live-pulse-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #10b981;
+    display: inline-block;
+    animation: livePulseGlow 2s infinite;
+}
+
+/* 2. Mature Headline */
+.mobile-hero-title {
+    font-family: 'Outfit', sans-serif !important;
+    font-size: clamp(1.45rem, 5.8vw, 2.05rem);
+    font-weight: 800;
+    line-height: 1.22;
+    letter-spacing: -0.025em;
+    margin-bottom: 0.75rem;
+    background: linear-gradient(180deg, #ffffff 45%, #cbd5e1 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* 3. Mature Subtitle */
+.mobile-hero-subtitle {
+    font-size: 0.88rem;
+    line-height: 1.55;
+    color: #94a3b8;
+    margin-bottom: 1.35rem;
+}
+
+.mobile-hero-subtitle strong {
+    color: #f1f5f9;
+}
+
+/* 4. Action Buttons */
+.mobile-hero-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+}
+
+.mobile-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: #ffffff !important;
+    padding: 0.82rem 1.35rem;
+    border-radius: 14px;
+    font-weight: 600;
+    font-size: 0.92rem;
+    text-decoration: none;
+    flex: 1;
+    min-width: 140px;
+    box-shadow: 0 8px 20px -4px rgba(59, 130, 246, 0.45);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mobile-btn-primary:active {
+    transform: scale(0.97);
+}
+
+.mobile-btn-glass {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.06);
+    color: #f1f5f9 !important;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 0.82rem 1.25rem;
+    border-radius: 14px;
+    font-weight: 600;
+    font-size: 0.92rem;
+    text-decoration: none;
+    flex: 1;
+    min-width: 130px;
+    backdrop-filter: blur(8px);
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.mobile-btn-glass:active {
+    transform: scale(0.97);
+    background: rgba(255, 255, 255, 0.12);
+}
+
+/* 5. Mobile Micro-Stats Strip (2x2 Grid) */
+.mobile-hero-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.65rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.35rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mobile-stat-chip {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 14px;
+    padding: 0.65rem 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.stat-chip-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+}
+
+.stat-icon-emerald { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+.stat-icon-sky { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
+.stat-icon-indigo { background: rgba(99, 102, 241, 0.15); color: #818cf8; }
+.stat-icon-amber { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+
+.stat-chip-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-chip-text strong {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #f8fafc;
+    line-height: 1.15;
+}
+
+.stat-chip-text span {
+    font-size: 0.68rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-top: 1px;
+}
+
+/* 6. Direct Portal Quick Launcher for Mobile */
+.mobile-portal-launcher {
+    text-align: left;
+}
+
+.launcher-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #94a3b8;
+    margin-bottom: 0.75rem;
+}
+
+.launcher-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.launcher-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 0.95rem;
+    border-radius: 14px;
+    text-decoration: none;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.2s ease;
+}
+
+.launcher-item:hover, .launcher-item:active {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateX(3px);
+}
+
+.launcher-resident { border-left: 3.5px solid #38bdf8 !important; }
+.launcher-resident .launcher-icon { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
+
+.launcher-staff { border-left: 3.5px solid #10b981 !important; }
+.launcher-staff .launcher-icon { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+
+.launcher-zone { border-left: 3.5px solid #c084fc !important; }
+.launcher-zone .launcher-icon { background: rgba(168, 85, 247, 0.15); color: #c084fc; }
+
+.launcher-admin { border-left: 3.5px solid #f59e0b !important; }
+.launcher-admin .launcher-icon { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+
+.launcher-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.launcher-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+}
+
+.launcher-name {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #f8fafc;
+    line-height: 1.2;
+}
+
+.launcher-sub {
+    font-size: 0.74rem;
+    color: #94a3b8;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.launcher-arrow {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+/* ==========================================================================
+   FINE-TUNED RESPONSIVE ADAPTATIONS (Across different phone screen sizes)
+   ========================================================================== */
+
+/* 1. Large Screen to Laptop (1080px) */
 @media (max-width: 1080px) {
     .portals-grid { grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
 }
 
+/* 2. Tablet & Large Mobile (992px) */
 @media (max-width: 992px) {
+    .hero-section {
+        padding: 5.5rem 1.25rem 3.5rem;
+        min-height: auto;
+    }
     .hero-title { font-size: 2.75rem; }
     .rules-card { grid-template-columns: 1fr; gap: 1.5rem; }
-    .footer-container { grid-template-columns: 1fr 1fr; }
+    .footer-container { grid-template-columns: 1fr 1fr; gap: 2rem; }
 }
 
-@media (max-width: 768px) {
-    .landing-nav .nav-links { display: none; }
-    .hero-title { font-size: 2.2rem; }
-    .hero-subtitle { font-size: 1.05rem; }
-    .estate-stats-strip { gap: 1.5rem; }
-    .portals-grid { grid-template-columns: 1fr; }
-    .footer-container { grid-template-columns: 1fr; }
-    .auth-card { padding: 2rem 1.5rem; }
+/* 3. Phablets & Small Tablets (576px - 768px) */
+@media (min-width: 576px) and (max-width: 768px) {
+    .portals-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    .features-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
+    }
 }
+
+/* 4. General Mobile (<= 768px) */
+@media (max-width: 768px) {
+    .landing-nav {
+        padding: 0.75rem 1rem;
+    }
+    .landing-nav .nav-links {
+        display: none;
+    }
+    .nav-brand {
+        font-size: 1.15rem;
+        gap: 0.5rem;
+    }
+    .nav-brand span {
+        max-width: 170px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .nav-cta {
+        padding: 0.48rem 0.95rem;
+        font-size: 0.82rem;
+    }
+    .hero-section {
+        padding: 5rem 0.75rem 2.5rem;
+    }
+    .portals-section {
+        padding: 3.5rem 1rem;
+    }
+    .section-title {
+        font-size: 1.85rem;
+    }
+    .section-subtitle {
+        font-size: 0.92rem;
+    }
+    .portal-card {
+        padding: 1.5rem 1.2rem;
+        border-radius: 1.1rem;
+    }
+    .portal-desc {
+        min-height: auto;
+        margin-bottom: 1.1rem;
+        font-size: 0.85rem;
+    }
+    .portal-features {
+        margin-bottom: 1.25rem;
+    }
+    .features-section {
+        padding: 3.5rem 1rem;
+    }
+    .feature-box {
+        padding: 1.5rem 1.2rem;
+    }
+    .footer-container {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+    .footer-bottom {
+        flex-direction: column;
+        gap: 0.75rem;
+        text-align: center;
+    }
+}
+
+/* 5. Standard Mobile Viewports (375px - 480px, e.g. iPhone 13/14/15/16, Galaxy S22/S23) */
+@media (max-width: 480px) {
+    .hero-section {
+        padding: 4.75rem 0.5rem 2rem;
+    }
+    .portals-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    .features-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    .mobile-hero-showcase {
+        padding: 1.5rem 1.15rem;
+        border-radius: 22px;
+    }
+    .mobile-hero-title {
+        font-size: 1.55rem;
+    }
+    .mobile-stat-chip {
+        padding: 0.55rem 0.65rem;
+        gap: 0.5rem;
+    }
+    .stat-chip-icon {
+        width: 30px;
+        height: 30px;
+        font-size: 0.85rem;
+    }
+    .stat-chip-text strong {
+        font-size: 0.88rem;
+    }
+    .stat-chip-text span {
+        font-size: 0.65rem;
+    }
+    .launcher-item {
+        padding: 0.7rem 0.85rem;
+    }
+    .launcher-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 0.9rem;
+    }
+    .launcher-name {
+        font-size: 0.88rem;
+    }
+}
+
+/* 6. Ultra-Compact Phones (<= 360px, e.g. iPhone SE 1st Gen, Galaxy A-series small, KaiOS) */
+@media (max-width: 360px) {
+    .nav-brand span {
+        max-width: 120px;
+        font-size: 1rem;
+    }
+    .nav-cta {
+        padding: 0.42rem 0.75rem;
+        font-size: 0.75rem;
+    }
+    .mobile-hero-showcase {
+        padding: 1.25rem 0.85rem;
+        border-radius: 18px;
+    }
+    .mobile-hero-badge {
+        font-size: 0.7rem;
+        padding: 0.3rem 0.65rem;
+    }
+    .mobile-hero-title {
+        font-size: 1.35rem;
+    }
+    .mobile-hero-subtitle {
+        font-size: 0.82rem;
+    }
+    .mobile-hero-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .mobile-btn-primary, .mobile-btn-glass {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        font-size: 0.85rem;
+    }
+    .mobile-hero-stats {
+        grid-template-columns: 1fr;
+        gap: 0.45rem;
+    }
+    .launcher-sub {
+        display: none;
+    }
+}
+

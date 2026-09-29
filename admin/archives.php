@@ -174,8 +174,8 @@ include '../includes/sidebar.php';
     </div>
 <?php endif; ?>
 
-<div class="glass" style="padding: 2rem; border-radius: 0.75rem; background: white; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
-    <div class="tabs" style="display: flex; gap: 1rem; border-bottom: 2px solid #e2e8f0; margin-bottom: 1.5rem;">
+<div class="glass archives-vault-card" style="border-radius: 0.75rem; background: white; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+    <div class="tabs" style="display: flex; gap: 0.75rem; border-bottom: 2px solid #e2e8f0; margin-bottom: 1.5rem; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: 2px;">
         <button id="tab-res-btn" class="tab-btn active" onclick="openArchTab(event, 'res-archives')">
             <i class="fa-solid fa-users me-1"></i> Resident Archives (<?php echo $archived_residents ? $archived_residents->num_rows : 0; ?>)
         </button>
@@ -189,212 +189,224 @@ include '../includes/sidebar.php';
 
     <!-- Resident Archives -->
     <div id="res-archives" class="tab-content">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
             <h4 style="margin:0;"><i class="fa-solid fa-user-clock text-secondary me-2"></i> Archived / Departed Residents</h4>
             <span class="small text-muted">Use <strong>Re-onboard</strong> to re-activate returning residents into new units without losing history.</span>
         </div>
-        <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-                <tr style="text-align: left; color: #64748b; border-bottom: 1px solid #e2e8f0;">
-                    <th style="padding: 0.75rem;">System ID</th>
-                    <th style="padding: 0.75rem;">Resident Name</th>
-                    <th style="padding: 0.75rem;">Last Address</th>
-                    <th style="padding: 0.75rem;">Role / Designation</th>
-                    <th style="padding: 0.75rem;">Contact Details</th>
-                    <th style="padding: 0.75rem; text-align: right;">Action Provision</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php while($row = $archived_residents->fetch_assoc()): ?>
-                <tr style="border-bottom: 1px solid #f1f5f9;">
-                    <td style="padding: 0.75rem;">
-                        <span style="font-family: monospace; font-size: 0.8rem; background: #f1f5f9; padding: 2px 6px; border-radius: 4px;"><?php echo htmlspecialchars($row['custom_id'] ?? 'RES-' . $row['id']); ?></span>
-                    </td>
-                    <td style="padding: 0.75rem; font-weight: 600;">
-                        <?php echo htmlspecialchars($row['name']); ?>
-                    </td>
-                    <td style="padding: 0.75rem; font-size: 0.85rem; color: #475569;">
-                        Flat <?php echo htmlspecialchars($row['flat_number'] ?? 'N/A'); ?>
-                        <?php if(!empty($row['building_name'])): ?>
-                            &bull; <?php echo htmlspecialchars($row['building_name']); ?>
-                        <?php endif; ?>
-                    </td>
-                    <td style="padding: 0.75rem;">
-                        <span style="font-size: 0.78rem; text-transform: capitalize; padding: 2px 8px; border-radius: 9999px; background: #f1f5f9; color: #475569;">
-                            <?php echo htmlspecialchars($row['type'] ?? 'head'); ?>
-                        </span>
-                    </td>
-                    <td style="padding: 0.75rem; font-size: 0.82rem; color: #64748b;">
-                        <?php echo htmlspecialchars($row['email']); ?><br>
-                        <span style="font-family: monospace; font-size: 0.78rem;"><?php echo htmlspecialchars($row['phone']); ?></span>
-                    </td>
-                    <td style="padding: 0.75rem; text-align: right; white-space: nowrap;">
-                        <button type="button" class="btn btn-sm btn-primary" style="padding: 0.28rem 0.65rem; font-size: 0.8rem; margin-right: 0.25rem;" onclick="openReonboardModal(<?php echo htmlspecialchars(json_encode($row)); ?>)" title="Re-onboard / Recreate Resident to Flat">
-                            <i class="fa-solid fa-arrows-rotate me-1"></i> Re-onboard
-                        </button>
-                        <form method="POST" style="display:inline; margin-right: 0.25rem;" onsubmit="return confirm('Restore this resident to active registry?');">
-                            <input type="hidden" name="table" value="residents">
-                            <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
-                            <button type="submit" name="restore_item" class="btn btn-sm btn-outline-secondary" style="padding: 0.28rem 0.65rem; font-size: 0.8rem;" title="Quick Restore">
-                                <i class="fa-solid fa-trash-arrow-up"></i>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="text-align: left; color: #64748b; border-bottom: 1px solid #e2e8f0;">
+                        <th style="padding: 0.75rem; white-space: nowrap;">System ID</th>
+                        <th style="padding: 0.75rem; white-space: nowrap;">Resident Name</th>
+                        <th style="padding: 0.75rem; white-space: nowrap;">Last Address</th>
+                        <th style="padding: 0.75rem; white-space: nowrap;">Role / Designation</th>
+                        <th style="padding: 0.75rem; white-space: nowrap;">Contact Details</th>
+                        <th style="padding: 0.75rem; text-align: right; white-space: nowrap;">Action Provision</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php while($row = $archived_residents->fetch_assoc()): ?>
+                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                        <td style="padding: 0.75rem;">
+                            <span style="font-family: monospace; font-size: 0.8rem; background: #f1f5f9; padding: 2px 6px; border-radius: 4px;"><?php echo htmlspecialchars($row['custom_id'] ?? 'RES-' . $row['id']); ?></span>
+                        </td>
+                        <td style="padding: 0.75rem; font-weight: 600;">
+                            <?php echo htmlspecialchars($row['name']); ?>
+                        </td>
+                        <td style="padding: 0.75rem; font-size: 0.85rem; color: #475569;">
+                            Flat <?php echo htmlspecialchars($row['flat_number'] ?? 'N/A'); ?>
+                            <?php if(!empty($row['building_name'])): ?>
+                                &bull; <?php echo htmlspecialchars($row['building_name']); ?>
+                            <?php endif; ?>
+                        </td>
+                        <td style="padding: 0.75rem;">
+                            <span style="font-size: 0.78rem; text-transform: capitalize; padding: 2px 8px; border-radius: 9999px; background: #f1f5f9; color: #475569;">
+                                <?php echo htmlspecialchars($row['type'] ?? 'head'); ?>
+                            </span>
+                        </td>
+                        <td style="padding: 0.75rem; font-size: 0.82rem; color: #64748b;">
+                            <?php echo htmlspecialchars($row['email']); ?><br>
+                            <span style="font-family: monospace; font-size: 0.78rem;"><?php echo htmlspecialchars($row['phone']); ?></span>
+                        </td>
+                        <td style="padding: 0.75rem; text-align: right; white-space: nowrap;">
+                            <button type="button" class="btn btn-sm btn-primary" style="padding: 0.28rem 0.65rem; font-size: 0.8rem; margin-right: 0.25rem;" onclick="openReonboardModal(<?php echo htmlspecialchars(json_encode($row)); ?>)" title="Re-onboard / Recreate Resident to Flat">
+                                <i class="fa-solid fa-arrows-rotate me-1"></i> Re-onboard
                             </button>
-                        </form>
-                        <form method="POST" style="display:inline;" onsubmit="return confirm('Permanently delete this archived resident record? This cannot be undone.');">
-                            <input type="hidden" name="table" value="residents">
-                            <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
-                            <button type="submit" name="delete_item" class="btn btn-sm btn-outline-danger" style="padding: 0.28rem 0.65rem; font-size: 0.8rem;" title="Permanently Delete">
-                                <i class="fa-solid fa-trash-can"></i>
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-                <?php endwhile; ?>
-                <?php if($archived_residents->num_rows == 0) echo "<tr><td colspan='6' style='padding:2.5rem; text-align:center; color:#94a3b8;'>No archived residents in the vault.</td></tr>"; ?>
-            </tbody>
-        </table>
+                            <form method="POST" style="display:inline; margin-right: 0.25rem;" onsubmit="return confirm('Restore this resident to active registry?');">
+                                <input type="hidden" name="table" value="residents">
+                                <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
+                                <button type="submit" name="restore_item" class="btn btn-sm btn-outline-secondary" style="padding: 0.28rem 0.65rem; font-size: 0.8rem;" title="Quick Restore">
+                                    <i class="fa-solid fa-trash-arrow-up"></i>
+                                </button>
+                            </form>
+                            <form method="POST" style="display:inline;" onsubmit="return confirm('Permanently delete this archived resident record? This cannot be undone.');">
+                                <input type="hidden" name="table" value="residents">
+                                <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
+                                <button type="submit" name="delete_item" class="btn btn-sm btn-outline-danger" style="padding: 0.28rem 0.65rem; font-size: 0.8rem;" title="Permanently Delete">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    <?php endwhile; ?>
+                    <?php if($archived_residents->num_rows == 0) echo "<tr><td colspan='6' style='padding:2.5rem; text-align:center; color:#94a3b8;'>No archived residents in the vault.</td></tr>"; ?>
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <!-- Staff Archives -->
     <div id="staff-archives" class="tab-content" style="display: none;">
         <h4 style="margin-top:0;">Archived Estate Staff</h4>
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 2rem;">
-            <thead>
-                <tr style="text-align: left; color: #64748b; border-bottom: 1px solid #e2e8f0;">
-                    <th style="padding: 0.75rem;">System ID</th>
-                    <th style="padding: 0.75rem;">Name</th>
-                    <th style="padding: 0.75rem;">Last Role</th>
-                    <th style="padding: 0.75rem;">Contact</th>
-                    <th style="padding: 0.75rem; text-align: right;">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php while($row = $archived_estate->fetch_assoc()): ?>
-                <tr style="border-bottom: 1px solid #f1f5f9;">
-                    <td style="padding: 0.75rem;"><span class="font-monospace small"><?php echo htmlspecialchars($row['custom_id'] ?? 'EST-' . $row['id']); ?></span></td>
-                    <td style="padding: 0.75rem; font-weight: 600;"><?php echo htmlspecialchars($row['name']); ?></td>
-                    <td style="padding: 0.75rem;"><span class="badge bg-secondary"><?php echo htmlspecialchars($row['role']); ?></span></td>
-                    <td style="padding: 0.75rem; font-size: 0.82rem; color: #64748b;"><?php echo htmlspecialchars($row['email']); ?><br><?php echo htmlspecialchars($row['phone'] ?? $row['u_phone']); ?></td>
-                    <td style="padding: 0.75rem; text-align: right;">
-                        <button type="button" class="btn btn-sm btn-primary" style="padding: 0.25rem 0.65rem; font-size: 0.8rem;" onclick="openRehireStaffModal(<?php echo $row['id']; ?>, '<?php echo addslashes($row['name']); ?>', <?php echo intval($row['role_id'] ?? 0); ?>)">
-                            <i class="fa-solid fa-user-check me-1"></i> Re-hire / Reactivate
-                        </button>
-                    </td>
-                </tr>
-                <?php endwhile; ?>
-                <?php if($archived_estate->num_rows == 0) echo "<tr><td colspan='5' style='padding:1.5rem; text-align:center; color:#94a3b8;'>No archived estate staff found.</td></tr>"; ?>
-            </tbody>
-        </table>
+        <div class="table-responsive mb-4">
+            <table class="table table-hover align-middle mb-0" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="text-align: left; color: #64748b; border-bottom: 1px solid #e2e8f0;">
+                        <th style="padding: 0.75rem; white-space: nowrap;">System ID</th>
+                        <th style="padding: 0.75rem; white-space: nowrap;">Name</th>
+                        <th style="padding: 0.75rem; white-space: nowrap;">Last Role</th>
+                        <th style="padding: 0.75rem; white-space: nowrap;">Contact</th>
+                        <th style="padding: 0.75rem; text-align: right; white-space: nowrap;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php while($row = $archived_estate->fetch_assoc()): ?>
+                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                        <td style="padding: 0.75rem;"><span class="font-monospace small"><?php echo htmlspecialchars($row['custom_id'] ?? 'EST-' . $row['id']); ?></span></td>
+                        <td style="padding: 0.75rem; font-weight: 600;"><?php echo htmlspecialchars($row['name']); ?></td>
+                        <td style="padding: 0.75rem;"><span class="badge bg-secondary"><?php echo htmlspecialchars($row['role']); ?></span></td>
+                        <td style="padding: 0.75rem; font-size: 0.82rem; color: #64748b;"><?php echo htmlspecialchars($row['email']); ?><br><?php echo htmlspecialchars($row['phone'] ?? $row['u_phone']); ?></td>
+                        <td style="padding: 0.75rem; text-align: right; white-space: nowrap;">
+                            <button type="button" class="btn btn-sm btn-primary" style="padding: 0.25rem 0.65rem; font-size: 0.8rem;" onclick="openRehireStaffModal(<?php echo $row['id']; ?>, '<?php echo addslashes($row['name']); ?>', <?php echo intval($row['role_id'] ?? 0); ?>)">
+                                <i class="fa-solid fa-user-check me-1"></i> Re-hire / Reactivate
+                            </button>
+                        </td>
+                    </tr>
+                    <?php endwhile; ?>
+                    <?php if($archived_estate->num_rows == 0) echo "<tr><td colspan='5' style='padding:1.5rem; text-align:center; color:#94a3b8;'>No archived estate staff found.</td></tr>"; ?>
+                </tbody>
+            </table>
+        </div>
 
         <h4>Archived Domestic / Household Staff</h4>
-        <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-                <tr style="text-align: left; color: #64748b; border-bottom: 1px solid #e2e8f0;">
-                    <th style="padding: 0.75rem;">Name</th>
-                    <th style="padding: 0.75rem;">Role</th>
-                    <th style="padding: 0.75rem;">Phone</th>
-                    <th style="padding: 0.75rem; text-align: right;">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php while($row = $archived_domestic->fetch_assoc()): ?>
-                <tr style="border-bottom: 1px solid #f1f5f9;">
-                    <td style="padding: 0.75rem; font-weight: 600;"><?php echo htmlspecialchars($row['name']); ?></td>
-                    <td style="padding: 0.75rem;"><span class="badge bg-light text-dark border"><?php echo htmlspecialchars($row['role']); ?></span></td>
-                    <td style="padding: 0.75rem; font-family: monospace; font-size: 0.85rem;"><?php echo htmlspecialchars($row['phone'] ?: '-'); ?></td>
-                    <td style="padding: 0.75rem; text-align: right;">
-                        <form method="POST" style="display:inline;">
-                            <input type="hidden" name="table" value="household_staff">
-                            <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
-                            <button type="submit" name="restore_item" class="btn btn-sm btn-outline-primary" style="padding: 0.25rem 0.75rem;"><i class="fa-solid fa-trash-arrow-up"></i> Restore</button>
-                        </form>
-                    </td>
-                </tr>
-                <?php endwhile; ?>
-                <?php if($archived_domestic->num_rows == 0) echo "<tr><td colspan='4' style='padding:1.5rem; text-align:center; color:#94a3b8;'>No archived domestic staff found.</td></tr>"; ?>
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="text-align: left; color: #64748b; border-bottom: 1px solid #e2e8f0;">
+                        <th style="padding: 0.75rem; white-space: nowrap;">Name</th>
+                        <th style="padding: 0.75rem; white-space: nowrap;">Role</th>
+                        <th style="padding: 0.75rem; white-space: nowrap;">Phone</th>
+                        <th style="padding: 0.75rem; text-align: right; white-space: nowrap;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php while($row = $archived_domestic->fetch_assoc()): ?>
+                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                        <td style="padding: 0.75rem; font-weight: 600;"><?php echo htmlspecialchars($row['name']); ?></td>
+                        <td style="padding: 0.75rem;"><span class="badge bg-light text-dark border"><?php echo htmlspecialchars($row['role']); ?></span></td>
+                        <td style="padding: 0.75rem; font-family: monospace; font-size: 0.85rem;"><?php echo htmlspecialchars($row['phone'] ?: '-'); ?></td>
+                        <td style="padding: 0.75rem; text-align: right; white-space: nowrap;">
+                            <form method="POST" style="display:inline;">
+                                <input type="hidden" name="table" value="household_staff">
+                                <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
+                                <button type="submit" name="restore_item" class="btn btn-sm btn-outline-primary" style="padding: 0.25rem 0.75rem;"><i class="fa-solid fa-trash-arrow-up"></i> Restore</button>
+                            </form>
+                        </td>
+                    </tr>
+                    <?php endwhile; ?>
+                    <?php if($archived_domestic->num_rows == 0) echo "<tr><td colspan='4' style='padding:1.5rem; text-align:center; color:#94a3b8;'>No archived domestic staff found.</td></tr>"; ?>
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <!-- Property Archives -->
     <div id="prop-archives" class="tab-content" style="display: none;">
         <h4 style="margin-top:0;">Archived Streets</h4>
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 2rem;">
-            <thead>
-                <tr style="text-align: left; color: #64748b; border-bottom: 1px solid #e2e8f0;">
-                    <th style="padding: 0.75rem;">Name</th>
-                    <th style="padding: 0.75rem; text-align: right;">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php while($row = $archived_streets->fetch_assoc()): ?>
-                <tr style="border-bottom: 1px solid #f1f5f9;">
-                    <td style="padding: 0.75rem;"><?php echo htmlspecialchars($row['name']); ?></td>
-                    <td style="padding: 0.75rem; text-align: right;">
-                        <form method="POST" style="display:inline;">
-                            <input type="hidden" name="table" value="streets">
-                            <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
-                            <button type="submit" name="restore_item" class="btn" style="background: #eff6ff; color: #2563eb; padding: 0.25rem 0.75rem;"><i class="fa-solid fa-trash-arrow-up"></i> Restore</button>
-                        </form>
-                    </td>
-                </tr>
-                <?php endwhile; ?>
-                <?php if($archived_streets->num_rows == 0) echo "<tr><td colspan='2' style='padding:1rem; text-align:center; color:#94a3b8;'>No archived streets found.</td></tr>"; ?>
-            </tbody>
-        </table>
+        <div class="table-responsive mb-4">
+            <table class="table table-hover align-middle mb-0" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="text-align: left; color: #64748b; border-bottom: 1px solid #e2e8f0;">
+                        <th style="padding: 0.75rem; white-space: nowrap;">Name</th>
+                        <th style="padding: 0.75rem; text-align: right; white-space: nowrap;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php while($row = $archived_streets->fetch_assoc()): ?>
+                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                        <td style="padding: 0.75rem;"><?php echo htmlspecialchars($row['name']); ?></td>
+                        <td style="padding: 0.75rem; text-align: right; white-space: nowrap;">
+                            <form method="POST" style="display:inline;">
+                                <input type="hidden" name="table" value="streets">
+                                <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
+                                <button type="submit" name="restore_item" class="btn" style="background: #eff6ff; color: #2563eb; padding: 0.25rem 0.75rem;"><i class="fa-solid fa-trash-arrow-up"></i> Restore</button>
+                            </form>
+                        </td>
+                    </tr>
+                    <?php endwhile; ?>
+                    <?php if($archived_streets->num_rows == 0) echo "<tr><td colspan='2' style='padding:1rem; text-align:center; color:#94a3b8;'>No archived streets found.</td></tr>"; ?>
+                </tbody>
+            </table>
+        </div>
 
         <h4>Archived Buildings</h4>
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 2rem;">
-            <thead>
-                <tr style="text-align: left; color: #64748b; border-bottom: 1px solid #e2e8f0;">
-                    <th style="padding: 0.75rem;">Name</th>
-                    <th style="padding: 0.75rem;">Street</th>
-                    <th style="padding: 0.75rem; text-align: right;">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php while($row = $archived_buildings->fetch_assoc()): ?>
-                <tr style="border-bottom: 1px solid #f1f5f9;">
-                    <td style="padding: 0.75rem;"><?php echo htmlspecialchars($row['name']); ?></td>
-                    <td style="padding: 0.75rem;"><?php echo htmlspecialchars($row['street_name']); ?></td>
-                    <td style="padding: 0.75rem; text-align: right;">
-                        <form method="POST" style="display:inline;">
-                            <input type="hidden" name="table" value="buildings">
-                            <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
-                            <button type="submit" name="restore_item" class="btn" style="background: #eff6ff; color: #2563eb; padding: 0.25rem 0.75rem;"><i class="fa-solid fa-trash-arrow-up"></i> Restore</button>
-                        </form>
-                    </td>
-                </tr>
-                <?php endwhile; ?>
-                <?php if($archived_buildings->num_rows == 0) echo "<tr><td colspan='3' style='padding:1rem; text-align:center; color:#94a3b8;'>No archived buildings found.</td></tr>"; ?>
-            </tbody>
-        </table>
+        <div class="table-responsive mb-4">
+            <table class="table table-hover align-middle mb-0" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="text-align: left; color: #64748b; border-bottom: 1px solid #e2e8f0;">
+                        <th style="padding: 0.75rem; white-space: nowrap;">Name</th>
+                        <th style="padding: 0.75rem; white-space: nowrap;">Street</th>
+                        <th style="padding: 0.75rem; text-align: right; white-space: nowrap;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php while($row = $archived_buildings->fetch_assoc()): ?>
+                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                        <td style="padding: 0.75rem;"><?php echo htmlspecialchars($row['name']); ?></td>
+                        <td style="padding: 0.75rem;"><?php echo htmlspecialchars($row['street_name']); ?></td>
+                        <td style="padding: 0.75rem; text-align: right; white-space: nowrap;">
+                            <form method="POST" style="display:inline;">
+                                <input type="hidden" name="table" value="buildings">
+                                <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
+                                <button type="submit" name="restore_item" class="btn" style="background: #eff6ff; color: #2563eb; padding: 0.25rem 0.75rem;"><i class="fa-solid fa-trash-arrow-up"></i> Restore</button>
+                            </form>
+                        </td>
+                    </tr>
+                    <?php endwhile; ?>
+                    <?php if($archived_buildings->num_rows == 0) echo "<tr><td colspan='3' style='padding:1rem; text-align:center; color:#94a3b8;'>No archived buildings found.</td></tr>"; ?>
+                </tbody>
+            </table>
+        </div>
 
         <h4>Archived Flats</h4>
-        <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-                <tr style="text-align: left; color: #64748b; border-bottom: 1px solid #e2e8f0;">
-                    <th style="padding: 0.75rem;">Number</th>
-                    <th style="padding: 0.75rem;">Building</th>
-                    <th style="padding: 0.75rem; text-align: right;">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php while($row = $archived_flats->fetch_assoc()): ?>
-                <tr style="border-bottom: 1px solid #f1f5f9;">
-                    <td style="padding: 0.75rem;">Flat <?php echo htmlspecialchars($row['number']); ?></td>
-                    <td style="padding: 0.75rem;"><?php echo htmlspecialchars($row['building_name']); ?></td>
-                    <td style="padding: 0.75rem; text-align: right;">
-                        <form method="POST" style="display:inline;">
-                            <input type="hidden" name="table" value="flats">
-                            <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
-                            <button type="submit" name="restore_item" class="btn" style="background: #eff6ff; color: #2563eb; padding: 0.25rem 0.75rem;"><i class="fa-solid fa-trash-arrow-up"></i> Restore</button>
-                        </form>
-                    </td>
-                </tr>
-                <?php endwhile; ?>
-                <?php if($archived_flats->num_rows == 0) echo "<tr><td colspan='3' style='padding:1rem; text-align:center; color:#94a3b8;'>No archived flats found.</td></tr>"; ?>
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="text-align: left; color: #64748b; border-bottom: 1px solid #e2e8f0;">
+                        <th style="padding: 0.75rem; white-space: nowrap;">Number</th>
+                        <th style="padding: 0.75rem; white-space: nowrap;">Building</th>
+                        <th style="padding: 0.75rem; text-align: right; white-space: nowrap;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php while($row = $archived_flats->fetch_assoc()): ?>
+                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                        <td style="padding: 0.75rem;">Flat <?php echo htmlspecialchars($row['number']); ?></td>
+                        <td style="padding: 0.75rem;"><?php echo htmlspecialchars($row['building_name']); ?></td>
+                        <td style="padding: 0.75rem; text-align: right; white-space: nowrap;">
+                            <form method="POST" style="display:inline;">
+                                <input type="hidden" name="table" value="flats">
+                                <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
+                                <button type="submit" name="restore_item" class="btn" style="background: #eff6ff; color: #2563eb; padding: 0.25rem 0.75rem;"><i class="fa-solid fa-trash-arrow-up"></i> Restore</button>
+                            </form>
+                        </td>
+                    </tr>
+                    <?php endwhile; ?>
+                    <?php if($archived_flats->num_rows == 0) echo "<tr><td colspan='3' style='padding:1rem; text-align:center; color:#94a3b8;'>No archived flats found.</td></tr>"; ?>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
@@ -491,6 +503,9 @@ include '../includes/sidebar.php';
 </div>
 
 <style>
+.archives-vault-card {
+    padding: 1.75rem;
+}
 .tab-btn {
     padding: 0.75rem 1rem;
     background: none;
@@ -499,6 +514,7 @@ include '../includes/sidebar.php';
     color: #64748b;
     font-weight: 600;
     cursor: pointer;
+    white-space: nowrap;
 }
 .tab-btn.active {
     color: var(--primary-color);
@@ -506,6 +522,21 @@ include '../includes/sidebar.php';
 }
 .tab-content { padding-top: 1rem; }
 h4 { color: #1e293b; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px dashed #e2e8f0; }
+
+@media (max-width: 768px) {
+    .archives-vault-card {
+        padding: 0.85rem 0.65rem !important;
+    }
+    .tab-btn {
+        padding: 0.55rem 0.75rem;
+        font-size: 0.82rem;
+    }
+    .archives-vault-card table th,
+    .archives-vault-card table td {
+        padding: 0.6rem 0.5rem !important;
+        font-size: 0.82rem;
+    }
+}
 </style>
 
 <script>

@@ -336,30 +336,32 @@ $vehicle_logs_admin = $conn->query("
 ");
 ?>
 
-<div class="page-header-futuristic mb-4">
-    <div>
-        <div class="header-breadcrumbs">
-            <a href="index">Dashboard</a>
-            <i class="fa-solid fa-chevron-right separator"></i>
-            <span>Perimeter Operations</span>
-            <i class="fa-solid fa-chevron-right separator"></i>
-            <span class="active">Gate & Security</span>
+<!-- Enterprise Hero Header (Image 3 Style) -->
+<div class="hero-header-enterprise">
+    <div class="hero-title-group">
+        <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+            <h1>Security Command &amp; Gate Control</h1>
+            <span class="mature-badge mature-badge-primary">
+                <i class="fa-solid fa-shield-halved me-1"></i> Perimeter Control
+            </span>
         </div>
-        <h1 class="page-title">Security Command &amp; Gate Control</h1>
-        <p class="page-subtitle">Real-time visitor processing, automated gate pass verification, access duration radar, and audit trails.</p>
+        <div class="hero-meta-strip">
+            <span><i class="fa-solid fa-qrcode me-1"></i> Automated Pass Verification</span>
+            <span>•</span>
+            <span><i class="fa-solid fa-car me-1"></i> Vehicle Clearance &amp; Stickers</span>
+            <span>•</span>
+            <span class="text-success"><i class="fa-solid fa-circle me-1" style="font-size: 0.5rem;"></i> Gates Active</span>
+        </div>
     </div>
-    <div class="header-actions">
-        <a href="security?tab=audit_logs" class="btn btn-sm btn-primary text-white shadow-sm">
-            <i class="fa-solid fa-clipboard-list me-1"></i> Full Gate Logs Archive
+    <div class="hero-actions-group">
+        <a href="roster" class="btn-export-ghost" title="Duty Roster & Guards">
+            <i class="fa-solid fa-calendar-check text-success"></i> Guard Roster
         </a>
-        <a href="roster" class="btn btn-sm btn-outline-primary">
-            <i class="fa-solid fa-calendar-check me-1"></i> Duty Roster &amp; Live Guards
+        <a href="security?tab=audit_logs" class="btn-export-ghost" title="Gate Logs Archive">
+            <i class="fa-solid fa-clipboard-list text-primary"></i> Gate Logs
         </a>
-        <a href="generate_id" class="btn btn-sm btn-outline-secondary">
-            <i class="fa-solid fa-id-card me-1"></i> ID Cards
-        </a>
-        <button class="btn btn-sm text-white" style="background: #0f172a;" data-bs-toggle="modal" data-bs-target="#walkinModal">
-            <i class="fa-solid fa-user-plus me-1"></i> Register Walk-in
+        <button type="button" class="btn-primary-action-pill" data-bs-toggle="modal" data-bs-target="#walkinModal">
+            <i class="fa-solid fa-user-plus"></i> + Walk-in Visitor
         </button>
     </div>
 </div>
@@ -868,8 +870,8 @@ $vehicle_logs_admin = $conn->query("
                 <input type="hidden" name="today_scope" value="<?= htmlspecialchars($effective_scope) ?>">
                 
                 <div class="col-md-4">
-                    <div class="input-group input-group-sm">
-                        <span class="input-group-text bg-white"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                    <div class="search-integrated-wrap">
+                        <i class="fa-solid fa-magnifying-glass search-icon"></i>
                         <input type="text" name="today_q" class="form-control" placeholder="Search Passcode, Name, Vehicle Plate..." value="<?= htmlspecialchars($today_search) ?>">
                     </div>
                 </div>

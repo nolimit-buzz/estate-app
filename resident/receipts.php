@@ -113,10 +113,10 @@ include 'sidebar.php';
         <div class="resident-card-title">
             <i class="fa-solid fa-file-invoice text-primary"></i> All Issued Proofs of Payment
         </div>
-        <div style="min-width: 260px;">
-            <div class="input-group input-group-sm">
-                <span class="input-group-text bg-transparent border-end-0 text-secondary"><i class="fa-solid fa-magnifying-glass"></i></span>
-                <input type="text" id="receiptSearch" placeholder="Search receipt or invoice #..." class="form-control border-start-0 rounded-end-pill" onkeyup="filterReceipts()">
+        <div style="min-width: 240px; flex: 1 1 240px; max-width: 360px;">
+            <div class="search-integrated-wrap">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="receiptSearch" placeholder="Search receipt or invoice #..." class="form-control" onkeyup="filterReceipts()">
             </div>
         </div>
     </div>

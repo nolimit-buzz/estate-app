@@ -566,25 +566,32 @@ $dom_staff_count = intval($res_kpi['total_staff'] ?? 0);
 $ancillaries_count = $vehicles_count + $pets_count + $dom_staff_count;
 ?>
 
-<!-- Header / Breadcrumb -->
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
-    <div>
-            <span>Residency</span>
-            <i class="fa-solid fa-chevron-right separator"></i>
-            <span class="active">Registry</span>
+<!-- Enterprise Hero Header (Image 3 Style) -->
+<div class="hero-header-enterprise">
+    <div class="hero-title-group">
+        <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+            <h1>Resident Management Registry</h1>
+            <span class="mature-badge mature-badge-primary">
+                <i class="fa-solid fa-users me-1"></i> Occupant Directory
+            </span>
         </div>
-        <h1 class="page-title">Resident Management</h1>
-        <p class="page-subtitle">Central occupant directory, domestic staff ledger, registered vehicles, and pet roster.</p>
+        <div class="hero-meta-strip">
+            <span><i class="fa-solid fa-building-user me-1"></i> Master Occupant Directory</span>
+            <span>•</span>
+            <span><i class="fa-solid fa-shield-halved me-1"></i> Domestic Staff &amp; Vehicle Ledger</span>
+            <span>•</span>
+            <span class="text-success"><i class="fa-solid fa-circle me-1" style="font-size: 0.5rem;"></i> Active Records</span>
+        </div>
     </div>
-    <div class="header-actions">
-        <a href="archives?tab=residents" class="btn btn-sm btn-outline-secondary">
-            <i class="fa-solid fa-box-archive me-1"></i> Archived Residents
+    <div class="hero-actions-group">
+        <a href="archives?tab=residents" class="btn-export-ghost" title="View Archived Residents">
+            <i class="fa-solid fa-box-archive text-secondary"></i> Archives
         </a>
-        <button class="btn btn-sm btn-outline-secondary" onclick="exportResidentsCSV()">
-            <i class="fa-solid fa-file-export me-1"></i> Export
+        <button type="button" class="btn-export-ghost" onclick="exportResidentsCSV()" title="Export Directory to CSV">
+            <i class="fa-solid fa-file-csv text-primary"></i> Export CSV
         </button>
-        <button class="btn btn-sm text-white" style="background: #0f172a;" onclick="openResidentModal()">
-            <i class="fa-solid fa-user-plus me-1"></i> Add Resident
+        <button type="button" class="btn-primary-action-pill" onclick="openResidentModal()">
+            <i class="fa-solid fa-user-plus"></i> + Add Resident
         </button>
     </div>
 </div>
@@ -599,9 +606,9 @@ $ancillaries_count = $vehicles_count + $pets_count + $dom_staff_count;
 <!-- ==========================================
      EXECUTIVE KPI METRICS RIBBON (4 PILLARS)
      ========================================== -->
-<div class="row g-3 mb-4">
+<div class="row g-2 g-md-3 mb-4">
     <!-- Pillar 1: Total Active Occupants -->
-    <div class="col-12 col-sm-6 col-xl-3">
+    <div class="col-6 col-xl-3">
         <div class="kpi-card h-100">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
@@ -623,7 +630,7 @@ $ancillaries_count = $vehicles_count + $pets_count + $dom_staff_count;
     </div>
 
     <!-- Pillar 2: Heads of Household -->
-    <div class="col-12 col-sm-6 col-xl-3">
+    <div class="col-6 col-xl-3">
         <div class="kpi-card h-100">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
@@ -645,7 +652,7 @@ $ancillaries_count = $vehicles_count + $pets_count + $dom_staff_count;
     </div>
 
     <!-- Pillar 3: Dependents & Families -->
-    <div class="col-12 col-sm-6 col-xl-3">
+    <div class="col-6 col-xl-3">
         <div class="kpi-card h-100">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
@@ -667,7 +674,7 @@ $ancillaries_count = $vehicles_count + $pets_count + $dom_staff_count;
     </div>
 
     <!-- Pillar 4: Registered Ancillaries -->
-    <div class="col-12 col-sm-6 col-xl-3">
+    <div class="col-6 col-xl-3">
         <div class="kpi-card h-100">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
@@ -689,28 +696,57 @@ $ancillaries_count = $vehicles_count + $pets_count + $dom_staff_count;
     </div>
 </div>
 
+<?php if ($pending_contact_reqs_count > 0): ?>
+    <div class="alert mature-card p-3 mb-4 shadow-sm" style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 0.75rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+        <div class="d-flex align-items-center gap-3">
+            <div style="width: 40px; height: 40px; border-radius: 10px; background: #fef3c7; display: flex; align-items: center; justify-content: center; color: #d97706; font-size: 1.15rem; flex-shrink: 0; box-shadow: 0 2px 4px rgba(217, 119, 6, 0.15);">
+                <i class="fa-solid fa-id-card-clip"></i>
+            </div>
+            <div>
+                <strong style="color: #92400e; font-size: 0.95rem;">Pending Resident Contact Change Requests</strong>
+                <div style="font-size: 0.85rem; color: #78350f;">
+                    You have <strong class="text-danger"><?php echo $pending_contact_reqs_count; ?></strong> pending email / phone change request(s) awaiting administrative approval.
+                </div>
+            </div>
+        </div>
+        <button type="button" onclick="openTab(event, 'contact_requests')" class="btn btn-sm text-white px-3 py-1.5 fw-semibold rounded-pill shadow-sm" style="background: #d97706;">
+            <i class="fa-solid fa-list-check me-1"></i> Review Requests Now
+        </button>
+    </div>
+<?php endif; ?>
+
 <!-- Futuristic Tabs -->
 <div class="futuristic-tabs">
-    <button class="futuristic-tab-btn tab-btn active" onclick="openTab(event, 'residents')">
+    <button class="futuristic-tab-btn tab-btn <?php echo (!isset($_GET['tab']) || $_GET['tab'] === 'residents') ? 'active' : ''; ?>" onclick="openTab(event, 'residents')">
         <i class="fa-solid fa-users"></i> Residents 
         <span class="tech-chip" style="padding: 1px 6px;"><?php echo $total_pop_count; ?></span>
     </button>
-    <button class="futuristic-tab-btn tab-btn" onclick="openTab(event, 'vehicles')">
+    <button class="futuristic-tab-btn tab-btn <?php echo (isset($_GET['tab']) && $_GET['tab'] === 'vehicles') ? 'active' : ''; ?>" onclick="openTab(event, 'vehicles')">
         <i class="fa-solid fa-car"></i> Vehicles 
         <span class="tech-chip" style="padding: 1px 6px;"><?php echo $vehicles_count; ?></span>
     </button>
-    <button class="futuristic-tab-btn tab-btn" onclick="openTab(event, 'pets')">
+    <button class="futuristic-tab-btn tab-btn <?php echo (isset($_GET['tab']) && $_GET['tab'] === 'pets') ? 'active' : ''; ?>" onclick="openTab(event, 'pets')">
         <i class="fa-solid fa-paw"></i> Pets 
         <span class="tech-chip" style="padding: 1px 6px;"><?php echo $pets_count; ?></span>
     </button>
-    <button class="futuristic-tab-btn tab-btn" onclick="openTab(event, 'staff')">
+    <button class="futuristic-tab-btn tab-btn <?php echo (isset($_GET['tab']) && $_GET['tab'] === 'staff') ? 'active' : ''; ?>" onclick="openTab(event, 'staff')">
         <i class="fa-solid fa-user-shield"></i> Domestic Staff 
         <span class="tech-chip" style="padding: 1px 6px;"><?php echo $dom_staff_count; ?></span>
+    </button>
+    <button class="futuristic-tab-btn tab-btn <?php echo (isset($_GET['tab']) && $_GET['tab'] === 'contact_requests') ? 'active' : ''; ?>" onclick="openTab(event, 'contact_requests')">
+        <i class="fa-solid fa-id-card-clip"></i> Contact Update Requests 
+        <?php if ($pending_contact_reqs_count > 0): ?>
+            <span class="badge bg-warning text-dark rounded-pill fw-bold ms-1" style="padding: 3px 8px; font-size: 0.72rem;">
+                <i class="fa-solid fa-clock me-1"></i><?php echo $pending_contact_reqs_count; ?> Pending
+            </span>
+        <?php else: ?>
+            <span class="tech-chip ms-1" style="padding: 1px 6px;">0</span>
+        <?php endif; ?>
     </button>
 </div>
 
 <!-- Residents Tab -->
-<div id="residents" class="tab-content">
+<div id="residents" class="tab-content" style="<?php echo (isset($_GET['tab']) && $_GET['tab'] !== 'residents') ? 'display: none;' : ''; ?>">
     <!-- Filter Toolbar for Residents -->
     <div class="futuristic-filter-bar mb-3">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-stretch align-items-md-center gap-3">
@@ -827,6 +863,9 @@ $ancillaries_count = $vehicles_count + $pets_count + $dom_staff_count;
                                     <div class="d-inline-flex align-items-center gap-1">
                                         <a href="resident_timeline?id=<?php echo $row['id']; ?>" class="btn btn-sm btn-outline-secondary" style="padding: 0.3rem 0.55rem; font-size: 0.8rem;" title="View Timeline">
                                             <i class="fa-solid fa-clock-rotate-left"></i>
+                                        </a>
+                                        <a href="users?q=<?php echo urlencode($row['email']); ?>" class="btn btn-sm btn-outline-primary" style="padding: 0.3rem 0.55rem; font-size: 0.8rem;" title="Account Security & Password Reset">
+                                            <i class="fa-solid fa-key"></i>
                                         </a>
                                         <button onclick='editResident(<?php echo json_encode($row); ?>)' class="btn btn-sm btn-outline-secondary" style="padding: 0.3rem 0.55rem; font-size: 0.8rem;" title="Edit Resident">
                                             <i class="fa-solid fa-pen-to-square"></i>
@@ -1113,7 +1152,7 @@ $ancillaries_count = $vehicles_count + $pets_count + $dom_staff_count;
 </div>
 
 <!-- Contact Requests Tab -->
-<div id="contact_requests" class="tab-content" style="display: none;">
+<div id="contact_requests" class="tab-content" style="<?php echo (isset($_GET['tab']) && $_GET['tab'] === 'contact_requests') ? 'display: block;' : 'display: none;'; ?>">
     <div class="mature-card mb-4">
         <div class="mature-card-header">
             <div>
@@ -1558,8 +1597,23 @@ function openTab(evt, tabName) {
     }
     if (evt && evt.currentTarget) {
         evt.currentTarget.classList.add("active");
+    } else {
+        var activeBtn = document.querySelector(`button[onclick*="'${tabName}'"]`);
+        if (activeBtn) activeBtn.classList.add("active");
+    }
+    // Update hash without page jump
+    if (history.replaceState) {
+        history.replaceState(null, null, '#' + tabName);
     }
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    var urlParams = new URLSearchParams(window.location.search);
+    var tabParam = urlParams.get('tab') || window.location.hash.replace('#', '');
+    if (tabParam && document.getElementById(tabParam)) {
+        openTab(null, tabParam);
+    }
+});
 
 // Image Preview Helper
 function previewImage(input, previewId) {

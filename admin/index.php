@@ -40,12 +40,14 @@ $kpi_res = $conn->query("
         (SELECT COUNT(*) FROM residents WHERE estate_id = $estate_id AND type = 'dependent') as total_dependents,
         (SELECT COUNT(*) FROM property_owners WHERE estate_id = $estate_id) as total_owners,
         (SELECT COUNT(*) FROM zones WHERE estate_id = $estate_id AND status = 'active') as total_zones,
-        (SELECT COUNT(*) FROM buildings WHERE estate_id = $estate_id) as total_buildings,
-        (SELECT COUNT(*) FROM flats WHERE estate_id = $estate_id) as total_flats,
+        (SELECT COUNT(*) FROM streets WHERE estate_id = $estate_id AND status != 'archived') as total_streets,
+        (SELECT COUNT(*) FROM buildings WHERE estate_id = $estate_id AND status != 'archived') as total_buildings,
+        (SELECT COUNT(*) FROM flats WHERE estate_id = $estate_id AND status != 'archived') as total_flats,
         (SELECT COUNT(*) FROM flats WHERE estate_id = $estate_id AND status = 'occupied') as occupied_flats,
         (SELECT COUNT(*) FROM flats WHERE estate_id = $estate_id AND status = 'vacant') as vacant_flats,
         (SELECT COUNT(*) FROM flats WHERE estate_id = $estate_id AND status = 'maintenance') as maintenance_flats,
         (SELECT COUNT(*) FROM estate_staff WHERE estate_id = $estate_id AND status = 'active') as active_staff,
+        (SELECT COUNT(*) FROM estate_staff WHERE estate_id = $estate_id AND (role = 'Security Officer' OR role_id = 5) AND status = 'active') as active_guards,
         (SELECT COUNT(*) FROM vehicles WHERE estate_id = $estate_id) as total_vehicles,
         (SELECT COUNT(*) FROM maintenance_requests WHERE estate_id = $estate_id AND status IN ('open','in_progress')) as pending_maint,
         (SELECT COUNT(*) FROM maintenance_requests WHERE estate_id = $estate_id AND priority = 'emergency' AND status IN ('open','in_progress')) as emergency_maint,
@@ -60,10 +62,7 @@ $kpi_res = $conn->query("
 $kpi = $kpi_res ? $kpi_res->fetch_assoc() : [];
 
 $total_zones = intval($kpi['total_zones'] ?? 0);
-$active_residents = intval($kpi['active_residents'] ?? 0);
-$total_dependents = intval($kpi['total_dependents'] ?? 0);
-$total_population = $active_residents + $total_dependents;
-$total_owners = intval($kpi['total_owners'] ?? 0);
+$total_streets = intval($kpi['total_streets'] ?? 0);
 $total_buildings = intval($kpi['total_buildings'] ?? 0);
 $total_flats = intval($kpi['total_flats'] ?? 0);
 $occupied_flats = intval($kpi['occupied_flats'] ?? 0);
@@ -71,7 +70,13 @@ $vacant_flats = intval($kpi['vacant_flats'] ?? 0);
 $maintenance_flats = intval($kpi['maintenance_flats'] ?? 0);
 $occupancy_pct = $total_flats > 0 ? round(($occupied_flats / $total_flats) * 100, 1) : 0;
 
+$active_residents = intval($kpi['active_residents'] ?? 0);
+$total_dependents = intval($kpi['total_dependents'] ?? 0);
+$total_population = $active_residents + $total_dependents;
+$total_owners = intval($kpi['total_owners'] ?? 0);
+
 $active_staff = intval($kpi['active_staff'] ?? 0);
+$active_guards = intval($kpi['active_guards'] ?? 0);
 $total_vehicles = intval($kpi['total_vehicles'] ?? 0);
 $pending_maint = intval($kpi['pending_maint'] ?? 0);
 $emergency_maint = intval($kpi['emergency_maint'] ?? 0);
@@ -157,47 +162,285 @@ $recent_audits = $conn->query("
     WHERE a.estate_id = $estate_id 
     ORDER BY a.id DESC LIMIT 5
 ");
+
+// Active Security Guards (Guards Force Roster)
+$recent_guards = $conn->query("
+    SELECT s.id as staff_id, s.custom_id, s.role, s.phone, s.status, u.name, u.email
+    FROM estate_staff s
+    JOIN users u ON s.user_id = u.id
+    WHERE s.estate_id = $estate_id AND (s.role = 'Security Officer' OR s.role_id = 5)
+    ORDER BY s.id ASC LIMIT 10
+");
+
+// Onboarded Residents & Housing Allocation
+$recent_new_residents = $conn->query("
+    SELECT r.id as res_id, r.custom_id, r.status, u.name, u.email, u.phone,
+           f.number as flat_number, b.name as building_name, s.name as street_name, z.code as zone_code, z.name as zone_name
+    FROM residents r
+    JOIN users u ON r.user_id = u.id
+    JOIN flats f ON r.flat_id = f.id
+    JOIN buildings b ON f.building_id = b.id
+    JOIN streets s ON b.street_id = s.id
+    JOIN zones z ON s.zone_id = z.id
+    WHERE r.estate_id = $estate_id
+    ORDER BY r.id DESC LIMIT 10
+");
 ?>
 
 <!-- ==========================================
-     EXECUTIVE HEADER & COMMAND TOOLBAR
+     NATIVE MOBILE APP DASHBOARD (< 992px)
+     Image 1 Screen 2 & Image 2 Operational Grid
      ========================================== -->
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4 pb-2 border-bottom border-light-subtle">
-    <div>
-        <div class="d-flex align-items-center gap-2 mb-1">
-            <h1 class="h4 font-bold text-slate-900 m-0" style="letter-spacing: -0.02em;">
-                <?php echo $greeting; ?>, <?php echo htmlspecialchars($current_user_name); ?>
-            </h1>
-            <span class="mature-badge mature-badge-slate">
-                <i class="fa-solid fa-shield-check me-1"></i> Admin Command
-            </span>
+<div class="mobile-only mb-4">
+    <!-- 1. Executive Summary Cards (Clean, Minimal, Spacious) -->
+    <div class="mobile-section-header">
+        <h3 class="mobile-section-title">Estate Overview</h3>
+        <a href="properties" class="mobile-section-link">View all &rarr;</a>
+    </div>
+    <div class="mobile-kpi-grid">
+        <a href="properties" class="mobile-kpi-card">
+            <span class="mobile-kpi-label">Properties</span>
+            <div class="mobile-kpi-val"><?php echo sprintf('%02d', $total_buildings); ?></div>
+            <span class="mobile-kpi-sub"><?php echo $total_flats; ?> Units Total</span>
+        </a>
+
+        <a href="properties" class="mobile-kpi-card">
+            <span class="mobile-kpi-label">Occupancy</span>
+            <div class="mobile-kpi-val"><?php echo $occupancy_pct; ?>%</div>
+            <span class="mobile-kpi-sub"><?php echo $occupied_flats; ?>/<?php echo $total_flats; ?> Occupied</span>
+        </a>
+
+        <a href="finance" class="mobile-kpi-card">
+            <span class="mobile-kpi-label">Monthly Revenue</span>
+            <div class="mobile-kpi-val"><?php echo $currency_symbol . number_format($revenue_this_month / 1000, 1); ?>k</div>
+            <span class="mobile-kpi-sub"><?php echo $currency_symbol . number_format($revenue_total / 1000, 0); ?>k All-Time</span>
+        </a>
+
+        <a href="maintenance" class="mobile-kpi-card">
+            <span class="mobile-kpi-label">Work Tickets</span>
+            <div class="mobile-kpi-val"><?php echo sprintf('%02d', $pending_maint); ?></div>
+            <span class="mobile-kpi-sub text-danger"><?php echo $emergency_maint > 0 ? $emergency_maint . ' Emergency' : 'Active Tickets'; ?></span>
+        </a>
+    </div>
+
+    <!-- 2. Occupancy / Revenue Trend Vertical Bar Chart (Image 1 Screen 2) -->
+    <div class="mobile-chart-card">
+        <div class="mobile-chart-header">
+            <h4 class="mobile-chart-title">Occupancy Rates</h4>
+            <div class="mobile-pill-dropdown">
+                <span>Monthly</span>
+                <i class="fa-solid fa-chevron-down" style="font-size: 0.65rem;"></i>
+            </div>
         </div>
-        <div class="d-flex flex-wrap align-items-center gap-2 text-secondary small">
+        <div class="mobile-bar-chart-body">
+            <?php 
+            $max_amt = max(array_merge([1], $chart_revenue_values));
+            foreach ($revenue_months as $rm):
+                $pct = $max_amt > 0 ? max(8, round(($rm['amount'] / $max_amt) * 100)) : 15;
+                $month_short = date('M', strtotime($rm['label']));
+            ?>
+                <div class="mobile-bar-col">
+                    <div class="mobile-bar-track">
+                        <div class="mobile-bar-fill" style="height: <?php echo $pct; ?>%;"></div>
+                    </div>
+                    <span class="mobile-bar-month"><?php echo $month_short; ?></span>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+
+    <!-- 3. ALL SIDEBAR ICONS DOWN BELOW (Image 2 Style Grid) -->
+    <?php 
+    if (function_exists('renderMobileSidebarIconsGrid')) {
+        renderMobileSidebarIconsGrid('admin');
+    }
+    ?>
+
+    <!-- 4. Recent Activity Mobile Feed (Image 1 Screen 2) -->
+    <div class="mobile-section-header mt-4">
+        <h3 class="mobile-section-title">Recent Activity</h3>
+        <a href="audit_logs" class="mobile-section-link">View all <i class="fa-solid fa-chevron-right"></i></a>
+    </div>
+    <div class="mobile-activity-list">
+        <?php if ($recent_visitors && $recent_visitors->num_rows > 0): 
+            $vis_row = $recent_visitors->fetch_assoc();
+            $recent_visitors->data_seek(0);
+        ?>
+            <a href="security" class="mobile-activity-item">
+                <div class="mobile-activity-left">
+                    <div class="mobile-activity-icon" style="background: rgba(37, 99, 235, 0.12); color: #2563eb;">
+                        <i class="fa-solid fa-person-walking-dashed-line-arrow-right"></i>
+                    </div>
+                    <div class="mobile-activity-text">
+                        <div class="mobile-activity-title">Entry: <?php echo htmlspecialchars($vis_row['name'] ?? 'Visitor'); ?></div>
+                        <div class="mobile-activity-meta">Unit <?php echo htmlspecialchars($vis_row['flat_number'] ?? 'N/A'); ?> • <?php echo date('h:i A', strtotime($vis_row['created_at'])); ?></div>
+                    </div>
+                </div>
+                <i class="fa-solid fa-chevron-right mobile-activity-chevron"></i>
+            </a>
+        <?php endif; ?>
+
+        <?php if ($recent_payments && $recent_payments->num_rows > 0): 
+            $pay_row = $recent_payments->fetch_assoc();
+            $recent_payments->data_seek(0);
+        ?>
+            <a href="finance" class="mobile-activity-item">
+                <div class="mobile-activity-left">
+                    <div class="mobile-activity-icon" style="background: rgba(22, 163, 74, 0.12); color: #16a34a;">
+                        <i class="fa-solid fa-receipt"></i>
+                    </div>
+                    <div class="mobile-activity-text">
+                        <div class="mobile-activity-title">Paid by <?php echo htmlspecialchars($pay_row['resident_name'] ?? 'Resident'); ?></div>
+                        <div class="mobile-activity-meta"><?php echo $currency_symbol . number_format($pay_row['amount']); ?> • <?php echo date('M j, Y', strtotime($pay_row['created_at'])); ?></div>
+                    </div>
+                </div>
+                <i class="fa-solid fa-chevron-right mobile-activity-chevron"></i>
+            </a>
+        <?php endif; ?>
+
+        <?php if ($recent_maintenance && $recent_maintenance->num_rows > 0): 
+            $mnt_row = $recent_maintenance->fetch_assoc();
+            $recent_maintenance->data_seek(0);
+        ?>
+            <a href="maintenance" class="mobile-activity-item">
+                <div class="mobile-activity-left">
+                    <div class="mobile-activity-icon" style="background: rgba(217, 119, 6, 0.12); color: #d97706;">
+                        <i class="fa-solid fa-wrench"></i>
+                    </div>
+                    <div class="mobile-activity-text">
+                        <div class="mobile-activity-title">Maint: <?php echo htmlspecialchars($mnt_row['title'] ?? 'Ticket'); ?></div>
+                        <div class="mobile-activity-meta"><?php echo htmlspecialchars($mnt_row['requester_name'] ?? 'Tenant'); ?> • Unit <?php echo htmlspecialchars($mnt_row['flat_number'] ?? 'N/A'); ?></div>
+                    </div>
+                </div>
+                <i class="fa-solid fa-chevron-right mobile-activity-chevron"></i>
+            </a>
+        <?php endif; ?>
+    </div>
+</div>
+
+<!-- ==========================================
+     EXECUTIVE HEADER & COMMAND TOOLBAR (Desktop Only)
+     ========================================== -->
+<div class="desktop-only">
+<!-- Image 3 Style Hero Header -->
+<div class="hero-header-enterprise">
+    <div class="hero-title-group">
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <h1><?php echo $greeting; ?>, <?php echo htmlspecialchars($current_user_name); ?></h1>
+            <span class="mature-badge mature-badge-slate"><i class="fa-solid fa-shield-check me-1"></i> Executive Command</span>
+        </div>
+        <div class="hero-meta-strip">
             <span><i class="fa-regular fa-calendar me-1"></i> <?php echo date('l, F j, Y'); ?></span>
             <span>•</span>
             <span><i class="fa-solid fa-building-circle-check me-1"></i> <?php echo htmlspecialchars($estate_display_name); ?></span>
             <span>•</span>
-            <span class="text-success"><i class="fa-solid fa-circle me-1" style="font-size: 0.55rem;"></i> System Live</span>
+            <span class="text-success"><i class="fa-solid fa-circle me-1" style="font-size: 0.5rem;"></i> System Live</span>
         </div>
     </div>
-    <div class="d-flex flex-wrap gap-2">
-        <a href="zones" class="btn btn-sm btn-outline-primary">
-            <i class="fa-solid fa-layer-group me-1"></i> Zones & Sectors
+    <div class="hero-actions-group">
+        <div class="pill-timeframe-dropdown" title="Reporting Period">
+            <i class="fa-regular fa-calendar-days text-primary"></i>
+            <span><?php echo date('M Y'); ?></span>
+            <i class="fa-solid fa-chevron-down" style="font-size: 0.65rem;"></i>
+        </div>
+        <a href="security" class="btn-primary-action-pill">
+            <i class="fa-solid fa-plus"></i> Issue Gate Pass
         </a>
-        <a href="residents" class="btn btn-sm btn-outline-secondary">
+        <a href="residents" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-2 fw-semibold">
             <i class="fa-solid fa-user-plus me-1"></i> Resident
         </a>
-        <a href="security" class="btn btn-sm btn-outline-secondary">
-            <i class="fa-solid fa-id-badge me-1"></i> Issue Pass
+    </div>
+</div>
+
+<?php 
+$dashboard_pending_requests = $conn->query("SELECT COUNT(*) as cnt FROM contact_change_requests WHERE estate_id = $estate_id AND status = 'pending'")->fetch_assoc()['cnt'] ?? 0;
+if ($dashboard_pending_requests > 0): 
+?>
+<div class="alert glass-panel p-3 mb-4 shadow-sm" style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; overflow: hidden;">
+    <div class="d-flex align-items-center gap-3 min-w-0" style="flex: 1;">
+        <div class="glass-icon-circle hero-icon-circle glass-icon-amber" style="width: 42px; height: 42px; font-size: 1.15rem;">
+            <i class="fa-solid fa-id-card-clip"></i>
+        </div>
+        <div class="min-w-0">
+            <strong style="color: #92400e; font-size: 0.95rem;">Pending Resident Contact Change Requests (Action Required)</strong>
+            <div style="font-size: 0.85rem; color: #78350f;">
+                You have <strong class="text-danger"><?php echo $dashboard_pending_requests; ?></strong> resident contact change request(s) awaiting approval.
+            </div>
+        </div>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="notifications" class="btn btn-sm btn-outline-warning text-dark px-3 py-1.5 fw-semibold rounded-pill">
+            <i class="fa-solid fa-bell me-1"></i> Action Center
         </a>
-        <a href="finance" class="btn btn-sm btn-outline-secondary">
-            <i class="fa-solid fa-file-invoice-dollar me-1"></i> Finance Hub
+        <a href="residents?tab=contact_requests" class="btn btn-sm text-white px-3 py-1.5 fw-semibold rounded-pill shadow-sm" style="background: #d97706;">
+            <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Review in Registry &rarr;
         </a>
-        <a href="community_chat" class="btn btn-sm btn-outline-secondary">
-            <i class="fa-solid fa-comments me-1"></i> Estate Forum
+    </div>
+</div>
+<?php endif; ?>
+
+<!-- ==========================================
+     ESTATE INFRASTRUCTURE & WORKFORCE ASSET RIBBON
+     ========================================== -->
+<div class="row g-3 mb-4">
+    <!-- Zones -->
+    <div class="col-6 col-md-4 col-xl-2">
+        <a href="zones" class="text-decoration-none">
+            <div class="glass-card h-100 p-3 text-center">
+                <div class="text-secondary small font-bold text-uppercase" style="font-size: 0.68rem; letter-spacing: 0.05em;">Sectors / Zones</div>
+                <div class="h3 font-bold text-slate-900 my-1" style="font-family: 'Outfit', sans-serif;"><?php echo $total_zones; ?></div>
+                <span class="mature-badge mature-badge-slate" style="font-size: 0.68rem;"><i class="fa-solid fa-layer-group me-1"></i>Active Sectors</span>
+            </div>
         </a>
-        <a href="maintenance" class="btn btn-sm text-white" style="background: #0f172a;">
-            <i class="fa-solid fa-screwdriver-wrench me-1"></i> Work Order
+    </div>
+    <!-- Streets -->
+    <div class="col-6 col-md-4 col-xl-2">
+        <a href="properties?tab=streets" class="text-decoration-none">
+            <div class="glass-card h-100 p-3 text-center">
+                <div class="text-secondary small font-bold text-uppercase" style="font-size: 0.68rem; letter-spacing: 0.05em;">Total Streets</div>
+                <div class="h3 font-bold text-primary my-1" style="font-family: 'Outfit', sans-serif; color: #2563eb !important;"><?php echo $total_streets; ?></div>
+                <span class="mature-badge mature-badge-primary" style="font-size: 0.68rem;"><i class="fa-solid fa-road me-1"></i>Active Streets</span>
+            </div>
+        </a>
+    </div>
+    <!-- Buildings -->
+    <div class="col-6 col-md-4 col-xl-2">
+        <a href="properties?tab=buildings" class="text-decoration-none">
+            <div class="glass-card h-100 p-3 text-center">
+                <div class="text-secondary small font-bold text-uppercase" style="font-size: 0.68rem; letter-spacing: 0.05em;">Total Buildings</div>
+                <div class="h3 font-bold my-1" style="font-family: 'Outfit', sans-serif; color: #4f46e5 !important;"><?php echo $total_buildings; ?></div>
+                <span class="mature-badge" style="background: #eef2ff; color: #4338ca; font-size: 0.68rem;"><i class="fa-solid fa-building me-1"></i>Active Buildings</span>
+            </div>
+        </a>
+    </div>
+    <!-- Flats -->
+    <div class="col-6 col-md-4 col-xl-2">
+        <a href="properties?tab=flats" class="text-decoration-none">
+            <div class="glass-card h-100 p-3 text-center">
+                <div class="text-secondary small font-bold text-uppercase" style="font-size: 0.68rem; letter-spacing: 0.05em;">Apartment Flats</div>
+                <div class="h3 font-bold my-1" style="font-family: 'Outfit', sans-serif; color: #059669 !important;"><?php echo $total_flats; ?></div>
+                <span class="mature-badge mature-badge-emerald" style="font-size: 0.68rem;"><i class="fa-solid fa-door-open me-1"></i><?php echo $occupied_flats; ?> Occupied</span>
+            </div>
+        </a>
+    </div>
+    <!-- Security Guards -->
+    <div class="col-6 col-md-4 col-xl-2">
+        <a href="staff" class="text-decoration-none">
+            <div class="glass-card h-100 p-3 text-center">
+                <div class="text-secondary small font-bold text-uppercase" style="font-size: 0.68rem; letter-spacing: 0.05em;">Security Force</div>
+                <div class="h3 font-bold my-1" style="font-family: 'Outfit', sans-serif; color: #d97706 !important;"><?php echo $active_guards; ?></div>
+                <span class="mature-badge mature-badge-amber" style="font-size: 0.68rem;"><i class="fa-solid fa-shield-halved me-1"></i>Guards on Duty</span>
+            </div>
+        </a>
+    </div>
+    <!-- Residents -->
+    <div class="col-6 col-md-4 col-xl-2">
+        <a href="residents" class="text-decoration-none">
+            <div class="glass-card h-100 p-3 text-center">
+                <div class="text-secondary small font-bold text-uppercase" style="font-size: 0.68rem; letter-spacing: 0.05em;">Active Residents</div>
+                <div class="h3 font-bold my-1" style="font-family: 'Outfit', sans-serif; color: #0d9488 !important;"><?php echo $active_residents; ?></div>
+                <span class="mature-badge" style="background: #ccfbf1; color: #0f766e; font-size: 0.68rem;"><i class="fa-solid fa-users me-1"></i>Housed</span>
+            </div>
         </a>
     </div>
 </div>
@@ -206,15 +449,15 @@ $recent_audits = $conn->query("
      CONDITIONAL OPERATIONAL ATTENTION BANNER
      ========================================== -->
 <?php if ($emergency_maint > 0 || $overdue_invoice_count > 0): ?>
-<div class="alert mature-card p-3 mb-4 border-0" style="background: #fff1f2; border-left: 4px solid #e11d48 !important;">
-    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
-        <div class="d-flex align-items-center gap-3">
-            <div class="kpi-icon-wrap" style="background: #ffe4e6; color: #e11d48; border-color: #fecdd3;">
+<div class="alert mature-card p-3 mb-4 border-0 shadow-sm" style="background: #fff1f2; border-left: 4px solid #e11d48 !important; border-radius: 14px; overflow: hidden;">
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3">
+        <div class="d-flex align-items-center gap-3 min-w-0" style="flex: 1;">
+            <div class="glass-icon-circle hero-icon-circle glass-icon-rose" style="width: 44px; height: 44px; font-size: 1.15rem;">
                 <i class="fa-solid fa-bell"></i>
             </div>
-            <div>
+            <div class="min-w-0">
                 <h6 class="fw-bold mb-0 text-slate-900" style="font-size: 0.9rem;">Operational Attention Required</h6>
-                <div class="small text-secondary">
+                <div class="small text-secondary text-truncate-neat">
                     <?php 
                     $alerts = [];
                     if ($emergency_maint > 0) $alerts[] = "<strong>$emergency_maint</strong> emergency maintenance ticket(s) awaiting dispatch";
@@ -224,7 +467,7 @@ $recent_audits = $conn->query("
                 </div>
             </div>
         </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 flex-shrink-0">
             <?php if ($emergency_maint > 0): ?>
                 <a href="maintenance" class="btn btn-xs btn-outline-danger btn-sm">Review Emergency</a>
             <?php endif; ?>
@@ -280,8 +523,8 @@ $recent_audits = $conn->query("
                 </div>
             </div>
             <div class="kpi-meta justify-content-between mt-2">
-                <span><strong><?php echo $occupied_flats; ?></strong> Occupied / <strong><?php echo $total_flats; ?></strong> Flats</span>
-                <span class="mature-badge mature-badge-slate"><a href="zones" class="text-decoration-none text-reset"><i class="fa-solid fa-layer-group me-1"></i><?php echo $total_zones; ?> Zones</a></span>
+                <span><strong><?php echo $total_buildings; ?></strong> Bldgs &bull; <strong><?php echo $total_streets; ?></strong> Streets</span>
+                <span class="mature-badge mature-badge-slate"><a href="properties" class="text-decoration-none text-reset"><i class="fa-solid fa-door-open me-1"></i><?php echo $total_flats; ?> Flats</a></span>
             </div>
             <div class="kpi-progress-bar">
                 <div class="kpi-progress-fill" style="width: <?php echo $occupancy_pct; ?>%;"></div>
@@ -302,8 +545,8 @@ $recent_audits = $conn->query("
                 </div>
             </div>
             <div class="kpi-meta justify-content-between mt-2">
-                <span>Today's Flow: <strong><?php echo $visitors_today; ?></strong></span>
-                <span class="mature-badge mature-badge-primary"><?php echo $visitors_expected; ?> Expected</span>
+                <span>Guard Force: <strong><?php echo $active_guards; ?> Active</strong></span>
+                <span class="mature-badge mature-badge-primary"><a href="staff" class="text-decoration-none text-reset"><i class="fa-solid fa-user-shield me-1"></i><?php echo $active_staff; ?> Staff</a></span>
             </div>
             <div class="kpi-progress-bar">
                 <?php 
@@ -327,12 +570,8 @@ $recent_audits = $conn->query("
                 </div>
             </div>
             <div class="kpi-meta justify-content-between mt-2">
-                <span>Population: <strong><?php echo number_format($total_population); ?></strong></span>
-                <?php if ($emergency_maint > 0): ?>
-                    <span class="mature-badge mature-badge-crimson"><i class="fa-solid fa-triangle-exclamation me-1"></i><?php echo $emergency_maint; ?> Critical</span>
-                <?php else: ?>
-                    <span class="mature-badge mature-badge-emerald"><i class="fa-solid fa-check me-1"></i>Normal</span>
-                <?php endif; ?>
+                <span>Residents: <strong><?php echo number_format($active_residents); ?> Active</strong></span>
+                <span class="mature-badge mature-badge-emerald"><a href="residents" class="text-decoration-none text-reset"><i class="fa-solid fa-users me-1"></i><?php echo $total_population; ?> Population</a></span>
             </div>
             <div class="kpi-progress-bar">
                 <?php 
@@ -681,6 +920,128 @@ $recent_audits = $conn->query("
 </div>
 
 <!-- ==========================================
+     ESTATE PERSONNEL & HOUSING OPERATIONS DOCK
+     ========================================== -->
+<div class="row g-3 mb-4">
+    <!-- Active Security Guard Force -->
+    <div class="col-12 col-lg-6">
+        <div class="mature-card">
+            <div class="mature-card-header">
+                <div>
+                    <h3 class="mature-card-title">
+                        <i class="fa-solid fa-user-shield text-secondary"></i> Active Security Guard Force
+                    </h3>
+                    <p class="text-secondary small mb-0">Live roster of on-duty gate and patrol officers</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <span class="mature-badge mature-badge-amber"><?php echo $active_guards; ?> Guards Active</span>
+                    <a href="staff" class="btn btn-sm btn-outline-secondary">
+                        Staff Hub <i class="fa-solid fa-arrow-right ms-1 small"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="mature-card-body p-0">
+                <div class="table-responsive">
+                    <table class="table dashboard-table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Staff ID</th>
+                                <th>Officer Name</th>
+                                <th>Username / Email</th>
+                                <th>Phone</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if ($recent_guards && $recent_guards->num_rows > 0): ?>
+                                <?php while ($g = $recent_guards->fetch_assoc()): ?>
+                                    <tr>
+                                        <td><span class="mature-badge mature-badge-slate font-monospace" style="font-size: 0.72rem;"><?php echo htmlspecialchars($g['custom_id']); ?></span></td>
+                                        <td>
+                                            <div class="fw-semibold text-slate-900"><?php echo htmlspecialchars($g['name']); ?></div>
+                                            <div class="small text-secondary"><?php echo htmlspecialchars($g['role']); ?></div>
+                                        </td>
+                                        <td>
+                                            <span class="small font-monospace text-primary"><?php echo htmlspecialchars($g['email']); ?></span>
+                                        </td>
+                                        <td class="small text-secondary"><?php echo htmlspecialchars($g['phone']); ?></td>
+                                        <td><span class="mature-badge mature-badge-emerald"><i class="fa-solid fa-circle-check me-1"></i>Active</span></td>
+                                    </tr>
+                                <?php endwhile; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-secondary">No guards registered.</td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Onboarded Residents & Housing Allocation -->
+    <div class="col-12 col-lg-6">
+        <div class="mature-card">
+            <div class="mature-card-header">
+                <div>
+                    <h3 class="mature-card-title">
+                        <i class="fa-solid fa-house-user text-secondary"></i> Residential Allocations &amp; Onboarding
+                    </h3>
+                    <p class="text-secondary small mb-0">Allocated residential units and sector tenancies</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <span class="mature-badge mature-badge-emerald"><?php echo $active_residents; ?> Residents</span>
+                    <a href="residents" class="btn btn-sm btn-outline-secondary">
+                        Residents Hub <i class="fa-solid fa-arrow-right ms-1 small"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="mature-card-body p-0">
+                <div class="table-responsive">
+                    <table class="table dashboard-table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Res ID</th>
+                                <th>Resident Name</th>
+                                <th>Housing Allocation</th>
+                                <th>Sector / Zone</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if ($recent_new_residents && $recent_new_residents->num_rows > 0): ?>
+                                <?php while ($r = $recent_new_residents->fetch_assoc()): ?>
+                                    <tr>
+                                        <td><span class="mature-badge mature-badge-slate font-monospace" style="font-size: 0.72rem;"><?php echo htmlspecialchars($r['custom_id']); ?></span></td>
+                                        <td>
+                                            <div class="fw-semibold text-slate-900"><?php echo htmlspecialchars($r['name']); ?></div>
+                                            <div class="small font-monospace text-secondary" style="font-size: 0.72rem;"><?php echo htmlspecialchars($r['email']); ?></div>
+                                        </td>
+                                        <td>
+                                            <div class="small fw-semibold text-slate-900">Unit <?php echo htmlspecialchars($r['flat_number']); ?></div>
+                                            <div class="small text-secondary" style="font-size: 0.72rem;"><?php echo htmlspecialchars($r['building_name']); ?>, <?php echo htmlspecialchars($r['street_name']); ?></div>
+                                        </td>
+                                        <td>
+                                            <span class="mature-badge mature-badge-primary" style="font-size: 0.7rem;"><?php echo htmlspecialchars($r['zone_code'] ?? 'ZN'); ?></span>
+                                        </td>
+                                        <td><span class="mature-badge mature-badge-emerald"><i class="fa-solid fa-circle-check me-1"></i>Active</span></td>
+                                    </tr>
+                                <?php endwhile; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-secondary">No residents registered.</td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==========================================
      OPERATIONAL QUICK-JUMP NAVIGATION DOCK
      ========================================== -->
 <div class="mb-4">
@@ -728,6 +1089,7 @@ $recent_audits = $conn->query("
         </div>
     </div>
 </div>
+</div><!-- end .desktop-only -->
 
 <!-- ==========================================
      CHART.JS INTEGRATION & CONFIGURATION

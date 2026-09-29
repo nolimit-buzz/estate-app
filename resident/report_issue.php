@@ -13,13 +13,48 @@ $message = "";
 $error = "";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // 1. Handle Resident Artisan Rating & Review
+    if (isset($_POST['submit_artisan_review'])) {
+        $m_id = intval($_POST['maintenance_id']);
+        $art_id = intval($_POST['artisan_id']);
+        $rating = max(1, min(5, intval($_POST['rating'] ?? 5)));
+        $comment = $conn->real_escape_string(trim($_POST['review_comment'] ?? ''));
+
+        if ($m_id > 0 && $art_id > 0) {
+            $conn->query("INSERT INTO artisan_reviews (estate_id, maintenance_id, artisan_id, resident_user_id, rating, review_comment, created_at)
+                         VALUES ($estate_id, $m_id, $art_id, $user_id, $rating, '$comment', NOW())");
+            
+            $conn->query("UPDATE maintenance_requests SET resident_rated = 1 WHERE id = $m_id AND user_id = $user_id");
+
+            // Recalculate artisan average rating & total jobs
+            $avg_q = $conn->query("SELECT AVG(rating) as avg_r, COUNT(id) as cnt FROM artisan_reviews WHERE artisan_id = $art_id");
+            if ($avg_q && $ar = $avg_q->fetch_assoc()) {
+                $new_avg = round(floatval($ar['avg_r']), 2);
+                $conn->query("UPDATE artisans SET average_rating = $new_avg, total_jobs_completed = total_jobs_completed + 1 WHERE id = $art_id");
+            }
+            $_SESSION['success_msg'] = "Thank you! Your feedback and rating have been logged.";
+        }
+        header("Location: report_issue");
+        exit;
+    }
+
+    // 2. Handle New Maintenance Ticket Submission
     $title = $conn->real_escape_string($_POST['title']);
     $description = $conn->real_escape_string($_POST['description']);
     $priority = $conn->real_escape_string($_POST['priority']);
     $flat_id = isset($_POST['flat_id']) && !empty($_POST['flat_id']) ? intval($_POST['flat_id']) : null;
+    $artisan_id = isset($_POST['artisan_id']) && !empty($_POST['artisan_id']) ? intval($_POST['artisan_id']) : null;
     
-    $sql = "INSERT INTO maintenance_requests (estate_id, user_id, flat_id, title, description, priority, status) 
-            VALUES ($estate_id, '$user_id', " . ($flat_id ? "'$flat_id'" : "NULL") . ", '$title', '$description', '$priority', 'open')";
+    $service_type = null;
+    if ($artisan_id) {
+        $art_chk = $conn->query("SELECT trade_category FROM artisans WHERE id = $artisan_id LIMIT 1");
+        if ($art_chk && $art_row = $art_chk->fetch_assoc()) {
+            $service_type = $conn->real_escape_string($art_row['trade_category']);
+        }
+    }
+    
+    $sql = "INSERT INTO maintenance_requests (estate_id, user_id, flat_id, title, description, priority, status, artisan_id, service_type) 
+            VALUES ($estate_id, '$user_id', " . ($flat_id ? "'$flat_id'" : "NULL") . ", '$title', '$description', '$priority', 'open', " . ($artisan_id ? "'$artisan_id'" : "NULL") . ", " . ($service_type ? "'$service_type'" : "NULL") . ")";
     
     if ($conn->query($sql) === TRUE) {
         $_SESSION['success_msg'] = "Maintenance ticket created successfully. Our facility dispatch team has been notified.";
@@ -52,11 +87,19 @@ $flats = $conn->query("SELECT f.id, f.number, b.name as building_name
                       WHERE f.estate_id = $estate_id
                       ORDER BY b.name, f.number");
 
+// Fetch verified artisans available in estate
+$verified_artisans = $conn->query("SELECT id, full_name, trade_category, artisan_code, phone 
+                                    FROM artisans 
+                                    WHERE estate_id = $estate_id AND verification_status = 'verified' 
+                                    ORDER BY trade_category ASC, full_name ASC");
+
 // Fetch resident's submitted maintenance requests
-$my_requests_res = $conn->query("SELECT m.*, f.number as flat_number, b.name as building_name 
+$my_requests_res = $conn->query("SELECT m.*, f.number as flat_number, b.name as building_name,
+                                         art.full_name as artisan_name, art.artisan_code, art.trade_category as artisan_trade, art.phone as artisan_phone
                                   FROM maintenance_requests m 
                                   LEFT JOIN flats f ON m.flat_id = f.id 
                                   LEFT JOIN buildings b ON f.building_id = b.id 
+                                  LEFT JOIN artisans art ON m.artisan_id = art.id
                                   WHERE m.user_id = $user_id AND m.estate_id = $estate_id 
                                   ORDER BY m.created_at DESC");
 
@@ -224,6 +267,28 @@ include 'sidebar.php';
                     </div>
 
                     <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label fw-semibold small text-secondary m-0">PREFERRED VERIFIED ARTISAN (OPTIONAL)</label>
+                            <a href="artisans" class="small text-primary text-decoration-none fw-semibold">Browse Directory &rarr;</a>
+                        </div>
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-end-0 text-secondary">
+                                <i class="fa-solid fa-user-gear"></i>
+                            </span>
+                            <select name="artisan_id" class="form-select border-start-0 ps-0">
+                                <option value="">-- Let Facility Dispatch Assign Best Handyman --</option>
+                                <?php if ($verified_artisans && $verified_artisans->num_rows > 0): ?>
+                                    <?php while($va = $verified_artisans->fetch_assoc()): ?>
+                                        <option value="<?= $va['id'] ?>">
+                                            <?= htmlspecialchars($va['full_name']) ?> (<?= ucfirst($va['trade_category']) ?> - <?= htmlspecialchars($va['artisan_code'] ?: 'ID #' . $va['id']) ?>)
+                                        </option>
+                                    <?php endwhile; ?>
+                                <?php endif; ?>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
                         <label class="form-label fw-semibold small text-secondary">SEVERITY / PRIORITY</label>
                         <div class="row g-2">
                             <div class="col-6 col-sm-3">
@@ -334,6 +399,25 @@ include 'sidebar.php';
                                             };
                                             echo $st_badge;
                                             ?>
+                                            <?php if (!empty($req['artisan_name'])): ?>
+                                                <div class="mt-1 d-flex align-items-center gap-1">
+                                                    <span class="badge bg-primary-subtle text-primary rounded-pill small" style="font-size: 0.68rem;" title="Assigned Handyman">
+                                                        <i class="fa-solid fa-wrench"></i> <?= htmlspecialchars($req['artisan_name']) ?>
+                                                    </span>
+                                                    <?php if (!empty($req['artisan_phone'])): ?>
+                                                        <a href="tel:<?= htmlspecialchars($req['artisan_phone']) ?>" class="text-secondary small" title="Call Handyman"><i class="fa-solid fa-phone" style="font-size: 0.68rem;"></i></a>
+                                                    <?php endif; ?>
+                                                </div>
+                                            <?php endif; ?>
+                                            <?php if (in_array($st, ['resolved', 'completed', 'closed']) && !empty($req['artisan_id'])): ?>
+                                                <?php if (empty($req['resident_rated'])): ?>
+                                                    <button type="button" class="btn btn-xs btn-outline-warning rounded-pill mt-1 py-0 px-2 fw-semibold d-block" style="font-size: 0.7rem;" onclick="openRatingModal(<?= $req['id'] ?>, <?= $req['artisan_id'] ?>, '<?= htmlspecialchars(addslashes($req['artisan_name'])) ?>')">
+                                                        <i class="fa-solid fa-star"></i> Rate Work
+                                                    </button>
+                                                <?php else: ?>
+                                                    <span class="badge bg-success-subtle text-success rounded-pill mt-1 d-inline-block" style="font-size: 0.65rem;">★ Rated</span>
+                                                <?php endif; ?>
+                                            <?php endif; ?>
                                         </td>
                                         <td style="padding-right: 1.5rem;">
                                             <div class="small font-monospace text-secondary">
@@ -401,6 +485,57 @@ document.querySelectorAll('.priority-choice').forEach(label => {
         if (radio) radio.checked = true;
     });
 });
+
+function openRatingModal(mId, artId, artName) {
+    document.getElementById('rate_maintenance_id').value = mId;
+    document.getElementById('rate_artisan_id').value = artId;
+    document.getElementById('rate_artisan_name').textContent = artName;
+    new bootstrap.Modal(document.getElementById('ratingModal')).show();
+}
 </script>
+
+<!-- Rating & Review Modal -->
+<div class="modal fade" id="ratingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            <form method="POST" action="report_issue.php">
+                <input type="hidden" name="submit_artisan_review" value="1">
+                <input type="hidden" name="maintenance_id" id="rate_maintenance_id" value="">
+                <input type="hidden" name="artisan_id" id="rate_artisan_id" value="">
+                
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title font-bold"><i class="fa-solid fa-star me-1"></i> Rate Work &amp; Artisan Performance</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                
+                <div class="modal-body p-4 text-center">
+                    <p class="mb-2">How satisfied were you with the service by</p>
+                    <h5 class="fw-bold text-dark mb-3" id="rate_artisan_name">Handyman Name</h5>
+                    
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Quality &amp; Workmanship Rating</label>
+                        <select name="rating" class="form-select text-center fw-bold fs-5" style="border-radius: 10px;">
+                            <option value="5" selected>⭐⭐⭐⭐⭐ (5 - Outstanding)</option>
+                            <option value="4">⭐⭐⭐⭐ (4 - Very Good)</option>
+                            <option value="3">⭐⭐⭐ (3 - Satisfactory)</option>
+                            <option value="2">⭐⭐ (2 - Needs Improvement)</option>
+                            <option value="1">⭐ (1 - Unsatisfactory)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3 text-start">
+                        <label class="form-label small fw-semibold text-secondary">Resident Review / Comments</label>
+                        <textarea name="review_comment" class="form-control" rows="3" placeholder="Punctuality, neatness, pricing transparency, or recommendations..."></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning font-bold text-dark"><i class="fa-solid fa-check me-1"></i> Submit Feedback</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 <?php include 'footer.php'; ?>

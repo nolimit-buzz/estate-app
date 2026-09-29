@@ -504,6 +504,9 @@ include '../includes/sidebar.php';
                                 </td>
                                 <td style="text-align: right;">
                                     <div class="d-inline-flex align-items-center gap-1">
+                                        <a href="users?q=<?php echo urlencode($row['email']); ?>" class="btn btn-sm btn-outline-primary" style="padding: 0.3rem 0.55rem; font-size: 0.8rem;" title="Account Security & Password Reset">
+                                            <i class="fa-solid fa-key"></i>
+                                        </a>
                                         <button onclick='editStaff(<?php echo json_encode($row); ?>)' class="btn btn-sm btn-outline-secondary" style="padding: 0.3rem 0.55rem; font-size: 0.8rem;" title="Edit Staff Member">
                                             <i class="fa-solid fa-pen-to-square"></i>
                                         </button>

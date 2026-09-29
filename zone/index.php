@@ -170,15 +170,293 @@ include 'header.php';
 include 'sidebar.php';
 ?>
 
+<style>
+/* Executive Zonal Command Hero Board */
+.zonal-hero-board {
+    background: linear-gradient(135deg, #3b0764 0%, #6b21a8 50%, #7e22ce 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 30px -5px rgba(107, 33, 168, 0.4) !important;
+    color: #ffffff !important;
+    position: relative;
+    overflow: hidden;
+    padding: 1.75rem !important;
+    margin-bottom: 1.5rem !important;
+}
+.zonal-hero-board::before {
+    content: '';
+    position: absolute;
+    top: -60px;
+    right: -60px;
+    width: 340px;
+    height: 340px;
+    background: radial-gradient(circle, rgba(192, 132, 252, 0.25) 0%, transparent 70%);
+    pointer-events: none;
+    border-radius: 50%;
+}
+.zonal-hero-board h2 {
+    color: #ffffff !important;
+    font-size: 1.65rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.35rem;
+}
+.zonal-hero-code-badge {
+    background: #ffffff !important;
+    color: #581c87 !important;
+    font-size: 0.85rem !important;
+    font-weight: 800 !important;
+    padding: 0.3rem 0.65rem !important;
+    border-radius: 8px !important;
+    display: inline-block;
+    vertical-align: middle;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+.zonal-hero-motto {
+    color: rgba(255, 255, 255, 0.95) !important;
+    font-style: italic;
+    font-size: 0.92rem;
+    margin-bottom: 0.65rem;
+}
+.zonal-hero-chips {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+.zonal-hero-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(255, 255, 255, 0.16) !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.28) !important;
+    color: #ffffff !important;
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+}
+.zonal-hero-chip i {
+    color: rgba(255, 255, 255, 0.9);
+}
+.zonal-hero-desc {
+    color: rgba(255, 255, 255, 0.92) !important;
+    font-size: 0.875rem;
+    line-height: 1.55;
+    max-width: 680px;
+    margin-bottom: 0;
+}
+.zonal-hero-btn-white {
+    background: #ffffff !important;
+    color: #581c87 !important;
+    font-weight: 700 !important;
+    font-size: 0.875rem;
+    padding: 0.55rem 1.15rem;
+    border-radius: 10px;
+    border: none !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+.zonal-hero-btn-white:hover {
+    background: #f8fafc !important;
+    color: #3b0764 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+.zonal-hero-btn-glass {
+    background: rgba(255, 255, 255, 0.16) !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1.5px solid rgba(255, 255, 255, 0.35) !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    font-size: 0.875rem;
+    padding: 0.52rem 1.05rem;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+.zonal-hero-btn-glass:hover {
+    background: rgba(255, 255, 255, 0.28) !important;
+    border-color: rgba(255, 255, 255, 0.6) !important;
+    color: #ffffff !important;
+    transform: translateY(-1px);
+}
+
+/* Paystack Dedicated Virtual Account Card High-Contrast Support */
+.zonal-dva-account-num {
+    font-family: monospace;
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    color: #0f172a;
+}
+[data-theme="dark"] .zonal-dva-account-num,
+body.dark-mode .zonal-dva-account-num {
+    color: #f8fafc !important;
+}
+
+/* Amber alert contrast in dark mode */
+[data-theme="dark"] .zonal-amber-alert-title,
+body.dark-mode .zonal-amber-alert-title {
+    color: #fbbf24 !important;
+}
+[data-theme="dark"] .zonal-amber-alert-sub,
+body.dark-mode .zonal-amber-alert-sub {
+    color: #fef3c7 !important;
+}
+
+/* KPI Subtitle & Unit Labels Contrast */
+.kpi-unit-label {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #64748b;
+}
+[data-theme="dark"] .kpi-unit-label,
+body.dark-mode .kpi-unit-label {
+    color: #94a3b8 !important;
+}
+[data-theme="dark"] .kpi-meta span,
+body.dark-mode .kpi-meta span {
+    color: #cbd5e1 !important;
+}
+[data-theme="dark"] .kpi-title,
+body.dark-mode .kpi-title {
+    color: #cbd5e1 !important;
+}
+</style>
+
 <!-- ==========================================
-     EXECUTIVE HEADER & COMMAND TOOLBAR
+     NATIVE MOBILE APP DASHBOARD (< 992px)
+     Image 1 Screen 2 & Image 2 Operational Grid
      ========================================== -->
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4 pb-2 border-bottom border-light-subtle">
-    <div>
+<div class="mobile-only mb-4">
+    <!-- 1. 2x2 Metric Summary Cards -->
+    <div class="mobile-section-header">
+        <h3 class="mobile-section-title">Zone Overview</h3>
+        <a href="properties" class="mobile-section-link">View all &rarr;</a>
+    </div>
+    <div class="mobile-kpi-grid">
+        <a href="properties" class="mobile-kpi-card">
+            <span class="mobile-kpi-label">Buildings</span>
+            <div class="mobile-kpi-val"><?php echo sprintf('%02d', $total_buildings); ?></div>
+            <span class="mobile-kpi-sub"><?php echo $total_flats; ?> Units Total</span>
+        </a>
+
+        <a href="properties" class="mobile-kpi-card">
+            <span class="mobile-kpi-label">Occupancy</span>
+            <div class="mobile-kpi-val"><?php echo $occupied_flats; ?><span style="font-size: 0.85rem; font-weight: 500; color: #94a3b8;">/<?php echo $total_flats; ?></span></div>
+            <span class="mobile-kpi-sub">Units Occupied</span>
+        </a>
+
+        <a href="finance" class="mobile-kpi-card">
+            <span class="mobile-kpi-label">Month Revenue</span>
+            <div class="mobile-kpi-val"><?php echo $currency_symbol . number_format($revenue_month / 1000, 1); ?>k</div>
+            <span class="mobile-kpi-sub"><?php echo $currency_symbol . number_format($revenue_total / 1000, 0); ?>k Total</span>
+        </a>
+
+        <a href="residents" class="mobile-kpi-card">
+            <span class="mobile-kpi-label">Residents</span>
+            <div class="mobile-kpi-val"><?php echo sprintf('%02d', $active_residents); ?></div>
+            <span class="mobile-kpi-sub"><?php echo $total_population; ?> Total Housed</span>
+        </a>
+    </div>
+
+    <!-- 2. Occupancy / Revenue Trend Vertical Bar Chart (Image 1 Screen 2) -->
+    <div class="mobile-chart-card">
+        <div class="mobile-chart-header">
+            <h4 class="mobile-chart-title">Revenue Velocity</h4>
+            <div class="mobile-pill-dropdown">
+                <span>Monthly</span>
+                <i class="fa-solid fa-chevron-down" style="font-size: 0.65rem;"></i>
+            </div>
+        </div>
+        <div class="mobile-bar-chart-body">
+            <?php 
+            $max_amt = max(array_merge([1], $chart_revenue_values));
+            foreach ($revenue_months as $rm):
+                $pct = $max_amt > 0 ? max(8, round(($rm['amount'] / $max_amt) * 100)) : 15;
+                $month_short = date('M', strtotime($rm['label']));
+            ?>
+                <div class="mobile-bar-col">
+                    <div class="mobile-bar-track">
+                        <div class="mobile-bar-fill" style="height: <?php echo $pct; ?>%; background: linear-gradient(180deg, #9333ea 0%, #c084fc 100%);"></div>
+                    </div>
+                    <span class="mobile-bar-month"><?php echo $month_short; ?></span>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+
+    <!-- 3. ALL ZONE SIDEBAR ICONS DOWN BELOW (Image 2 Style Grid) -->
+    <?php 
+    if (function_exists('renderMobileSidebarIconsGrid')) {
+        renderMobileSidebarIconsGrid('zone');
+    }
+    ?>
+
+    <!-- 4. Recent Zonal Activity Feed -->
+    <div class="mobile-section-header mt-4">
+        <h3 class="mobile-section-title">Recent Zonal Activity</h3>
+        <a href="residents" class="mobile-section-link">View all <i class="fa-solid fa-chevron-right"></i></a>
+    </div>
+    <div class="mobile-activity-list">
+        <?php if ($recent_residents && $recent_residents->num_rows > 0): 
+            $r_row = $recent_residents->fetch_assoc();
+            $recent_residents->data_seek(0);
+        ?>
+            <a href="residents" class="mobile-activity-item">
+                <div class="mobile-activity-left">
+                    <div class="mobile-activity-icon" style="background: rgba(147, 51, 234, 0.12); color: #9333ea;">
+                        <i class="fa-solid fa-user-check"></i>
+                    </div>
+                    <div class="mobile-activity-text">
+                        <div class="mobile-activity-title"><?php echo htmlspecialchars($r_row['resident_name']); ?></div>
+                        <div class="mobile-activity-meta">Unit <?php echo htmlspecialchars($r_row['flat_number']); ?> • <?php echo htmlspecialchars($r_row['building_name']); ?></div>
+                    </div>
+                </div>
+                <i class="fa-solid fa-chevron-right mobile-activity-chevron"></i>
+            </a>
+        <?php endif; ?>
+
+        <?php if ($recent_payments && $recent_payments->num_rows > 0): 
+            $p_row = $recent_payments->fetch_assoc();
+            $recent_payments->data_seek(0);
+        ?>
+            <a href="finance" class="mobile-activity-item">
+                <div class="mobile-activity-left">
+                    <div class="mobile-activity-icon" style="background: rgba(22, 163, 74, 0.12); color: #16a34a;">
+                        <i class="fa-solid fa-receipt"></i>
+                    </div>
+                    <div class="mobile-activity-text">
+                        <div class="mobile-activity-title">Settled: <?php echo htmlspecialchars($p_row['resident_name'] ?? 'Resident'); ?></div>
+                        <div class="mobile-activity-meta"><?php echo $currency_symbol . number_format($p_row['amount']); ?> • <?php echo htmlspecialchars($p_row['invoice_number'] ?? 'INV'); ?></div>
+                    </div>
+                </div>
+                <i class="fa-solid fa-chevron-right mobile-activity-chevron"></i>
+            </a>
+        <?php endif; ?>
+    </div>
+</div>
+
+<!-- ==========================================
+     EXECUTIVE HEADER & COMMAND TOOLBAR (Desktop Only)
+     ========================================== -->
+<div class="desktop-only">
+<div class="hero-header-enterprise">
+    <div class="hero-title-group">
         <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
-            <h1 class="h4 font-bold text-slate-900 m-0" style="letter-spacing: -0.02em;">
-                <?php echo $greeting; ?>, <?php echo htmlspecialchars($current_user_name); ?>
-            </h1>
+            <h1><?php echo $greeting; ?>, <?php echo htmlspecialchars($current_user_name); ?></h1>
             <span class="mature-badge mature-badge-purple">
                 <i class="fa-solid fa-shield-halved me-1"></i> Zone <?php echo htmlspecialchars($zone_code); ?> Command
             </span>
@@ -186,85 +464,111 @@ include 'sidebar.php';
                 <i class="fa-solid fa-layer-group me-1"></i> Isolated Scope
             </span>
         </div>
-        <div class="d-flex flex-wrap align-items-center gap-2 text-secondary small">
+        <div class="hero-meta-strip">
             <span><i class="fa-regular fa-calendar me-1"></i> <?php echo date('l, F j, Y'); ?></span>
             <span>•</span>
             <span><i class="fa-solid fa-location-dot me-1"></i> <?php echo htmlspecialchars($zone_name); ?></span>
             <span>•</span>
-            <span class="text-success"><i class="fa-solid fa-circle me-1" style="font-size: 0.55rem;"></i> Sector Active</span>
+            <span class="text-success"><i class="fa-solid fa-circle me-1" style="font-size: 0.5rem;"></i> Sector Active</span>
         </div>
     </div>
-    <div class="d-flex flex-wrap gap-2">
-        <a href="properties" class="btn btn-sm btn-outline-primary">
-            <i class="fa-solid fa-road me-1"></i> Streets & Flats
+    <div class="hero-actions-group">
+        <div class="pill-timeframe-dropdown" title="Reporting Period">
+            <i class="fa-regular fa-calendar-days text-purple" style="color: #9333ea;"></i>
+            <span><?php echo date('M Y'); ?></span>
+            <i class="fa-solid fa-chevron-down" style="font-size: 0.65rem;"></i>
+        </div>
+        <a href="reports" class="btn-export-ghost" title="Zonal Financial & Resident Reports">
+            <i class="fa-solid fa-chart-pie text-purple" style="color: #7e22ce;"></i> Zonal Reports
         </a>
-        <a href="residents" class="btn btn-sm btn-outline-secondary">
-            <i class="fa-solid fa-user-plus me-1"></i> Resident
+        <a href="residents" class="btn-primary-action-pill" style="background: linear-gradient(135deg, #7e22ce 0%, #6b21a8 100%); box-shadow: 0 4px 14px -2px rgba(126, 34, 206, 0.4);">
+            <i class="fa-solid fa-user-plus"></i> Onboard Resident
         </a>
-        <a href="charges" class="btn btn-sm btn-outline-secondary">
-            <i class="fa-solid fa-list-check me-1"></i> Levies
-        </a>
-        <a href="billing_config" class="btn btn-sm btn-outline-secondary">
-            <i class="fa-solid fa-sliders me-1"></i> Billing Config
-        </a>
-        <a href="reports" class="btn btn-sm btn-outline-secondary">
-            <i class="fa-solid fa-chart-pie me-1"></i> Reports
-        </a>
-        <a href="broadcasts" class="btn btn-sm btn-outline-secondary">
-            <i class="fa-solid fa-bullhorn me-1"></i> Notices
-        </a>
-        <a href="community_chat" class="btn btn-sm btn-outline-secondary">
-            <i class="fa-solid fa-comments me-1"></i> Forum
-        </a>
-        <a href="finance" class="btn btn-sm text-white" style="background: #7e22ce; border-color: #7e22ce;">
-            <i class="fa-solid fa-file-invoice-dollar me-1"></i> Invoices
+        <a href="broadcasts" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-2 fw-semibold">
+            <i class="fa-solid fa-bullhorn me-1"></i> Broadcast
         </a>
     </div>
 </div>
 
+<?php 
+$z_pending_requests = $conn->query("
+    SELECT COUNT(DISTINCT ccr.id) as cnt 
+    FROM contact_change_requests ccr
+    LEFT JOIN residents r ON ccr.resident_id = r.id OR (r.user_id = ccr.user_id AND r.estate_id = ccr.estate_id)
+    LEFT JOIN flats f ON r.flat_id = f.id
+    LEFT JOIN buildings b ON f.building_id = b.id
+    LEFT JOIN streets s ON b.street_id = s.id
+    WHERE ccr.estate_id = $estate_id 
+      AND (ccr.zone_id = $zone_id OR s.zone_id = $zone_id)
+      AND ccr.status = 'pending'
+")->fetch_assoc()['cnt'] ?? 0;
+if ($z_pending_requests > 0): 
+?>
+<div class="alert mature-card p-3 mb-4 shadow-sm" style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; overflow: hidden;">
+    <div class="d-flex align-items-center gap-3 min-w-0" style="flex: 1;">
+        <div class="glass-icon-circle hero-icon-circle glass-icon-light-amber" style="width: 44px; height: 44px; min-width: 44px; min-height: 44px; font-size: 1.25rem;">
+            <i class="fa-solid fa-id-card-clip"></i>
+        </div>
+        <div class="min-w-0">
+            <strong class="zonal-amber-alert-title" style="color: #92400e; font-size: 0.95rem;">Zonal Action Required: Pending Contact Change Requests</strong>
+            <div class="zonal-amber-alert-sub" style="font-size: 0.85rem; color: #78350f;">
+                You have <strong class="text-danger"><?php echo $z_pending_requests; ?></strong> resident contact change request(s) in your zone awaiting approval.
+            </div>
+        </div>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="notifications" class="btn btn-sm btn-outline-warning text-dark px-3 py-1.5 fw-semibold rounded-pill">
+            <i class="fa-solid fa-bell me-1"></i> Zonal Action Center
+        </a>
+        <a href="residents?tab=contact_requests" class="btn btn-sm text-white px-3 py-1.5 fw-semibold rounded-pill shadow-sm" style="background: #d97706;">
+            <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Review in Registry &rarr;
+        </a>
+    </div>
+</div>
+<?php endif; ?>
+
 <!-- ==========================================
-     GLASSY ZONAL PROFILE & BANNER
+     EXECUTIVE ZONAL COMMAND HERO BOARD
      ========================================== -->
-<div class="glass-card mb-4 p-4 text-white overflow-hidden position-relative" style="background: linear-gradient(135deg, rgba(76, 29, 149, 0.96) 0%, rgba(126, 34, 206, 0.92) 55%, rgba(147, 51, 234, 0.88) 100%); border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 10px 30px -5px rgba(126, 34, 206, 0.25);">
+<div class="zonal-hero-board">
     <div class="position-relative" style="z-index: 2;">
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
             <div>
-
-                <h2 class="fw-bold mb-1 text-white" style="letter-spacing: -0.02em;">
+                <h2>
                     <?php echo htmlspecialchars($zone_name); ?> 
-                    <span class="badge bg-white fs-6 fw-bold align-middle ms-2" style="color: #581c87;"><?php echo htmlspecialchars($zone_code); ?></span>
+                    <span class="zonal-hero-code-badge"><?php echo htmlspecialchars($zone_code); ?></span>
                 </h2>
                 <?php if (!empty($zone['motto'])): ?>
-                    <div class="fst-italic text-white text-opacity-90 small mb-2" style="font-size: 0.9rem;">
-                        <i class="fa-solid fa-quote-left opacity-50 me-1"></i><?php echo htmlspecialchars($zone['motto']); ?><i class="fa-solid fa-quote-right opacity-50 ms-1"></i>
+                    <div class="zonal-hero-motto">
+                        <i class="fa-solid fa-quote-left opacity-75 me-1"></i><?php echo htmlspecialchars($zone['motto']); ?><i class="fa-solid fa-quote-right opacity-75 ms-1"></i>
                     </div>
                 <?php endif; ?>
-                <div class="d-flex flex-wrap align-items-center gap-3 text-white text-opacity-80 small mb-2" style="font-size: 0.825rem;">
+                <div class="zonal-hero-chips">
                     <?php if (!empty($zone['email'])): ?>
-                        <span><i class="fa-solid fa-envelope me-1"></i> <?php echo htmlspecialchars($zone['email']); ?></span>
+                        <span class="zonal-hero-chip"><i class="fa-solid fa-envelope"></i> <?php echo htmlspecialchars($zone['email']); ?></span>
                     <?php endif; ?>
                     <?php if (!empty($zone['phone'])): ?>
-                        <span><i class="fa-solid fa-phone me-1"></i> <?php echo htmlspecialchars($zone['phone']); ?></span>
+                        <span class="zonal-hero-chip"><i class="fa-solid fa-phone"></i> <?php echo htmlspecialchars($zone['phone']); ?></span>
                     <?php endif; ?>
                     <?php if (!empty($zone['office_address'])): ?>
-                        <span><i class="fa-solid fa-location-dot me-1"></i> <?php echo htmlspecialchars($zone['office_address']); ?></span>
+                        <span class="zonal-hero-chip"><i class="fa-solid fa-location-dot"></i> <?php echo htmlspecialchars($zone['office_address']); ?></span>
                     <?php endif; ?>
                     <?php if (!empty($zone['registration_date'])): ?>
-                        <span><i class="fa-solid fa-calendar-check me-1"></i> Established: <?php echo date('M d, Y', strtotime($zone['registration_date'])); ?></span>
+                        <span class="zonal-hero-chip"><i class="fa-solid fa-calendar-check"></i> Established: <?php echo date('M d, Y', strtotime($zone['registration_date'])); ?></span>
                     <?php endif; ?>
                 </div>
-                <p class="mb-0 text-white text-opacity-85 small" style="max-width: 680px;">
+                <p class="zonal-hero-desc">
                     <?php echo !empty($zone['description']) ? htmlspecialchars($zone['description']) : 'Dedicated sector administration, infrastructure catalog, resident onboarding, and localized billing realization.'; ?>
                 </p>
             </div>
             <div class="d-flex flex-wrap gap-2">
-                <a href="broadcasts" class="btn btn-light rounded-3 fw-semibold d-inline-flex align-items-center gap-2 shadow-sm" style="color: #6b21a8;">
+                <a href="broadcasts" class="zonal-hero-btn-white">
                     <i class="fa-solid fa-bullhorn"></i> Send Zone Notice
                 </a>
-                <a href="properties" class="btn btn-outline-light rounded-3 fw-semibold d-inline-flex align-items-center gap-2" style="backdrop-filter: blur(6px);">
-                    <i class="fa-solid fa-road"></i> Streets & Flats
+                <a href="properties" class="zonal-hero-btn-glass">
+                    <i class="fa-solid fa-road"></i> Streets &amp; Flats
                 </a>
-                <a href="residents" class="btn btn-outline-light rounded-3 fw-semibold d-inline-flex align-items-center gap-2" style="backdrop-filter: blur(6px);">
+                <a href="residents" class="zonal-hero-btn-glass">
                     <i class="fa-solid fa-user-plus"></i> Onboard Resident
                 </a>
             </div>
@@ -286,7 +590,7 @@ include 'sidebar.php';
                     <span class="mature-badge mature-badge-sky"><?php echo htmlspecialchars($zone['paystack_bank_name'] ?? 'Wema Bank (Paystack DVA)'); ?></span>
                 </div>
                 <div class="d-flex align-items-center gap-2 mt-1 flex-wrap">
-                    <span style="font-family: monospace; font-size: 1.35rem; font-weight: 800; color: #0f172a; letter-spacing: 0.05em;"><?php echo htmlspecialchars($zone['paystack_account_number']); ?></span>
+                    <span class="zonal-dva-account-num"><?php echo htmlspecialchars($zone['paystack_account_number']); ?></span>
                     <span class="text-secondary small fw-medium">&bull; <?php echo htmlspecialchars($zone['paystack_account_name'] ?? ($zone_name . ' Account')); ?></span>
                     <?php if (!empty($zone['paystack_subaccount_code'])): ?>
                         <span class="mature-badge mature-badge-slate font-monospace"><?php echo htmlspecialchars($zone['paystack_subaccount_code']); ?></span>
@@ -295,10 +599,10 @@ include 'sidebar.php';
             </div>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <button type="button" onclick="navigator.clipboard.writeText('<?php echo htmlspecialchars($zone['paystack_account_number']); ?>'); this.innerHTML='<i class=\'fa-solid fa-check me-1\'></i> Copied!'; setTimeout(() => this.innerHTML='<i class=\'fa-regular fa-copy me-1\'></i> Copy NUBAN', 2000);" class="btn btn-sm btn-outline-primary fw-semibold">
+            <button type="button" onclick="navigator.clipboard.writeText('<?php echo htmlspecialchars($zone['paystack_account_number']); ?>'); this.innerHTML='<i class=\'fa-solid fa-check me-1\'></i> Copied!'; setTimeout(() => this.innerHTML='<i class=\'fa-regular fa-copy me-1\'></i> Copy NUBAN', 2000);" class="btn btn-sm btn-outline-primary fw-semibold px-3 py-1.5 rounded-pill">
                 <i class="fa-regular fa-copy me-1"></i> Copy NUBAN
             </button>
-            <a href="finance" class="btn btn-sm btn-outline-secondary fw-semibold">
+            <a href="finance" class="btn btn-sm btn-outline-secondary fw-semibold px-3 py-1.5 rounded-pill">
                 <i class="fa-solid fa-receipt me-1"></i> Zonal Finance
             </a>
         </div>
@@ -343,7 +647,7 @@ include 'sidebar.php';
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <span class="kpi-title">Capacity & Occupancy</span>
-                    <div class="kpi-value"><?php echo $occupancy_pct; ?>% <span style="font-size: 0.95rem; font-weight: 500; color: #64748b;">Occupied</span></div>
+                    <div class="kpi-value"><?php echo $occupancy_pct; ?>% <span class="kpi-unit-label">Occupied</span></div>
                 </div>
                 <div class="kpi-icon-wrap">
                     <i class="fa-solid fa-city"></i>
@@ -365,7 +669,7 @@ include 'sidebar.php';
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <span class="kpi-title">Zonal Population</span>
-                    <div class="kpi-value"><?php echo number_format($active_residents); ?> <span style="font-size: 0.95rem; font-weight: 500; color: #64748b;">Residents</span></div>
+                    <div class="kpi-value"><?php echo number_format($active_residents); ?> <span class="kpi-unit-label">Residents</span></div>
                 </div>
                 <div class="kpi-icon-wrap">
                     <i class="fa-solid fa-users"></i>
@@ -390,7 +694,7 @@ include 'sidebar.php';
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <span class="kpi-title">Sector Infrastructure</span>
-                    <div class="kpi-value"><?php echo $total_streets; ?> <span style="font-size: 0.95rem; font-weight: 500; color: #64748b;">Streets</span></div>
+                    <div class="kpi-value"><?php echo $total_streets; ?> <span class="kpi-unit-label">Streets</span></div>
                 </div>
                 <div class="kpi-icon-wrap">
                     <i class="fa-solid fa-road"></i>
@@ -797,6 +1101,7 @@ include 'sidebar.php';
         </div>
     </div>
 </div>
+</div><!-- end .desktop-only -->
 
 <!-- ==========================================
      CHART.JS INTEGRATION & CONFIGURATION

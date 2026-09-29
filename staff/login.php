@@ -30,13 +30,21 @@ $estate_name = $sys['estate_name'] ?? 'Estate Operations';
 $estate_logo = $sys['estate_logo'] ?? '';
 
 $error = '';
+if (isset($_GET['error']) && $_GET['error'] === 'account_disabled') {
+    $error = "Your account has been deactivated. Please contact Estate Central Administration.";
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = $_POST['email'] ?? '';
     $password = $_POST['password'] ?? '';
     
     $result = authenticatePortalUser($conn, $email, $password, 'staff');
     if ($result['success']) {
-        header("Location: " . (in_array($result['role'], ['staff', 'security', 'accountant', 'technician']) ? 'index' : '../' . $result['redirect']));
+        if (!empty($result['force_password_change'])) {
+            header("Location: ../change_password");
+        } else {
+            header("Location: " . (in_array($result['role'], ['staff', 'security', 'accountant', 'technician']) ? 'index' : '../' . $result['redirect']));
+        }
         exit;
     } else {
         $error = $result['error'];
@@ -75,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <?php if ($estate_logo): ?>
                         <img src="../<?php echo htmlspecialchars($estate_logo); ?>" alt="Logo" style="height: 48px; border-radius: 8px;">
                     <?php else: ?>
-                        <div style="width: 52px; height: 52px; border-radius: 12px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #10b981; margin: 0 auto;">
+                        <div class="glass-icon-circle hero-icon-circle glass-icon-emerald" style="width: 54px; height: 54px; min-width: 54px; min-height: 54px; font-size: 1.45rem; margin: 0 auto;">
                             <i class="fa-solid fa-user-shield"></i>
                         </div>
                     <?php endif; ?>
@@ -118,7 +126,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <div class="auth-input-group">
-                    <label for="password">Password</label>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                        <label for="password" style="margin-bottom: 0;">Password</label>
+                        <a href="../forgot_password" style="font-size: 0.78rem; color: #34d399; text-decoration: none; font-weight: 500;">Forgot Password?</a>
+                    </div>
                     <div class="auth-input-wrapper">
                         <i class="fa-solid fa-lock"></i>
                         <input type="password" id="password" name="password" class="auth-input" placeholder="••••••••" required>

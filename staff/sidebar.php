@@ -75,6 +75,11 @@ $current_page = str_replace('.php', '', basename($_SERVER['PHP_SELF']));
                     <i class="fa-solid fa-hammer"></i> My Work Orders
                 </a>
             </li>
+            <li>
+                <a href="../staff/artisans" class="<?php echo ($current_page == 'artisans') ? 'active' : ''; ?>">
+                    <i class="fa-solid fa-wrench"></i> Verified Artisans
+                </a>
+            </li>
             <?php endif; ?>
 
             <li class="nav-label text-slate-400 px-3 py-2 mt-3 text-uppercase fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.05em;">Account</li>
@@ -86,4 +91,9 @@ $current_page = str_replace('.php', '', basename($_SERVER['PHP_SELF']));
         </ul>
     </nav>
 </aside>
-<main class="main-content p-4" style="flex: 1; background: #f8fafc;">
+<main class="main-content p-4" style="flex: 1;">
+    <?php 
+    if (function_exists('renderMobileAppShell')) {
+        renderMobileAppShell('staff', $current_page, $page_title ?? '');
+    }
+    ?>

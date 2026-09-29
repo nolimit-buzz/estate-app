@@ -2,6 +2,8 @@
 // admin/policies.php - Central Administration Policy, Rules & Regulations Hub
 require_once '../config.php';
 require_once '../includes/auth_guard.php';
+require_once '../includes/Mailer.php';
+require_once '../includes/WhatsApp.php';
 
 requireLogin();
 if (!isAdminRole()) {
@@ -15,10 +17,110 @@ $message = '';
 $error = '';
 
 // -------------------------------------------------------------
-// POST HANDLERS: CREATE / EDIT / DELETE POLICIES
+// POST HANDLERS: CREATE / EDIT / DELETE POLICIES & ISSUE PENALTIES
 // -------------------------------------------------------------
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
+
+    // Action 1: Issue Official Penalty / Infraction Citation
+    if ($action === 'issue_penalty') {
+        $policy_id = !empty($_POST['policy_id']) ? intval($_POST['policy_id']) : null;
+        $recipient_type = in_array($_POST['recipient_type'] ?? '', ['resident', 'artisan', 'visitor', 'staff', 'other']) ? $_POST['recipient_type'] : 'resident';
+        $user_id_rec = !empty($_POST['user_id']) ? intval($_POST['user_id']) : null;
+        $recipient_name = trim($_POST['recipient_name'] ?? '');
+        $recipient_phone = trim($_POST['recipient_phone'] ?? '');
+        $recipient_email = trim($_POST['recipient_email'] ?? '');
+        $property_or_unit = trim($_POST['property_or_unit'] ?? '');
+        $vehicle_plate = trim($_POST['vehicle_plate'] ?? '');
+        $violation_title = trim($_POST['violation_title'] ?? '');
+        $violation_code = trim($_POST['violation_code'] ?? 'INF-RULE');
+        $violation_details = trim($_POST['violation_details'] ?? '');
+        $offence_date = !empty($_POST['offence_date']) ? $_POST['offence_date'] : date('Y-m-d H:i:s');
+        $location = trim($_POST['location'] ?? 'Estate Premises');
+        $fine_amount = floatval($_POST['fine_amount'] ?? 0);
+        $due_date = !empty($_POST['due_date']) ? $_POST['due_date'] : date('Y-m-d', strtotime('+7 days'));
+        $issued_by_name = $_SESSION['name'] ?? 'Estate Central Administration';
+        $dispatch_email = isset($_POST['channel_email']);
+        $dispatch_whatsapp = isset($_POST['channel_whatsapp']);
+
+        if (empty($recipient_name) || empty($violation_title) || empty($violation_details)) {
+            $error = "Recipient Name, Violation Title, and Citation Details are required.";
+        } else {
+            $rand_ref = strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 6));
+            $penalty_ref = 'PEN-' . $rand_ref;
+
+            $esc_pref = $conn->real_escape_string($penalty_ref);
+            $esc_name = $conn->real_escape_string($recipient_name);
+            $esc_phone = $conn->real_escape_string($recipient_phone);
+            $esc_email = $conn->real_escape_string($recipient_email);
+            $esc_prop = $conn->real_escape_string($property_or_unit);
+            $esc_veh = $conn->real_escape_string($vehicle_plate);
+            $esc_vtitle = $conn->real_escape_string($violation_title);
+            $esc_vcode = $conn->real_escape_string($violation_code);
+            $esc_vdetails = $conn->real_escape_string($violation_details);
+            $esc_offdate = $conn->real_escape_string($offence_date);
+            $esc_loc = $conn->real_escape_string($location);
+            $esc_duedate = $conn->real_escape_string($due_date);
+            $esc_issuer = $conn->real_escape_string($issued_by_name);
+            $pol_id_sql = $policy_id ? $policy_id : "NULL";
+            $uid_sql = $user_id_rec ? $user_id_rec : "NULL";
+
+            $sql = "INSERT INTO estate_penalties 
+                (estate_id, penalty_ref, policy_id, recipient_type, user_id, recipient_name, recipient_phone, recipient_email, property_or_unit, vehicle_plate, violation_title, violation_code, violation_details, offence_date, location, fine_amount, due_date, status, issued_by, issued_by_name, created_at)
+                VALUES 
+                ($estate_id, '$esc_pref', $pol_id_sql, '$recipient_type', $uid_sql, '$esc_name', '$esc_phone', '$esc_email', '$esc_prop', '$esc_veh', '$esc_vtitle', '$esc_vcode', '$esc_vdetails', '$esc_offdate', '$esc_loc', $fine_amount, '$esc_duedate', 'pending', $user_id, '$esc_issuer', NOW())";
+
+            if ($conn->query($sql)) {
+                $penalty_id = $conn->insert_id;
+
+                // Dispatch Email and WhatsApp notifications
+                $dispatched_channels = [];
+                if ($dispatch_email && !empty($recipient_email)) {
+                    if (EstateMailer::sendPenaltyNoticeEmail($conn, $penalty_id)) {
+                        $dispatched_channels[] = "Email";
+                    }
+                }
+                if ($dispatch_whatsapp && !empty($recipient_phone)) {
+                    if (EstateWhatsApp::sendPenaltyNoticeWhatsApp($conn, $penalty_id)) {
+                        $dispatched_channels[] = "WhatsApp";
+                    }
+                }
+
+                if (function_exists('logAudit')) {
+                    logAudit($conn, "Penalty Issued", "Compliance", "Issued penalty notice #$penalty_ref to $recipient_name (Fine: ₦$fine_amount, Code: $violation_code)");
+                }
+
+                $chan_str = !empty($dispatched_channels) ? "Dispatched via " . implode(" and ", $dispatched_channels) . "." : "Saved to system ledger.";
+                $message = "Official Penalty Citation #$penalty_ref issued successfully! $chan_str";
+            } else {
+                $error = "Database error issuing penalty: " . $conn->error;
+            }
+        }
+    }
+
+    // Action 2: Resend Penalty Notice to Offender
+    if ($action === 'resend_penalty') {
+        $penalty_id = intval($_POST['penalty_id'] ?? 0);
+        if ($penalty_id > 0) {
+            $m_sent = EstateMailer::sendPenaltyNoticeEmail($conn, $penalty_id);
+            $w_sent = EstateWhatsApp::sendPenaltyNoticeWhatsApp($conn, $penalty_id);
+            if ($m_sent || $w_sent) {
+                $message = "Penalty notice re-dispatched via " . ($m_sent && $w_sent ? "Email & WhatsApp" : ($m_sent ? "Email" : "WhatsApp")) . " successfully!";
+            } else {
+                $error = "Could not deliver penalty notice. Ensure recipient email or phone is valid and configured.";
+            }
+        }
+    }
+
+    // Action 3: Update Penalty Status (Paid / Waived)
+    if ($action === 'update_penalty_status') {
+        $penalty_id = intval($_POST['penalty_id'] ?? 0);
+        $new_status = in_array($_POST['status'] ?? '', ['pending', 'paid', 'waived', 'disputed']) ? $_POST['status'] : 'pending';
+        if ($penalty_id > 0) {
+            $conn->query("UPDATE estate_penalties SET status = '$new_status' WHERE id = $penalty_id AND estate_id = $estate_id");
+            $message = "Penalty citation #$penalty_id marked as " . strtoupper($new_status) . ".";
+        }
+    }
 
     if ($action === 'save_policy') {
         $policy_id = intval($_POST['policy_id'] ?? 0);
@@ -131,7 +233,7 @@ if ($zones_res) {
 }
 
 // Active Tab & Filters
-$active_tab = $_GET['tab'] ?? 'central'; // 'central', 'zonal', 'all', 'matrix'
+$active_tab = $_GET['tab'] ?? 'central'; // 'central', 'zonal', 'all', 'matrix', 'penalties'
 $filter_category = $_GET['category'] ?? '';
 $filter_zone = isset($_GET['zone_id']) ? intval($_GET['zone_id']) : 0;
 $search = trim($_GET['search'] ?? '');
@@ -142,6 +244,41 @@ $central_policies_cnt = $conn->query("SELECT COUNT(id) as c FROM estate_policies
 $zonal_policies_cnt = $conn->query("SELECT COUNT(id) as c FROM estate_policies WHERE estate_id = $estate_id AND scope = 'zonal'")->fetch_assoc()['c'] ?? 0;
 $fines_cnt = $conn->query("SELECT COUNT(id) as c FROM estate_policies WHERE estate_id = $estate_id AND fine_amount > 0")->fetch_assoc()['c'] ?? 0;
 $max_fine = $conn->query("SELECT MAX(fine_amount) as m FROM estate_policies WHERE estate_id = $estate_id")->fetch_assoc()['m'] ?? 0;
+$total_penalties_cnt = $conn->query("SELECT COUNT(id) as c FROM estate_penalties WHERE estate_id = $estate_id")->fetch_assoc()['c'] ?? 0;
+
+// Fetch Residents for Penalty Modal
+$residents_q = $conn->query("SELECT u.id, u.name, u.email, u.phone, f.number as flat_number, b.name as building_name 
+                             FROM users u
+                             LEFT JOIN residents r ON u.id = r.user_id AND r.estate_id = $estate_id
+                             LEFT JOIN flats f ON r.flat_id = f.id
+                             LEFT JOIN buildings b ON f.building_id = b.id
+                             WHERE u.estate_id = $estate_id AND u.role = 'resident' ORDER BY u.name ASC");
+$residents_list_for_penalty = [];
+if ($residents_q) {
+    while ($rq = $residents_q->fetch_assoc()) {
+        $residents_list_for_penalty[] = $rq;
+    }
+}
+
+// Fetch Policies for Penalty Modal Lookup
+$policies_lookup_q = $conn->query("SELECT id, code, title, fine_amount, description FROM estate_policies WHERE estate_id = $estate_id AND status = 'active' ORDER BY title ASC");
+$policies_lookup = [];
+if ($policies_lookup_q) {
+    while ($pq = $policies_lookup_q->fetch_assoc()) {
+        $policies_lookup[] = $pq;
+    }
+}
+
+// Fetch penalties if tab is active
+$penalties_list = [];
+if ($active_tab === 'penalties') {
+    $pen_res = $conn->query("SELECT * FROM estate_penalties WHERE estate_id = $estate_id ORDER BY id DESC");
+    if ($pen_res) {
+        while ($pr = $pen_res->fetch_assoc()) {
+            $penalties_list[] = $pr;
+        }
+    }
+}
 
 // Filter criteria array for helper
 $filters = [
@@ -180,6 +317,9 @@ include '../includes/sidebar.php';
     <div class="header-actions d-flex align-items-center gap-2">
         <button type="button" class="btn btn-outline-secondary" onclick="window.print()">
             <i class="fa-solid fa-print me-1.5"></i> Print Rulebook
+        </button>
+        <button type="button" class="btn btn-danger shadow-sm fw-semibold" onclick="openIssuePenaltyModal()">
+            <i class="fa-solid fa-triangle-exclamation me-1.5"></i> Issue Penalty Notice
         </button>
         <button type="button" class="btn btn-primary shadow-sm" onclick="openPolicyModal()">
             <i class="fa-solid fa-plus me-1.5"></i> Enact New Policy / Rule
@@ -244,12 +384,12 @@ include '../includes/sidebar.php';
     <div class="col-6 col-lg-3">
         <div class="card border-0 shadow-sm rounded-4 p-3 d-flex flex-row align-items-center justify-content-between h-100" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);">
             <div>
-                <span class="text-secondary small fw-semibold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.04em;">Fines &amp; Penalties</span>
-                <h3 class="fw-bold mb-0 text-danger mt-1"><?php echo number_format($fines_cnt); ?></h3>
-                <small class="text-muted" style="font-size: 0.72rem;">Max Fine: ₦<?php echo number_format($max_fine, 2); ?></small>
+                <span class="text-secondary small fw-semibold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.04em;">Citations &amp; Penalties</span>
+                <h3 class="fw-bold mb-0 text-danger mt-1"><?php echo number_format($total_penalties_cnt); ?></h3>
+                <small class="text-muted" style="font-size: 0.72rem;">Active Fines Enacted</small>
             </div>
             <div style="width: 48px; height: 48px; border-radius: 14px; background: rgba(239, 68, 68, 0.12); color: #dc2626; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
-                <i class="fa-solid fa-money-bill-transfer"></i>
+                <i class="fa-solid fa-triangle-exclamation"></i>
             </div>
         </div>
     </div>
@@ -260,13 +400,13 @@ include '../includes/sidebar.php';
     <ul class="nav nav-pills gap-2" id="policyTabs">
         <li class="nav-item">
             <a class="nav-link <?php echo ($active_tab === 'central') ? 'active' : ''; ?> fw-semibold px-3 py-2 rounded-3" href="?tab=central">
-                <i class="fa-solid fa-globe me-1.5"></i> Central Estate Policies (Estate-Wide)
+                <i class="fa-solid fa-globe me-1.5"></i> Central Estate Policies
                 <span class="badge ms-1.5 <?php echo ($active_tab === 'central') ? 'bg-white text-primary' : 'bg-light text-dark'; ?>"><?php echo $central_policies_cnt; ?></span>
             </a>
         </li>
         <li class="nav-item">
             <a class="nav-link <?php echo ($active_tab === 'zonal') ? 'active' : ''; ?> fw-semibold px-3 py-2 rounded-3" href="?tab=zonal">
-                <i class="fa-solid fa-layer-group me-1.5"></i> Zonal Bylaws &amp; Sector Rules
+                <i class="fa-solid fa-layer-group me-1.5"></i> Zonal Bylaws
                 <span class="badge ms-1.5 <?php echo ($active_tab === 'zonal') ? 'bg-white text-primary' : 'bg-light text-dark'; ?>"><?php echo $zonal_policies_cnt; ?></span>
             </a>
         </li>
@@ -279,6 +419,12 @@ include '../includes/sidebar.php';
         <li class="nav-item">
             <a class="nav-link <?php echo ($active_tab === 'matrix') ? 'active' : ''; ?> fw-semibold px-3 py-2 rounded-3" href="?tab=matrix">
                 <i class="fa-solid fa-table-cells me-1.5"></i> Offences &amp; Fines Matrix
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link <?php echo ($active_tab === 'penalties') ? 'active' : ''; ?> fw-semibold px-3 py-2 rounded-3 text-danger" href="?tab=penalties">
+                <i class="fa-solid fa-triangle-exclamation me-1.5"></i> Issued Citations &amp; Penalties
+                <span class="badge ms-1.5 <?php echo ($active_tab === 'penalties') ? 'bg-danger text-white' : 'bg-danger bg-opacity-10 text-danger'; ?>"><?php echo $total_penalties_cnt; ?></span>
             </a>
         </li>
     </ul>
@@ -307,45 +453,46 @@ include '../includes/sidebar.php';
             <?php endforeach; ?>
         </select>
 
-        <div class="input-group input-group-sm" style="width: 220px;">
+        <div class="search-integrated-wrap" style="width: 220px;">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
             <input type="text" name="search" class="form-control" placeholder="Search rules, fines..." value="<?php echo htmlspecialchars($search); ?>">
-            <button class="btn btn-outline-secondary" type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+            <?php if (!empty($search)): ?>
+                <a href="?tab=<?php echo htmlspecialchars($active_tab); ?>" class="search-clear-btn" title="Clear search"><i class="fa-solid fa-xmark"></i></a>
+            <?php endif; ?>
         </div>
-
-        <?php if (!empty($search) || !empty($filter_category) || $filter_zone > 0): ?>
-            <a href="?tab=<?php echo htmlspecialchars($active_tab); ?>" class="btn btn-sm btn-light border text-danger" title="Clear Filters">
-                <i class="fa-solid fa-xmark"></i>
-            </a>
-        <?php endif; ?>
     </form>
 </div>
 
-<!-- Scope Description Banner -->
+<!-- Scope Description Banner (Compact & Smart) -->
 <?php if ($active_tab === 'central'): ?>
-    <div class="alert alert-primary bg-primary bg-opacity-10 border-primary border-opacity-25 rounded-4 p-3 mb-4 d-flex align-items-center justify-content-between">
-        <div class="d-flex align-items-center gap-3">
-            <div class="bg-primary text-white rounded-3 p-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                <i class="fa-solid fa-landmark fs-5"></i>
+    <div class="alert alert-primary bg-primary bg-opacity-10 border-primary border-opacity-25 rounded-3 p-2.5 p-sm-3 mb-3">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-2.5 min-w-0" style="flex: 1 1 240px;">
+                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 32px; height: 32px; font-size: 0.85rem;">
+                    <i class="fa-solid fa-landmark"></i>
+                </div>
+                <div class="min-w-0">
+                    <span class="fw-bold text-primary d-block text-truncate" style="font-size: 0.88rem;">Central Estate Regulations</span>
+                    <span class="text-secondary small d-none d-md-inline" style="font-size: 0.78rem;">Universal rules applicable across all zones, residents, visitors, and contractors.</span>
+                </div>
             </div>
-            <div>
-                <strong class="d-block text-primary">Central Estate Jurisdiction (Estate-Wide Applicability)</strong>
-                <span class="text-secondary small">These policies are enacted by Central Management and apply universally to all residents, visitors, staff, and contractors across all zones. Zone bylaws cannot override these rules.</span>
-            </div>
+            <span class="badge bg-primary rounded-pill font-monospace px-2.5 py-1 flex-shrink-0 ms-auto" style="font-size: 0.68rem; letter-spacing: 0.04em;">ESTATE-WIDE</span>
         </div>
-        <span class="badge bg-primary px-3 py-2 rounded-pill font-monospace" style="letter-spacing: 0.05em;">ESTATE-WIDE JURISDICTION</span>
     </div>
 <?php elseif ($active_tab === 'zonal'): ?>
-    <div class="alert alert-purple bg-purple bg-opacity-10 border border-purple border-opacity-25 rounded-4 p-3 mb-4 d-flex align-items-center justify-content-between" style="background: rgba(168, 85, 247, 0.08); border-color: rgba(168, 85, 247, 0.25);">
-        <div class="d-flex align-items-center gap-3">
-            <div class="text-white rounded-3 p-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background: #9333ea;">
-                <i class="fa-solid fa-layer-group fs-5"></i>
+    <div class="alert alert-purple rounded-3 p-2.5 p-sm-3 mb-3" style="background: rgba(168, 85, 247, 0.08); border: 1px solid rgba(168, 85, 247, 0.25);">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-2.5 min-w-0" style="flex: 1 1 240px;">
+                <div class="text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 32px; height: 32px; background: #9333ea; font-size: 0.85rem;">
+                    <i class="fa-solid fa-layer-group"></i>
+                </div>
+                <div class="min-w-0">
+                    <span class="fw-bold d-block text-truncate" style="color: #7e22ce; font-size: 0.88rem;">Zonal Bylaws &amp; Local Sector Regulations</span>
+                    <span class="text-secondary small d-none d-md-inline" style="font-size: 0.78rem;">Sector-specific regulations tailored to individual zones.</span>
+                </div>
             </div>
-            <div>
-                <strong class="d-block" style="color: #7e22ce;">Zonal Bylaws &amp; Local Sector Regulations</strong>
-                <span class="text-secondary small">Sector-specific regulations tailored to individual zones (e.g. inner crescent parking, localized waste collection hours, green areas). Only residents and units residing in the corresponding zone are subject to these bylaws.</span>
-            </div>
+            <span class="badge rounded-pill font-monospace px-2.5 py-1 flex-shrink-0 ms-auto" style="background: #9333ea; color: white; font-size: 0.68rem; letter-spacing: 0.04em;">LOCAL SECTOR</span>
         </div>
-        <span class="badge px-3 py-2 rounded-pill font-monospace" style="background: #9333ea; color: white; letter-spacing: 0.05em;">LOCAL SECTOR JURISDICTION</span>
     </div>
 <?php endif; ?>
 
@@ -437,6 +584,146 @@ include '../includes/sidebar.php';
         </div>
     </div>
 
+<!-- TAB CONTENT: ISSUED CITATIONS & PENALTIES LEDGER -->
+<?php elseif ($active_tab === 'penalties'): ?>
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+        <div class="card-header bg-white py-3 px-4 border-bottom d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <div>
+                <h5 class="fw-bold mb-0 text-slate-900"><i class="fa-solid fa-triangle-exclamation text-danger me-2"></i>Official Citations &amp; Penalty Assessment Ledger</h5>
+                <small class="text-muted">Direct tracking of issued regulatory fines, payment status, and automated WhatsApp/Email notices</small>
+            </div>
+            <button class="btn btn-sm btn-danger rounded-3 fw-semibold shadow-sm" onclick="openIssuePenaltyModal()">
+                <i class="fa-solid fa-plus me-1"></i> Issue Penalty Notice
+            </button>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-uppercase text-secondary" style="font-size: 0.73rem; letter-spacing: 0.05em;">
+                    <tr>
+                        <th class="ps-4">Citation Ref</th>
+                        <th>Offender / Recipient</th>
+                        <th>Unit / Vehicle</th>
+                        <th>Violation &amp; Code</th>
+                        <th>Fine Amount</th>
+                        <th>Due Date</th>
+                        <th>Delivery Status</th>
+                        <th>Payment Status</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (empty($penalties_list)): ?>
+                        <tr>
+                            <td colspan="9" class="text-center py-5 text-muted">
+                                <i class="fa-solid fa-clipboard-check fs-1 d-block mb-2 text-success opacity-50"></i>
+                                <span class="fw-semibold">No Infraction Citations Issued</span>
+                                <p class="small text-secondary mb-3">All residents, artisans, and visitors are currently in compliance with estate regulations.</p>
+                                <button type="button" class="btn btn-sm btn-outline-danger rounded-3" onclick="openIssuePenaltyModal()">
+                                    <i class="fa-solid fa-plus me-1"></i> Issue First Penalty Notice
+                                </button>
+                            </td>
+                        </tr>
+                    <?php else:
+                        foreach ($penalties_list as $pen): 
+                            $status_class = match($pen['status']) {
+                                'paid' => 'bg-success text-white',
+                                'waived' => 'bg-secondary text-white',
+                                'disputed' => 'bg-warning text-dark',
+                                default => 'bg-danger text-white'
+                            };
+                            $rec_type_badge = match($pen['recipient_type']) {
+                                'artisan' => 'bg-info bg-opacity-10 text-info',
+                                'visitor' => 'bg-warning bg-opacity-10 text-warning',
+                                default => 'bg-primary bg-opacity-10 text-primary'
+                            };
+                    ?>
+                        <tr>
+                            <td class="ps-4 font-monospace fw-bold text-slate-900" style="font-size: 0.85rem;">
+                                <?php echo htmlspecialchars($pen['penalty_ref']); ?>
+                                <div class="text-muted small" style="font-size: 0.70rem;"><?php echo date('d M Y, h:i A', strtotime($pen['offence_date'])); ?></div>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-slate-800"><?php echo htmlspecialchars($pen['recipient_name']); ?></div>
+                                <span class="badge rounded-pill <?php echo $rec_type_badge; ?>" style="font-size: 0.65rem;"><?php echo strtoupper($pen['recipient_type']); ?></span>
+                                <?php if (!empty($pen['recipient_phone'])): ?>
+                                    <span class="text-muted small ms-1"><i class="fa-solid fa-phone me-1"></i><?php echo htmlspecialchars($pen['recipient_phone']); ?></span>
+                                <?php endif; ?>
+                            </td>
+                            <td class="small text-slate-700">
+                                <?php if (!empty($pen['property_or_unit'])): ?>
+                                    <div><i class="fa-solid fa-building me-1 text-secondary"></i><?php echo htmlspecialchars($pen['property_or_unit']); ?></div>
+                                <?php endif; ?>
+                                <?php if (!empty($pen['vehicle_plate'])): ?>
+                                    <div class="font-monospace text-uppercase text-muted" style="font-size: 0.75rem;"><i class="fa-solid fa-car me-1"></i><?php echo htmlspecialchars($pen['vehicle_plate']); ?></div>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <div class="fw-semibold text-slate-800" style="font-size: 0.85rem;"><?php echo htmlspecialchars($pen['violation_title']); ?></div>
+                                <span class="badge bg-light text-secondary font-monospace" style="font-size: 0.68rem;"><?php echo htmlspecialchars($pen['violation_code'] ?: 'INF'); ?></span>
+                                <div class="text-muted small text-truncate" style="max-width: 200px; font-size: 0.72rem;"><?php echo htmlspecialchars($pen['location'] ?: 'Estate Premises'); ?></div>
+                            </td>
+                            <td class="font-monospace fw-bold text-danger" style="font-size: 0.95rem;">
+                                ₦<?php echo number_format($pen['fine_amount'], 2); ?>
+                            </td>
+                            <td class="small text-slate-700">
+                                <?php echo !empty($pen['due_date']) ? date('d M Y', strtotime($pen['due_date'])) : 'Immediate'; ?>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column gap-1" style="font-size: 0.72rem;">
+                                    <?php if ($pen['email_dispatched']): ?>
+                                        <span class="text-success"><i class="fa-solid fa-circle-check me-1"></i>Email Sent</span>
+                                    <?php else: ?>
+                                        <span class="text-muted"><i class="fa-regular fa-clock me-1"></i>Email Pending</span>
+                                    <?php endif; ?>
+                                    <?php if ($pen['whatsapp_dispatched']): ?>
+                                        <span class="text-success"><i class="fa-brands fa-whatsapp me-1 text-success"></i>WhatsApp Sent</span>
+                                    <?php else: ?>
+                                        <span class="text-muted"><i class="fa-regular fa-clock me-1"></i>WhatsApp Pending</span>
+                                    <?php endif; ?>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge rounded-pill <?php echo $status_class; ?>" style="font-size: 0.72rem;">
+                                    <?php echo strtoupper($pen['status']); ?>
+                                </span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="d-flex align-items-center justify-content-end gap-1">
+                                    <form method="POST" style="display:inline-block;" title="Resend Notice via Email & WhatsApp">
+                                        <input type="hidden" name="action" value="resend_penalty">
+                                        <input type="hidden" name="penalty_id" value="<?php echo $pen['id']; ?>">
+                                        <button type="submit" class="btn btn-sm btn-light border text-primary" style="padding: 2px 8px; font-size: 0.75rem;">
+                                            <i class="fa-solid fa-paper-plane me-1"></i> Resend
+                                        </button>
+                                    </form>
+                                    <?php if ($pen['status'] === 'pending'): ?>
+                                        <form method="POST" style="display:inline-block;">
+                                            <input type="hidden" name="action" value="update_penalty_status">
+                                            <input type="hidden" name="penalty_id" value="<?php echo $pen['id']; ?>">
+                                            <input type="hidden" name="status" value="paid">
+                                            <button type="submit" class="btn btn-sm btn-success text-white" style="padding: 2px 8px; font-size: 0.75rem;" title="Mark Paid">
+                                                <i class="fa-solid fa-check"></i>
+                                            </button>
+                                        </form>
+                                        <form method="POST" style="display:inline-block;" onsubmit="return confirm('Waive this penalty assessment?');">
+                                            <input type="hidden" name="action" value="update_penalty_status">
+                                            <input type="hidden" name="penalty_id" value="<?php echo $pen['id']; ?>">
+                                            <input type="hidden" name="status" value="waived">
+                                            <button type="submit" class="btn btn-sm btn-light border text-muted" style="padding: 2px 8px; font-size: 0.75rem;" title="Waive">
+                                                <i class="fa-solid fa-ban"></i>
+                                            </button>
+                                        </form>
+                                    <?php endif; ?>
+                                </div>
+                            </td>
+                        </tr>
+                    <?php endforeach;
+                    endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
 <!-- TAB CONTENT: POLICY CARDS VIEW (CENTRAL, ZONAL, OR ALL) -->
 <?php else: ?>
     <?php if (empty($policies_list)): ?>
@@ -456,44 +743,46 @@ include '../includes/sidebar.php';
         <div class="row g-4">
             <?php foreach ($policies_list as $pol): ?>
                 <div class="col-12 col-lg-6">
-                    <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden d-flex flex-column" style="border: 1px solid rgba(226, 232, 240, 0.8) !important; transition: transform 0.2s ease, box-shadow 0.2s ease;">
+                    <div class="card policy-card border-0 shadow-sm rounded-4 h-100 overflow-hidden d-flex flex-column">
                         <!-- Card Header -->
-                        <div class="card-header bg-white p-3.5 border-bottom d-flex align-items-start justify-content-between gap-2">
-                            <div>
-                                <div class="d-flex align-items-center gap-2 flex-wrap mb-1.5">
+                        <div class="card-header p-3 p-sm-3.5 pb-2 border-bottom d-flex align-items-start justify-content-between gap-2">
+                            <div class="flex-grow-1 min-w-0">
+                                <!-- Horizontal Badges Row (Spacious & Clean) -->
+                                <div class="d-flex align-items-center gap-2 flex-wrap mb-2" style="row-gap: 6px; column-gap: 8px;">
+                                    <span class="badge bg-light text-dark border font-monospace px-2.5 py-1" style="font-size: 0.72rem; font-weight: 700;"><?php echo htmlspecialchars($pol['code'] ?: 'POL-' . $pol['id']); ?></span>
+
                                     <!-- Scope Badge -->
                                     <?php if ($pol['scope'] === 'central'): ?>
-                                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-0.5 rounded-pill font-monospace" style="font-size: 0.72rem;">
-                                            <i class="fa-solid fa-globe me-1"></i> Central Estate
+                                        <span class="badge badge-policy-scope px-2.5 py-1 rounded-pill" style="font-size: 0.7rem; font-weight: 600;">
+                                            <i class="fa-solid fa-globe me-1 text-primary"></i>Central
                                         </span>
                                     <?php else: ?>
-                                        <span class="badge px-2 py-0.5 rounded-pill font-monospace" style="background: rgba(168, 85, 247, 0.12); color: #7e22ce; border: 1px solid rgba(168, 85, 247, 0.25); font-size: 0.72rem;">
-                                            <i class="fa-solid fa-layer-group me-1"></i> <?php echo htmlspecialchars($pol['zone_name'] ?: 'Zone ' . $pol['zone_id']); ?>
+                                        <span class="badge px-2.5 py-1 rounded-pill" style="background: rgba(168, 85, 247, 0.12); color: #7e22ce; border: 1px solid rgba(168, 85, 247, 0.25); font-size: 0.7rem; font-weight: 600;">
+                                            <i class="fa-solid fa-layer-group me-1"></i><?php echo htmlspecialchars($pol['zone_name'] ?: 'Zone ' . $pol['zone_id']); ?>
                                         </span>
                                     <?php endif; ?>
 
                                     <!-- Category Badge -->
-                                    <span class="badge px-2 py-0.5 rounded-pill" style="background: <?php echo htmlspecialchars($pol['category_color'] ?: '#3b82f6'); ?>18; color: <?php echo htmlspecialchars($pol['category_color'] ?: '#3b82f6'); ?>; border: 1px solid <?php echo htmlspecialchars($pol['category_color'] ?: '#3b82f6'); ?>33; font-size: 0.72rem;">
-                                        <i class="fa-solid <?php echo htmlspecialchars($pol['category_icon'] ?: 'fa-gavel'); ?> me-1"></i>
-                                        <?php echo htmlspecialchars($pol['category_name'] ?: ucfirst($pol['category_slug'])); ?>
+                                    <span class="badge badge-policy-cat px-2.5 py-1 rounded-pill" style="font-size: 0.7rem; font-weight: 500;">
+                                        <i class="fa-solid <?php echo htmlspecialchars($pol['category_icon'] ?: 'fa-gavel'); ?> me-1 text-secondary"></i><?php echo htmlspecialchars($pol['category_name'] ?: ucfirst($pol['category_slug'])); ?>
                                     </span>
 
                                     <!-- Severity Badge -->
                                     <?php echo formatSeverityBadge($pol['severity']); ?>
 
                                     <?php if ($pol['status'] !== 'active'): ?>
-                                        <span class="badge bg-secondary text-white px-2 py-0.5 rounded-pill" style="font-size: 0.7rem;"><?php echo strtoupper($pol['status']); ?></span>
+                                        <span class="badge bg-secondary text-white px-2.5 py-1 rounded-pill" style="font-size: 0.65rem;"><?php echo strtoupper($pol['status']); ?></span>
                                     <?php endif; ?>
                                 </div>
-                                <h5 class="fw-bold text-slate-800 mb-0 d-flex align-items-center gap-2">
-                                    <span class="text-secondary small font-monospace"><?php echo htmlspecialchars($pol['code'] ?: 'POL-' . $pol['id']); ?>:</span>
+
+                                <h5 class="fw-bold text-slate-900 mb-0" style="font-size: 0.95rem; line-height: 1.35;">
                                     <?php echo htmlspecialchars($pol['title']); ?>
                                 </h5>
                             </div>
                             
                             <!-- Action Dropdown -->
-                            <div class="dropdown">
-                                <button class="btn btn-sm btn-light border-0 rounded-circle" type="button" data-bs-toggle="dropdown" style="width: 32px; height: 32px;">
+                            <div class="dropdown flex-shrink-0">
+                                <button class="btn btn-sm btn-light border-0 rounded-circle" type="button" data-bs-toggle="dropdown" style="width: 30px; height: 30px;" aria-label="Policy Actions">
                                     <i class="fa-solid fa-ellipsis-vertical text-secondary"></i>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3">
@@ -526,59 +815,47 @@ include '../includes/sidebar.php';
                             </div>
                         </div>
 
-                        <!-- Card Body -->
-                        <div class="card-body p-3.5 flex-grow-1">
+                        <!-- Card Body (Compact & Smart) -->
+                        <div class="card-body p-3 flex-grow-1 d-flex flex-column justify-content-between gap-2">
                             <!-- Policy Text -->
-                            <div class="mb-3">
-                                <div class="text-secondary small fw-bold text-uppercase mb-1" style="font-size: 0.72rem; letter-spacing: 0.04em;">Policy Description &amp; Rule:</div>
-                                <p class="text-slate-700 small mb-0" style="line-height: 1.55;"><?php echo nl2br(htmlspecialchars($pol['description'])); ?></p>
-                            </div>
+                            <p class="text-slate-600 mb-1" style="font-size: 0.83rem; line-height: 1.5;"><?php echo nl2br(htmlspecialchars($pol['description'])); ?></p>
 
-                            <!-- Offence Definition Box -->
-                            <div class="p-2.5 rounded-3 mb-3" style="background: #fff1f2; border-left: 3px solid #f43f5e;">
-                                <div class="d-flex align-items-center gap-1.5 text-danger fw-bold small mb-1" style="font-size: 0.75rem;">
-                                    <i class="fa-solid fa-circle-exclamation"></i> Breach / Offence Definition:
-                                </div>
-                                <div class="text-slate-700 small" style="font-size: 0.8rem; line-height: 1.45;">
-                                    <?php echo nl2br(htmlspecialchars($pol['offence_definition'] ?: 'Any breach of the above stated guidelines.')); ?>
-                                </div>
-                            </div>
-
-                            <!-- Punishment & Penalty Details -->
-                            <div class="p-2.5 rounded-3 mb-2" style="background: #f8fafc; border: 1px solid #e2e8f0;">
-                                <div class="d-flex align-items-center justify-content-between mb-1.5 flex-wrap gap-1">
-                                    <div class="d-flex align-items-center gap-1.5">
-                                        <span class="text-secondary small fw-bold" style="font-size: 0.75rem;">Sanction:</span>
-                                        <?php echo formatPunishmentTypeBadge($pol['punishment_type']); ?>
+                            <!-- Offence & Penalty Summary Strip -->
+                            <div class="policy-offence-summary rounded-3 p-2.5">
+                                <div class="d-flex align-items-start justify-content-between gap-2 mb-1.5">
+                                    <div class="min-w-0">
+                                        <span class="text-muted fw-bold text-uppercase d-block" style="font-size: 0.65rem; letter-spacing: 0.04em;">
+                                            <i class="fa-solid fa-triangle-exclamation text-amber-500 me-1"></i> Breach Definition
+                                        </span>
+                                        <div class="text-slate-700" style="font-size: 0.79rem; line-height: 1.4;">
+                                            <?php echo nl2br(htmlspecialchars($pol['offence_definition'] ?: 'Any breach of the above stated guidelines.')); ?>
+                                        </div>
                                     </div>
                                     <?php if ($pol['fine_amount'] > 0): ?>
-                                        <div class="text-end">
-                                            <span class="text-secondary small" style="font-size: 0.72rem;">Fine Amount:</span>
-                                            <span class="fw-bold text-danger font-monospace fs-6 ms-1">₦<?php echo number_format($pol['fine_amount'], 2); ?></span>
+                                        <div class="text-end flex-shrink-0">
+                                            <span class="text-muted fw-bold text-uppercase d-block" style="font-size: 0.65rem;">Fine</span>
+                                            <span class="fw-bold text-danger font-monospace" style="font-size: 0.88rem;">₦<?php echo number_format($pol['fine_amount'], 2); ?></span>
                                         </div>
                                     <?php endif; ?>
                                 </div>
-                                <?php if (!empty($pol['punishment_details'])): ?>
-                                    <div class="text-secondary small" style="font-size: 0.78rem;">
-                                        <strong>Details:</strong> <?php echo htmlspecialchars($pol['punishment_details']); ?>
-                                    </div>
-                                <?php endif; ?>
-                                <?php if (!empty($pol['repeat_offence_penalty'])): ?>
-                                    <div class="text-danger small mt-1" style="font-size: 0.75rem;">
-                                        <i class="fa-solid fa-arrow-trend-up me-1"></i> <strong>Repeat Offence:</strong> <?php echo htmlspecialchars($pol['repeat_offence_penalty']); ?>
-                                    </div>
-                                <?php endif; ?>
+                                <div class="d-flex align-items-center gap-2 flex-wrap pt-1.5 border-top" style="font-size: 0.74rem;">
+                                    <span class="text-muted">Sanction:</span>
+                                    <?php echo formatPunishmentTypeBadge($pol['punishment_type']); ?>
+                                    <?php if (!empty($pol['repeat_offence_penalty'])): ?>
+                                        <span class="text-muted ms-auto"><i class="fa-solid fa-arrow-trend-up me-1 text-amber-600"></i>Repeat: <strong class="text-slate-700"><?php echo htmlspecialchars($pol['repeat_offence_penalty']); ?></strong></span>
+                                    <?php endif; ?>
+                                </div>
                             </div>
                         </div>
 
                         <!-- Card Footer -->
-                        <div class="card-footer bg-light bg-opacity-50 p-2.5 px-3.5 border-top d-flex align-items-center justify-content-between text-secondary small" style="font-size: 0.72rem;">
+                        <div class="card-footer bg-light bg-opacity-40 p-2.5 px-3 border-top d-flex align-items-center justify-content-between text-muted" style="font-size: 0.72rem;">
                             <div>
-                                <i class="fa-solid fa-shield me-1 text-primary"></i>
-                                Enforced by: <strong><?php echo htmlspecialchars($pol['enforcement_entity'] ?: 'Estate Security'); ?></strong>
+                                <i class="fa-solid fa-shield me-1 text-slate-500"></i>
+                                Enforced by: <strong class="text-slate-700"><?php echo htmlspecialchars($pol['enforcement_entity'] ?: 'Estate Security'); ?></strong>
                             </div>
-                            <div class="text-muted">
-                                Ref: #<?php echo $pol['id']; ?>
+                            <div class="text-muted font-monospace">
+                                Ref #<?php echo $pol['id']; ?>
                             </div>
                         </div>
                     </div>
@@ -753,7 +1030,230 @@ include '../includes/sidebar.php';
     </div>
 </div>
 
+<!-- ------------------------------------------------------------- -->
+<!-- MODAL: ISSUE OFFICIAL PENALTY / CITATION                     -->
+<!-- ------------------------------------------------------------- -->
+<div class="modal fade" id="issuePenaltyModal" tabindex="-1" aria-labelledby="issuePenaltyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <form method="POST">
+                <input type="hidden" name="action" value="issue_penalty">
+
+                <div class="modal-header text-white py-3 px-4" style="background: #0f172a;">
+                    <h5 class="modal-title fw-bold text-white d-flex align-items-center gap-2" id="issuePenaltyModalLabel">
+                        <i class="fa-solid fa-triangle-exclamation text-danger"></i>
+                        <span>Issue Official Infraction Citation &amp; Penalty</span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body p-4">
+                    <div class="alert alert-light border d-flex align-items-center gap-2 mb-3 py-2 px-3 rounded-3" style="background: #f8fafc;">
+                        <i class="fa-solid fa-shield-halved text-secondary"></i>
+                        <span class="small text-muted">This citation will be logged to the official compliance ledger and dispatched directly to the recipient via Email &amp; WhatsApp.</span>
+                    </div>
+
+                    <!-- Target Recipient Type -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-5">
+                            <label class="form-label fw-semibold text-slate-700 small">Recipient Category <span class="text-danger">*</span></label>
+                            <select name="recipient_type" id="penalty_recipient_type" class="form-select" onchange="togglePenaltyRecipientType()" required>
+                                <option value="resident" selected>Registered Resident / Tenant</option>
+                                <option value="artisan">Contractor / Artisan</option>
+                                <option value="visitor">Visitor / Guest</option>
+                                <option value="staff">Estate Staff / Operative</option>
+                                <option value="other">Other Individual</option>
+                            </select>
+                        </div>
+                        <div class="col-md-7" id="penalty_resident_picker_col">
+                            <label class="form-label fw-semibold text-slate-700 small">Select Resident <span class="text-danger">*</span></label>
+                            <select name="user_id" id="penalty_user_id" class="form-select" onchange="onPenaltyResidentSelect(this)">
+                                <option value="">-- Choose Resident from Directory --</option>
+                                <?php foreach ($residents_list_for_penalty as $res_item): 
+                                    $unit_display = trim(($res_item['building_name'] ?? '') . ' ' . ($res_item['flat_number'] ?? ''));
+                                ?>
+                                    <option value="<?php echo $res_item['id']; ?>" 
+                                            data-name="<?php echo htmlspecialchars($res_item['name']); ?>"
+                                            data-email="<?php echo htmlspecialchars($res_item['email']); ?>"
+                                            data-phone="<?php echo htmlspecialchars($res_item['phone']); ?>"
+                                            data-unit="<?php echo htmlspecialchars($unit_display); ?>">
+                                        <?php echo htmlspecialchars($res_item['name']); ?> <?php echo !empty($unit_display) ? '(' . htmlspecialchars($unit_display) . ')' : ''; ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Contact Details -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-slate-700 small">Full Name <span class="text-danger">*</span></label>
+                            <input type="text" name="recipient_name" id="penalty_recipient_name" class="form-control" placeholder="Full Name" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-slate-700 small">Phone (WhatsApp) <span class="text-success"><i class="fa-brands fa-whatsapp ms-1"></i></span></label>
+                            <input type="tel" name="recipient_phone" id="penalty_recipient_phone" class="form-control" placeholder="e.g. 08012345678">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-slate-700 small">Email Address <i class="fa-regular fa-envelope ms-1 text-secondary"></i></label>
+                            <input type="email" name="recipient_email" id="penalty_recipient_email" class="form-control" placeholder="offender@example.com">
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-slate-700 small">Property / Unit / Residence</label>
+                            <input type="text" name="property_or_unit" id="penalty_property_or_unit" class="form-control" placeholder="e.g. Block 4, Flat 12B">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-slate-700 small">Vehicle Plate Number (if applicable)</label>
+                            <input type="text" name="vehicle_plate" id="penalty_vehicle_plate" class="form-control font-monospace text-uppercase" placeholder="e.g. ABC-123XY">
+                        </div>
+                    </div>
+
+                    <hr class="my-3 text-secondary opacity-25">
+
+                    <!-- Violation & Policy Link -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold text-slate-700 small">Linked Policy Clause / Offence Rule</label>
+                            <select name="policy_id" id="penalty_policy_id" class="form-select" onchange="onPenaltyPolicySelect(this)">
+                                <option value="">-- Custom Offence (Not linked to specific rule) --</option>
+                                <?php foreach ($policies_lookup as $pol_lk): ?>
+                                    <option value="<?php echo $pol_lk['id']; ?>"
+                                            data-code="<?php echo htmlspecialchars($pol_lk['code']); ?>"
+                                            data-title="<?php echo htmlspecialchars($pol_lk['title']); ?>"
+                                            data-fine="<?php echo $pol_lk['fine_amount']; ?>"
+                                            data-desc="<?php echo htmlspecialchars($pol_lk['description']); ?>">
+                                        [<?php echo htmlspecialchars($pol_lk['code'] ?: 'POL-' . $pol_lk['id']); ?>] <?php echo htmlspecialchars($pol_lk['title']); ?> (₦<?php echo number_format($pol_lk['fine_amount'], 2); ?>)
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-slate-700 small">Violation Code</label>
+                            <input type="text" name="violation_code" id="penalty_violation_code" class="form-control font-monospace" placeholder="INF-RULE" value="INF-RULE">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-slate-700 small">Violation Title <span class="text-danger">*</span></label>
+                        <input type="text" name="violation_title" id="penalty_violation_title" class="form-control" placeholder="e.g. Unauthorized Commercial Parking / Noise Violation" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-slate-700 small">Incident Description &amp; Specific Breach Evidence <span class="text-danger">*</span></label>
+                        <textarea name="violation_details" id="penalty_violation_details" class="form-control" rows="3" placeholder="Provide factual details: time of occurrence, security officer observations, photographic evidence notes..." required></textarea>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-slate-700 small">Incident Date &amp; Time</label>
+                            <input type="datetime-local" name="offence_date" id="penalty_offence_date" class="form-control" value="<?php echo date('Y-m-d\TH:i'); ?>">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-slate-700 small">Location / Street / Zone</label>
+                            <input type="text" name="location" id="penalty_location" class="form-control" placeholder="e.g. Main Gate / Palm Avenue" value="Estate Premises">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-slate-700 small">Fine Assessment (₦)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₦</span>
+                                <input type="number" step="0.01" name="fine_amount" id="penalty_fine_amount" class="form-control font-monospace fw-bold text-danger" placeholder="0.00" value="0.00">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-slate-700 small">Fine Settlement Due Date</label>
+                            <input type="date" name="due_date" id="penalty_due_date" class="form-control" value="<?php echo date('Y-m-d', strtotime('+7 days')); ?>">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-slate-700 small">Dispatch Delivery Channels</label>
+                            <div class="d-flex align-items-center gap-3 pt-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="channel_email" id="pen_ch_email" value="1" checked>
+                                    <label class="form-check-label small fw-semibold" for="pen_ch_email">
+                                        <i class="fa-regular fa-envelope me-1 text-primary"></i> Email Notice
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="channel_whatsapp" id="pen_ch_whatsapp" value="1" checked>
+                                    <label class="form-check-label small fw-semibold" for="pen_ch_whatsapp">
+                                        <i class="fa-brands fa-whatsapp me-1 text-success"></i> WhatsApp Alert
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer bg-light p-3 border-top d-flex justify-content-between">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger px-4 shadow-sm fw-semibold">
+                        <i class="fa-solid fa-triangle-exclamation me-1.5"></i> Confirm &amp; Issue Citation
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
+function openIssuePenaltyModal() {
+    document.getElementById('penalty_recipient_type').value = 'resident';
+    document.getElementById('penalty_user_id').value = '';
+    document.getElementById('penalty_recipient_name').value = '';
+    document.getElementById('penalty_recipient_phone').value = '';
+    document.getElementById('penalty_recipient_email').value = '';
+    document.getElementById('penalty_property_or_unit').value = '';
+    document.getElementById('penalty_vehicle_plate').value = '';
+    document.getElementById('penalty_policy_id').value = '';
+    document.getElementById('penalty_violation_code').value = 'INF-RULE';
+    document.getElementById('penalty_violation_title').value = '';
+    document.getElementById('penalty_violation_details').value = '';
+    document.getElementById('penalty_fine_amount').value = '0.00';
+    togglePenaltyRecipientType();
+    new bootstrap.Modal(document.getElementById('issuePenaltyModal')).show();
+}
+
+function togglePenaltyRecipientType() {
+    const type = document.getElementById('penalty_recipient_type').value;
+    const pickerCol = document.getElementById('penalty_resident_picker_col');
+    if (type === 'resident') {
+        pickerCol.style.display = 'block';
+    } else {
+        pickerCol.style.display = 'none';
+        document.getElementById('penalty_user_id').value = '';
+    }
+}
+
+function onPenaltyResidentSelect(selectEl) {
+    const opt = selectEl.options[selectEl.selectedIndex];
+    if (opt && opt.value) {
+        document.getElementById('penalty_recipient_name').value = opt.getAttribute('data-name') || '';
+        document.getElementById('penalty_recipient_phone').value = opt.getAttribute('data-phone') || '';
+        document.getElementById('penalty_recipient_email').value = opt.getAttribute('data-email') || '';
+        document.getElementById('penalty_property_or_unit').value = opt.getAttribute('data-unit') || '';
+    }
+}
+
+function onPenaltyPolicySelect(selectEl) {
+    const opt = selectEl.options[selectEl.selectedIndex];
+    if (opt && opt.value) {
+        const code = opt.getAttribute('data-code') || '';
+        const title = opt.getAttribute('data-title') || '';
+        const fine = opt.getAttribute('data-fine') || '0.00';
+        const desc = opt.getAttribute('data-desc') || '';
+        if (code) document.getElementById('penalty_violation_code').value = code;
+        if (title) document.getElementById('penalty_violation_title').value = title;
+        if (fine) document.getElementById('penalty_fine_amount').value = fine;
+        if (desc && !document.getElementById('penalty_violation_details').value) {
+            document.getElementById('penalty_violation_details').value = 'Breach of policy: ' + desc;
+        }
+    }
+}
 function toggleScopeInputs() {
     const isZonal = document.getElementById('scope_zonal').checked;
     const targetZoneWrapper = document.getElementById('target_zone_wrapper');
