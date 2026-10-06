@@ -633,6 +633,49 @@ include 'sidebar.php';
                     </div>
                 </div>
             </div>
+
+            <!-- Resident Platform Value & Privileges Hub -->
+            <div class="resident-glass-panel">
+                <div class="resident-card-header">
+                    <div class="resident-card-title">
+                        <i class="fa-solid fa-gem text-primary"></i> Resident Lifestyle Privileges
+                    </div>
+                    <span class="mature-badge mature-badge-sky"><i class="fa-solid fa-shield-check me-1"></i>Verified Home</span>
+                </div>
+                <div class="resident-card-body p-3">
+                    <div class="d-flex flex-column gap-2.5">
+                        <div class="d-flex align-items-center gap-2.5 p-2 rounded-3" style="background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.15);">
+                            <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(59, 130, 246, 0.15); color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0;">
+                                <i class="fa-solid fa-qrcode"></i>
+                            </div>
+                            <div style="flex: 1; min-width: 0;">
+                                <div class="fw-bold text-slate-900" style="font-size: 0.82rem;">Express QR Gate Passes</div>
+                                <div class="text-secondary" style="font-size: 0.72rem;">Guests clear gatehouse in &lt; 5 seconds with instant arrival alerts.</div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-2.5 p-2 rounded-3" style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.15);">
+                            <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(16, 185, 129, 0.15); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0;">
+                                <i class="fa-solid fa-wrench"></i>
+                            </div>
+                            <div style="flex: 1; min-width: 0;">
+                                <div class="fw-bold text-slate-900" style="font-size: 0.82rem;">Accredited Artisan Network</div>
+                                <div class="text-secondary" style="font-size: 0.72rem;">Admin-vetted tradesmen with transparent pricing &amp; priority gate badges.</div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-2.5 p-2 rounded-3" style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.15);">
+                            <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(245, 158, 11, 0.15); color: #d97706; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0;">
+                                <i class="fa-solid fa-phone-volume"></i>
+                            </div>
+                            <div style="flex: 1; min-width: 0;">
+                                <div class="fw-bold text-slate-900" style="font-size: 0.82rem;">24/7 Gatehouse Security Hotlines</div>
+                                <div class="text-secondary" style="font-size: 0.72rem;">Direct phone line to armed gatehouse officers without siren panic alarms.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

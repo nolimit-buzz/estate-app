@@ -142,8 +142,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </button>
             </form>
 
-            <div style="margin-top: 1.5rem; text-align: center; font-size: 0.8rem; color: #64748b;">
+            <div style="margin-top: 1.25rem; text-align: center; font-size: 0.8rem; color: #64748b;">
                 Demo Staff: paul@estate.com / admin123
+            </div>
+
+            <!-- Staff & Security Selling Points Banner -->
+            <div class="auth-usp-banner">
+                <div class="auth-usp-item">
+                    <i class="fa-solid fa-shield-halved text-success"></i>
+                    <span><strong>Sub-5s Gate Clearance:</strong> Instant QR verification stops gate queues.</span>
+                </div>
+                <div class="auth-usp-item">
+                    <i class="fa-solid fa-car text-info"></i>
+                    <span><strong>Plate Recognition:</strong> Instant vehicle sticker &amp; residency validation.</span>
+                </div>
+                <div class="auth-usp-item">
+                    <i class="fa-solid fa-clipboard-check text-warning"></i>
+                    <span><strong>Shift Audit Logging:</strong> Automatic officer tracking and custody logs.</span>
+                </div>
             </div>
         </div>
     </div>

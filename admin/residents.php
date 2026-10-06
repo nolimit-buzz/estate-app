@@ -1954,6 +1954,8 @@ function exportResidentsCSV() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+}
+
 function openRejectContactModal(reqId, resName) {
     document.getElementById('reject_req_id').value = reqId;
     document.getElementById('reject_res_name').innerText = resName;

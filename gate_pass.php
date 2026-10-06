@@ -967,6 +967,32 @@ $wa_link = "https://api.whatsapp.com/send?text=" . $wa_text . (!empty($v['phone'
                     <?php endif; ?>
                 </div>
 
+                <!-- Official Security Value & Assurance Strip -->
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.75rem 1rem; margin-top: 0.25rem;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.68rem; font-weight: 800; text-transform: uppercase; color: #475569; letter-spacing: 0.05em; margin-bottom: 0.5rem; border-bottom: 1px dashed #cbd5e1; padding-bottom: 0.35rem;">
+                        <span><i class="fa-solid fa-shield-halved text-primary me-1"></i> Digital Pass Security Features</span>
+                        <span style="color: #10b981;"><i class="fa-solid fa-check-circle me-1"></i> 100% Verified Credential</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.72rem; color: #334155;">
+                        <div style="display: flex; align-items: center; gap: 0.4rem;">
+                            <i class="fa-solid fa-bolt text-warning"></i>
+                            <span><strong>&lt; 5s Gate Clearance:</strong> Scanned directly by security</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.4rem;">
+                            <i class="fa-solid fa-bell text-info"></i>
+                            <span><strong>Host Auto-Ping:</strong> Arrival logged in resident portal</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.4rem;">
+                            <i class="fa-solid fa-fingerprint text-primary"></i>
+                            <span><strong>Encrypted QR:</strong> Single-use anti-fraud protocol</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.4rem;">
+                            <i class="fa-solid fa-clipboard-check text-success"></i>
+                            <span><strong>Custody Log:</strong> Timestamped entry &amp; exit record</span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Estate Gate Security Instructions -->
                 <div class="instructions-box">
                     <div class="instructions-title">

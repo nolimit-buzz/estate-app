@@ -140,8 +140,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </button>
             </form>
 
-            <div style="margin-top: 1.5rem; text-align: center; font-size: 0.8rem; color: #64748b;">
+            <div style="margin-top: 1.25rem; text-align: center; font-size: 0.8rem; color: #64748b;">
                 Demo Resident: john@example.com / admin123
+            </div>
+
+            <!-- Resident Platform Selling Points Banner -->
+            <div class="auth-usp-banner">
+                <div class="auth-usp-item">
+                    <i class="fa-solid fa-qrcode text-info"></i>
+                    <span><strong>Instant Visitor Passes:</strong> 1-click passcodes &amp; QR WhatsApp sharing.</span>
+                </div>
+                <div class="auth-usp-item">
+                    <i class="fa-solid fa-receipt text-success"></i>
+                    <span><strong>Digital Bill Settlement:</strong> Pay dues online with instant verifiable proof.</span>
+                </div>
+                <div class="auth-usp-item">
+                    <i class="fa-solid fa-screwdriver-wrench text-warning"></i>
+                    <span><strong>Vetted Artisan Desk:</strong> Direct access to accredited estate technicians.</span>
+                </div>
             </div>
         </div>
     </div>

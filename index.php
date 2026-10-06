@@ -90,6 +90,8 @@ if ($pol_q) {
 
             <ul class="nav-links">
                 <li><a href="#about">About</a></li>
+                <li><a href="#selling-points"><i class="fa-solid fa-gem text-info me-1"></i> Advantages</a></li>
+                <li><a href="#comparison">Compare</a></li>
                 <li><a href="#portals">Portals</a></li>
                 <li><a href="artisan_register.php"><i class="fa-solid fa-wrench me-1 text-primary"></i> Artisan Network</a></li>
                 <li><a href="#features">Amenities</a></li>
@@ -283,6 +285,282 @@ if ($pol_q) {
         </div>
     </section>
 
+    <!-- Core Platform Selling Points (USPs) Section -->
+    <section class="selling-points-section" id="selling-points">
+        <div class="usp-container">
+            <div class="section-header">
+                <div class="section-badge">
+                    <i class="fa-solid fa-gem text-primary"></i> Value Propositions &amp; Selling Points
+                </div>
+                <h2 class="section-title">6 Core Pillars That Set Our Estate Apart</h2>
+                <p class="section-subtitle">
+                    Engineered from the ground up to solve real estate bottlenecks: from ironclad gatehouse security and strict zonal data isolation to transparent accounting and verified artisan networks.
+                </p>
+            </div>
+
+            <div class="selling-points-grid">
+                <!-- 1. Ironclad Gatehouse Clearance -->
+                <div class="usp-card" style="--usp-accent: #10b981; --usp-icon-bg: rgba(16, 185, 129, 0.15); --usp-icon-border: rgba(16, 185, 129, 0.3); --usp-glow: rgba(16, 185, 129, 0.25);">
+                    <div class="usp-header">
+                        <div class="usp-icon-wrap">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                        <span class="usp-metric-badge">
+                            <i class="fa-solid fa-bolt text-warning"></i> &lt; 5s Verification
+                        </span>
+                    </div>
+                    <h3 class="usp-title">Ironclad Gatehouse Security &amp; Passes</h3>
+                    <p class="usp-desc">
+                        Eliminates manual paper logbooks and gate congestion. Encrypted digital QR passes allow security officers to verify visitors in under 5 seconds with instant host arrival notifications.
+                    </p>
+                    <ul class="usp-perks-list">
+                        <li class="usp-perk-item">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>Zero manual paper logs or stolen visitor records</span>
+                        </li>
+                        <li class="usp-perk-item">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>Real-time gatehouse scanner with entry &amp; exit timestamping</span>
+                        </li>
+                        <li class="usp-perk-item">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>Single-use, auto-expiring codes stop unauthorized re-entry</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- 2. Hierarchical Zonal Autonomy -->
+                <div class="usp-card" style="--usp-accent: #a855f7; --usp-icon-bg: rgba(168, 85, 247, 0.15); --usp-icon-border: rgba(168, 85, 247, 0.3); --usp-glow: rgba(168, 85, 247, 0.25);">
+                    <div class="usp-header">
+                        <div class="usp-icon-wrap">
+                            <i class="fa-solid fa-layer-group"></i>
+                        </div>
+                        <span class="usp-metric-badge">
+                            <i class="fa-solid fa-lock text-purple"></i> Strict Data Boundary
+                        </span>
+                    </div>
+                    <h3 class="usp-title">Hierarchical Zonal RBAC Autonomy</h3>
+                    <p class="usp-desc">
+                        Tailored for modern multi-sector communities. Zone Admins autonomously manage their streets, units, and local levies with zero visibility into central secrets or other sectors.
+                    </p>
+                    <ul class="usp-perks-list">
+                        <li class="usp-perk-item">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>Zero cross-zone data leakage or unauthorized sector access</span>
+                        </li>
+                        <li class="usp-perk-item">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>Street-level precision for local billing &amp; resident census</span>
+                        </li>
+                        <li class="usp-perk-item">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>Consolidated executive visibility for Central Management</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- 3. Transparent Accounting & Instant Settlement -->
+                <div class="usp-card" style="--usp-accent: #3b82f6; --usp-icon-bg: rgba(59, 130, 246, 0.15); --usp-icon-border: rgba(59, 130, 246, 0.3); --usp-glow: rgba(59, 130, 246, 0.25);">
+                    <div class="usp-header">
+                        <div class="usp-icon-wrap">
+                            <i class="fa-solid fa-file-invoice-dollar"></i>
+                        </div>
+                        <span class="usp-metric-badge">
+                            <i class="fa-solid fa-chart-line text-info"></i> 100% Reconciled
+                        </span>
+                    </div>
+                    <h3 class="usp-title">Transparent Accounting &amp; Direct Billing</h3>
+                    <p class="usp-desc">
+                        Eliminates financial leakage and unrecorded dues. Automated recurring billing with Paystack card, USSD, and dedicated zonal bank accounts with instant verifiable receipts.
+                    </p>
+                    <ul class="usp-perks-list">
+                        <li class="usp-perk-item">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>Zero cash handling &amp; complete protection against revenue diversion</span>
+                        </li>
+                        <li class="usp-perk-item">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>Flexible installment milestones configured per zone</span>
+                        </li>
+                        <li class="usp-perk-item">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>Tamper-proof digital receipts with automated PDF export</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- 4. Accredited Artisan Network -->
+                <div class="usp-card" style="--usp-accent: #0284c7; --usp-icon-bg: rgba(2, 132, 199, 0.15); --usp-icon-border: rgba(2, 132, 199, 0.3); --usp-glow: rgba(2, 132, 199, 0.25);">
+                    <div class="usp-header">
+                        <div class="usp-icon-wrap">
+                            <i class="fa-solid fa-screwdriver-wrench"></i>
+                        </div>
+                        <span class="usp-metric-badge">
+                            <i class="fa-solid fa-certificate text-primary"></i> Vetted &amp; Quarantined
+                        </span>
+                    </div>
+                    <h3 class="usp-title">Accredited Estate Artisan Network</h3>
+                    <p class="usp-desc">
+                        Protect households from unverified roadside workers. Central Administration vets artisans with NIN verification, guarantor audits, and background screening before issuing credentials.
+                    </p>
+                    <ul class="usp-perks-list">
+                        <li class="usp-perk-item">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>Strict admin quarantine before listing in the resident directory</span>
+                        </li>
+                        <li class="usp-perk-item">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>Express gatehouse clearance code eliminates entry delays</span>
+                        </li>
+                        <li class="usp-perk-item">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>5-star resident ratings, review tracking &amp; fair inspection pricing</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- 5. 360° Resident Dossiers & Vehicle Stickers -->
+                <div class="usp-card" style="--usp-accent: #f59e0b; --usp-icon-bg: rgba(245, 158, 11, 0.15); --usp-icon-border: rgba(245, 158, 11, 0.3); --usp-glow: rgba(245, 158, 11, 0.25);">
+                    <div class="usp-header">
+                        <div class="usp-icon-wrap">
+                            <i class="fa-solid fa-id-card"></i>
+                        </div>
+                        <span class="usp-metric-badge">
+                            <i class="fa-solid fa-car text-amber"></i> 360° Household Dossier
+                        </span>
+                    </div>
+                    <h3 class="usp-title">360° Household &amp; Vehicle Profiling</h3>
+                    <p class="usp-desc">
+                        Centralize multi-entity household management in one profile: authorized domestic staff, co-residents, dependents, registered pets, and vehicles with holographic security stickers.
+                    </p>
+                    <ul class="usp-perks-list">
+                        <li class="usp-perk-item">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>Anti-counterfeit vehicle stickers with QR license plate verification</span>
+                        </li>
+                        <li class="usp-perk-item">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>Domestic staff gate clearance passes &amp; verified background files</span>
+                        </li>
+                        <li class="usp-perk-item">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>Comprehensive resident timeline history and occupancy tracking</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- 6. Emergency SOS & Multi-Channel Broadcast -->
+                <div class="usp-card" style="--usp-accent: #f43f5e; --usp-icon-bg: rgba(244, 63, 94, 0.15); --usp-icon-border: rgba(244, 63, 94, 0.3); --usp-glow: rgba(244, 63, 94, 0.25);">
+                    <div class="usp-header">
+                        <div class="usp-icon-wrap">
+                            <i class="fa-solid fa-tower-broadcast"></i>
+                        </div>
+                        <span class="usp-metric-badge">
+                            <i class="fa-solid fa-phone-volume text-danger"></i> Rapid Response
+                        </span>
+                    </div>
+                    <h3 class="usp-title">Emergency SOS &amp; Omnichannel Notices</h3>
+                    <p class="usp-desc">
+                        Speed saves lives. Emergency hotlines connect residents directly to guardhouse officers without alarm delays, supported by automated WhatsApp, Kapso webhook, and Email broadcasts.
+                    </p>
+                    <ul class="usp-perks-list">
+                        <li class="usp-perk-item">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>One-tap panic hotline dialer to gatehouse &amp; patrol beats</span>
+                        </li>
+                        <li class="usp-perk-item">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>Automated multi-channel notices delivered to Email &amp; WhatsApp</span>
+                        </li>
+                        <li class="usp-perk-item">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>Interactive resident community forum &amp; digital policy handbook</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Trust & Assurance Strip -->
+            <div class="trust-strip-bar">
+                <div class="trust-strip-item">
+                    <i class="fa-solid fa-lock text-success"></i>
+                    <span>256-Bit Bank Grade Data Encryption</span>
+                </div>
+                <div class="trust-strip-item">
+                    <i class="fa-solid fa-qrcode text-info"></i>
+                    <span>Sub-5s Gate Access Verification</span>
+                </div>
+                <div class="trust-strip-item">
+                    <i class="fa-solid fa-shield-check text-warning"></i>
+                    <span>100% Vetted Artisan Guarantee</span>
+                </div>
+                <div class="trust-strip-item">
+                    <i class="fa-solid fa-scale-balanced text-primary"></i>
+                    <span>Zero Revenue Diversion &amp; Audited Ledgers</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Legacy Estates vs Smart Digital Estate Comparison Matrix -->
+    <section class="comparison-section" id="comparison">
+        <div class="usp-container">
+            <div class="section-header">
+                <div class="section-badge">
+                    <i class="fa-solid fa-code-compare text-info"></i> Comparative Operational Impact
+                </div>
+                <h2 class="section-title">Smart Digital Estate vs. Legacy Estate Management</h2>
+                <p class="section-subtitle">
+                    Why traditional manual estates struggle with security breaches, financial discrepancies, and resident dissatisfaction — and how our platform transforms community living.
+                </p>
+            </div>
+
+            <div class="comparison-wrapper">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th class="col-feature"><i class="fa-solid fa-sliders me-1.5"></i> Operational Domain</th>
+                            <th class="col-legacy"><i class="fa-solid fa-triangle-exclamation me-1.5"></i> Legacy Estates (Paper &amp; Manual)</th>
+                            <th class="col-smart"><i class="fa-solid fa-circle-check me-1.5"></i> Our Smart Estate Platform</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="col-feature">Visitor Access Clearance</td>
+                            <td class="col-legacy"><i class="fa-solid fa-xmark"></i> Paper notebooks, queues at gate, unverified phone calls, prone to theft and lost records.</td>
+                            <td class="col-smart"><i class="fa-solid fa-check"></i> Encrypted QR passes generated on mobile, sub-5s gate scanner, automated resident check-in alert.</td>
+                        </tr>
+                        <tr>
+                            <td class="col-feature">Levies &amp; Dues Collection</td>
+                            <td class="col-legacy"><i class="fa-solid fa-xmark"></i> Cash handling, lost paper receipts, delayed bank reconciliations, frequent dispute over paid dues.</td>
+                            <td class="col-smart"><i class="fa-solid fa-check"></i> Automated digital invoices, instant Paystack/bank transfer, tamper-proof receipts, 100% reconciled ledger.</td>
+                        </tr>
+                        <tr>
+                            <td class="col-feature">Artisans &amp; Tradespeople</td>
+                            <td class="col-legacy"><i class="fa-solid fa-xmark"></i> Unvetted roadside workers roaming estate, unverified identities, security and theft risks.</td>
+                            <td class="col-smart"><i class="fa-solid fa-check"></i> Central Admin accredited network, NIN &amp; guarantor verified, gate pre-clearance badge code, resident ratings.</td>
+                        </tr>
+                        <tr>
+                            <td class="col-feature">Multi-Zone Administration</td>
+                            <td class="col-legacy"><i class="fa-solid fa-xmark"></i> Central executive bottleneck, chaotic WhatsApp groups, cross-zone privacy leaks, uncoordinated billing.</td>
+                            <td class="col-smart"><i class="fa-solid fa-check"></i> Strict Zonal RBAC isolation, autonomous sector secretariats, localized levies, executive oversight hub.</td>
+                        </tr>
+                        <tr>
+                            <td class="col-feature">Resident Household Tracking</td>
+                            <td class="col-legacy"><i class="fa-solid fa-xmark"></i> Scattered paper files, untracked domestic staff, no record of resident vehicles or pets.</td>
+                            <td class="col-smart"><i class="fa-solid fa-check"></i> 360° Household dossiers: domestic staff security passes, holographic vehicle stickers, pet registry.</td>
+                        </tr>
+                        <tr>
+                            <td class="col-feature">Emergency &amp; Security Alerts</td>
+                            <td class="col-legacy"><i class="fa-solid fa-xmark"></i> Chaotic phone calls, delayed security guardhouse response, unconfirmed rumors.</td>
+                            <td class="col-smart"><i class="fa-solid fa-check"></i> Direct gatehouse emergency hotlines, automated multi-channel WhatsApp, Kapso webhook, &amp; Email broadcasts.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
     <!-- Role Portals Selector Section -->
     <section class="portals-section" id="portals">
         <div class="section-header">
@@ -301,16 +579,19 @@ if ($pol_q) {
                 <div class="portal-icon-wrapper">
                     <i class="fa-solid fa-house-user"></i>
                 </div>
-                <span class="portal-tag">Residents & Owners</span>
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                    <span class="portal-tag mb-0">Residents &amp; Owners</span>
+                    <span class="badge bg-info bg-opacity-25 text-info rounded-pill px-2 py-0.5" style="font-size: 0.7rem;"><i class="fa-solid fa-bolt me-1"></i> Instant QR Pass</span>
+                </div>
                 <h3 class="portal-title">Resident Portal</h3>
                 <p class="portal-desc">
                     Homeowners and tenants can manage utility bills, book visitor access passes, and report facility repair issues in seconds.
                 </p>
                 <ul class="portal-features">
-                    <li><i class="fa-solid fa-circle-check"></i> Visitor Access Passes & QR Codes</li>
-                    <li><i class="fa-solid fa-circle-check"></i> Online Bill Payments & Receipts</li>
-                    <li><i class="fa-solid fa-circle-check"></i> Maintenance Work Order Tracking</li>
-                    <li><i class="fa-solid fa-circle-check"></i> Resident Forum & Community Chat</li>
+                    <li><i class="fa-solid fa-circle-check"></i> Visitor Access Passes &amp; QR Codes (&lt; 5s Entry)</li>
+                    <li><i class="fa-solid fa-circle-check"></i> Online Bill Payments &amp; Instant Proof of Settlement</li>
+                    <li><i class="fa-solid fa-circle-check"></i> Vetted Artisan Directory &amp; Repair Work Orders</li>
+                    <li><i class="fa-solid fa-circle-check"></i> Resident Forum &amp; Direct Gatehouse Panic Hotline</li>
                 </ul>
                 <a href="resident/login" class="portal-btn">
                     <span>Resident Sign In</span>
@@ -323,16 +604,19 @@ if ($pol_q) {
                 <div class="portal-icon-wrapper">
                     <i class="fa-solid fa-shield-halved"></i>
                 </div>
-                <span class="portal-tag">Operations & Security</span>
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                    <span class="portal-tag mb-0">Operations &amp; Security</span>
+                    <span class="badge bg-success bg-opacity-25 text-success rounded-pill px-2 py-0.5" style="font-size: 0.7rem;"><i class="fa-solid fa-qrcode me-1"></i> Sub-5s Scanner</span>
+                </div>
                 <h3 class="portal-title">Staff Console</h3>
                 <p class="portal-desc">
                     For gatehouse security officers, maintenance engineers, and field supervisors to verify visitors and resolve tickets.
                 </p>
                 <ul class="portal-features">
-                    <li><i class="fa-solid fa-circle-check"></i> Real-time Gate Pass Verification</li>
-                    <li><i class="fa-solid fa-circle-check"></i> Visitor Check-In / Check-Out Log</li>
-                    <li><i class="fa-solid fa-circle-check"></i> Assigned Field Work Order Queue</li>
-                    <li><i class="fa-solid fa-circle-check"></i> Gatehouse Shift Reporting</li>
+                    <li><i class="fa-solid fa-circle-check"></i> Real-time Gate Pass Verification &amp; Inspection</li>
+                    <li><i class="fa-solid fa-circle-check"></i> Scannable Vehicle Hologram Plate Lookup</li>
+                    <li><i class="fa-solid fa-circle-check"></i> Automated Check-In / Check-Out Audit Logs</li>
+                    <li><i class="fa-solid fa-circle-check"></i> Gatehouse Shift Reporting &amp; Incident Dispatch</li>
                 </ul>
                 <a href="staff/login" class="portal-btn">
                     <span>Staff Sign In</span>
@@ -345,16 +629,19 @@ if ($pol_q) {
                 <div class="portal-icon-wrapper">
                     <i class="fa-solid fa-layer-group"></i>
                 </div>
-                <span class="portal-tag">Zonal Management</span>
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                    <span class="portal-tag mb-0">Zonal Management</span>
+                    <span class="badge rounded-pill px-2 py-0.5" style="font-size: 0.7rem; background: rgba(168, 85, 247, 0.2); color: #c084fc;"><i class="fa-solid fa-lock me-1"></i> Strict RBAC</span>
+                </div>
                 <h3 class="portal-title">Zonal Admin Portal</h3>
                 <p class="portal-desc">
                     Dedicated command center for Zone Administrators to manage streets, onboard local residents, configure zonal levies, and generate bills.
                 </p>
                 <ul class="portal-features">
-                    <li><i class="fa-solid fa-circle-check"></i> Scoped Street & Property Registry</li>
-                    <li><i class="fa-solid fa-circle-check"></i> Resident & Owner Onboarding</li>
-                    <li><i class="fa-solid fa-circle-check"></i> Local Levies & Automated Billing</li>
-                    <li><i class="fa-solid fa-circle-check"></i> Zone Financial & Occupancy Analytics</li>
+                    <li><i class="fa-solid fa-circle-check"></i> Scoped Street &amp; Property Registry (Zero Cross-Zone Leak)</li>
+                    <li><i class="fa-solid fa-circle-check"></i> Multi-Entity Resident &amp; Domestic Staff Directory</li>
+                    <li><i class="fa-solid fa-circle-check"></i> Dedicated Zonal Accounts &amp; Automated Billing</li>
+                    <li><i class="fa-solid fa-circle-check"></i> Real-time Zone Financial &amp; Occupancy Analytics</li>
                 </ul>
                 <a href="zone/login" class="portal-btn">
                     <span>Zone Admin Sign In</span>
@@ -367,16 +654,19 @@ if ($pol_q) {
                 <div class="portal-icon-wrapper">
                     <i class="fa-solid fa-building-columns"></i>
                 </div>
-                <span class="portal-tag">Central & Executive</span>
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                    <span class="portal-tag mb-0">Central &amp; Executive</span>
+                    <span class="badge bg-warning bg-opacity-25 text-warning rounded-pill px-2 py-0.5" style="font-size: 0.7rem;"><i class="fa-solid fa-chart-pie me-1"></i> Audited Ledger</span>
+                </div>
                 <h3 class="portal-title">Central Admin Hub</h3>
                 <p class="portal-desc">
                     Executive management command center for estate-wide zone creation, guardhouse security oversight, automated finance, and global governance.
                 </p>
                 <ul class="portal-features">
-                    <li><i class="fa-solid fa-circle-check"></i> Multi-Zone Creation & Admin Assignment</li>
-                    <li><i class="fa-solid fa-circle-check"></i> Exclusive Gate & Guardhouse Security</li>
-                    <li><i class="fa-solid fa-circle-check"></i> Estate-Wide Consolidated Financials</li>
-                    <li><i class="fa-solid fa-circle-check"></i> Global Roles, Staff & System Audit</li>
+                    <li><i class="fa-solid fa-circle-check"></i> Multi-Zone Sector Creation &amp; Admin Scoping</li>
+                    <li><i class="fa-solid fa-circle-check"></i> Exclusive Gate &amp; Guardhouse Security Command</li>
+                    <li><i class="fa-solid fa-circle-check"></i> Estate-Wide Consolidated Financial Auditing</li>
+                    <li><i class="fa-solid fa-circle-check"></i> Global Roles, Staff Shift Logs &amp; Activity Audit</li>
                 </ul>
                 <a href="login" class="portal-btn">
                     <span>Central Sign In</span>
@@ -389,16 +679,19 @@ if ($pol_q) {
                 <div class="portal-icon-wrapper" style="background: rgba(2, 132, 199, 0.1); color: #0284c7;">
                     <i class="fa-solid fa-screwdriver-wrench"></i>
                 </div>
-                <span class="portal-tag" style="background: rgba(2, 132, 199, 0.1); color: #0284c7;">Artisans &amp; Trades</span>
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                    <span class="portal-tag mb-0" style="background: rgba(2, 132, 199, 0.1); color: #0284c7;">Artisans &amp; Trades</span>
+                    <span class="badge rounded-pill px-2 py-0.5" style="font-size: 0.7rem; background: rgba(2, 132, 199, 0.2); color: #38bdf8;"><i class="fa-solid fa-certificate me-1"></i> Vetted Pro</span>
+                </div>
                 <h3 class="portal-title">Artisan Network</h3>
                 <p class="portal-desc">
                     Plumbers, electricians, HVAC technicians, carpenters, and facility contractors can apply for official estate accreditation and receive service requests.
                 </p>
                 <ul class="portal-features">
-                    <li><i class="fa-solid fa-circle-check"></i> Central Admin Vetted Badge</li>
-                    <li><i class="fa-solid fa-circle-check"></i> Direct Resident Work Orders</li>
-                    <li><i class="fa-solid fa-circle-check"></i> Seamless Security Gate Clearance</li>
-                    <li><i class="fa-solid fa-circle-check"></i> Trust Ratings &amp; Performance Review</li>
+                    <li><i class="fa-solid fa-circle-check"></i> Official Vetted Badge &amp; Express Gatehouse Passcode</li>
+                    <li><i class="fa-solid fa-circle-check"></i> Exclusive Direct Work Orders from 500+ Verified Residents</li>
+                    <li><i class="fa-solid fa-circle-check"></i> Direct 100% Client Settlement (Zero Middleman Deductions)</li>
+                    <li><i class="fa-solid fa-circle-check"></i> Verified Ratings, 5-Star Reviews &amp; Facility Contracts</li>
                 </ul>
                 <a href="artisan_register.php?ref=public" class="portal-btn" style="background: #0284c7; color: #fff;">
                     <span>Apply for Accreditation</span>

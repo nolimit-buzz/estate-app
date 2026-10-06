@@ -352,6 +352,24 @@ $recent_new_residents = $conn->query("
     </div>
 </div>
 
+<!-- Central Executive Governance & Platform Integrity Ribbon -->
+<div class="card border-0 rounded-4 p-3 mb-4 shadow-sm" style="background: linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(16, 185, 129, 0.05) 100%); border: 1px solid rgba(37, 99, 235, 0.2) !important;">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-primary rounded-pill px-2.5 py-1" style="font-size: 0.72rem; font-weight: 700;">
+                <i class="fa-solid fa-building-columns me-1"></i> EXECUTIVE COMMAND
+            </span>
+            <span class="text-secondary small fw-semibold">Central Administrative Authority &amp; System Integrity Active</span>
+        </div>
+        <div class="d-flex align-items-center gap-3 flex-wrap small text-secondary">
+            <span><i class="fa-solid fa-shield-halved text-success me-1"></i> 24/7 Gatehouse Oversight</span>
+            <span><i class="fa-solid fa-lock text-info me-1"></i> Strict Multi-Zone Isolation</span>
+            <span><i class="fa-solid fa-scale-balanced text-primary me-1"></i> 100% Audited Financial Ledger</span>
+            <span><i class="fa-solid fa-screwdriver-wrench text-warning me-1"></i> Central Vetted Artisans</span>
+        </div>
+    </div>
+</div>
+
 <?php 
 $dashboard_pending_requests = $conn->query("SELECT COUNT(*) as cnt FROM contact_change_requests WHERE estate_id = $estate_id AND status = 'pending'")->fetch_assoc()['cnt'] ?? 0;
 if ($dashboard_pending_requests > 0): 

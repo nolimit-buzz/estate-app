@@ -812,6 +812,61 @@ $verify_url = $protocol . $_SERVER['HTTP_HOST'] . rtrim(dirname($_SERVER['SCRIPT
                 </div>
             <?php endif; ?>
         </div>
+
+        <!-- Vehicle Security Privileges & Selling Points Ribbon -->
+        <div class="card border-0 rounded-4 p-4 mt-3 no-print" style="background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.08) !important;">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+                <div class="d-flex align-items-center gap-2">
+                    <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(56, 189, 248, 0.15); color: #38bdf8; display: flex; align-items: center; justify-content: center;">
+                        <i class="fa-solid fa-car-tunnel"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-white fw-bold mb-0" style="font-size: 0.95rem;">Registered Vehicle Security Privileges</h6>
+                        <small class="text-slate-400">Exclusive advantages of the digital vehicle sticker system</small>
+                    </div>
+                </div>
+                <span class="badge bg-primary bg-opacity-25 text-info rounded-pill px-3 py-1 font-monospace" style="font-size: 0.72rem;">ESTATE RFID-READY PROTOCOL</span>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-3 col-sm-6">
+                    <div class="d-flex align-items-start gap-2.5">
+                        <i class="fa-solid fa-gauge-high text-warning mt-1 fs-6"></i>
+                        <div>
+                            <div class="text-white fw-bold small">Resident Express Lane</div>
+                            <div class="text-slate-400" style="font-size: 0.75rem;">Fast-track priority gate passage; bypasses visitor queues during rush hours.</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="d-flex align-items-start gap-2.5">
+                        <i class="fa-solid fa-shield-halved text-success mt-1 fs-6"></i>
+                        <div>
+                            <div class="text-white fw-bold small">Anti-Cloning Hologram</div>
+                            <div class="text-slate-400" style="font-size: 0.75rem;">Serialized alphanumeric code permanently locked to residence address.</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="d-flex align-items-start gap-2.5">
+                        <i class="fa-solid fa-qrcode text-info mt-1 fs-6"></i>
+                        <div>
+                            <div class="text-white fw-bold small">Patrol QR Scanner</div>
+                            <div class="text-slate-400" style="font-size: 0.75rem;">Mobile security officers scan sticker to confirm parking and authorized overnight stays.</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="d-flex align-items-start gap-2.5">
+                        <i class="fa-solid fa-triangle-exclamation text-danger mt-1 fs-6"></i>
+                        <div>
+                            <div class="text-white fw-bold small">Instant Gate Blacklist</div>
+                            <div class="text-slate-400" style="font-size: 0.75rem;">1-click alert from resident portal locks gate boom barrier if vehicle is compromised.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- HTML2CANVAS SCRIPT FOR DOWNLOAD -->

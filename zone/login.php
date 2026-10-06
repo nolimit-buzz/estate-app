@@ -153,8 +153,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </button>
             </form>
             
-            <div style="margin-top: 1.5rem; text-align: center; font-size: 0.8rem; color: #64748b;">
+            <div style="margin-top: 1.25rem; text-align: center; font-size: 0.8rem; color: #64748b;">
                 Default Zone Admin: zone1@estate.com / admin123
+            </div>
+
+            <!-- Zonal Platform Selling Points Banner -->
+            <div class="auth-usp-banner">
+                <div class="auth-usp-item">
+                    <i class="fa-solid fa-layer-group" style="color: #c084fc;"></i>
+                    <span><strong>Sector Isolation:</strong> Streets, units &amp; residents scoped to your zone.</span>
+                </div>
+                <div class="auth-usp-item">
+                    <i class="fa-solid fa-file-invoice-dollar text-success"></i>
+                    <span><strong>Autonomous Levies:</strong> Configure local dues &amp; track collection velocity.</span>
+                </div>
+                <div class="auth-usp-item">
+                    <i class="fa-solid fa-bullhorn text-info"></i>
+                    <span><strong>Targeted Notices:</strong> Direct emergency broadcasts to sector households.</span>
+                </div>
             </div>
         </div>
     </div>

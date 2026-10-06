@@ -490,6 +490,23 @@ body.dark-mode .kpi-title {
     </div>
 </div>
 
+<!-- Zonal Autonomy & Security Privilege Ribbon -->
+<div class="card border-0 rounded-4 p-3 mb-4 shadow-sm" style="background: linear-gradient(135deg, rgba(168, 85, 247, 0.08) 0%, rgba(59, 130, 246, 0.05) 100%); border: 1px solid rgba(168, 85, 247, 0.2) !important;">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge rounded-pill px-2.5 py-1" style="background: rgba(168, 85, 247, 0.2); color: #7e22ce; font-size: 0.72rem; font-weight: 700;">
+                <i class="fa-solid fa-lock me-1"></i> ZONAL PRIVACY LOCK
+            </span>
+            <span class="text-secondary small fw-semibold">Strict Role-Based Scoping Active for <?= htmlspecialchars($zone_name) ?></span>
+        </div>
+        <div class="d-flex align-items-center gap-3 flex-wrap small text-secondary">
+            <span><i class="fa-solid fa-circle-check text-success me-1"></i> Zero Cross-Zone Data Leakage</span>
+            <span><i class="fa-solid fa-circle-check text-success me-1"></i> Street-Level Accounting</span>
+            <span><i class="fa-solid fa-circle-check text-success me-1"></i> Dedicated Zonal Remittance</span>
+        </div>
+    </div>
+</div>
+
 <?php 
 $z_pending_requests = $conn->query("
     SELECT COUNT(DISTINCT ccr.id) as cnt 

@@ -424,6 +424,29 @@ $amount_in_kobo = round($initial_pay_amount * 100);
                 <div style="font-size: 0.8rem; color: #64748b; margin-top: 0.75rem;">
                     Instant confirmation via Debit Card, USSD (*737#, *966#, etc.), or Online Transfer
                 </div>
+
+                <!-- Safe & Transparent Settlement Selling Points -->
+                <div style="margin-top: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.85rem; padding: 1rem 1.15rem; text-align: left;">
+                    <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: #475569; letter-spacing: 0.05em; margin-bottom: 0.6rem; display: flex; align-items: center; justify-content: space-between;">
+                        <span><i class="fa-solid fa-shield-halved text-success me-1"></i> Payment Guarantees</span>
+                        <span style="color: #059669; font-size: 0.68rem;"><i class="fa-solid fa-lock me-1"></i> PCI-DSS Encrypted</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.76rem; color: #334155;">
+                        <div style="display: flex; align-items: center; gap: 0.45rem;">
+                            <i class="fa-solid fa-circle-check text-success" style="font-size: 0.8rem;"></i>
+                            <span><strong>Zero Cash Handling:</strong> Direct settlement into official estate account.</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.45rem;">
+                            <i class="fa-solid fa-circle-check text-success" style="font-size: 0.8rem;"></i>
+                            <span><strong>Official Tamper-Proof Receipt:</strong> Instantly verified &amp; downloadable.</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.45rem;">
+                            <i class="fa-solid fa-circle-check text-success" style="font-size: 0.8rem;"></i>
+                            <span><strong>Instant Dues Clearance:</strong> Gate access restrictions cleared in real time.</span>
+                        </div>
+                    </div>
+                </div>
+
                 <script src="https://js.paystack.co/v1/inline.js"></script>
                 <script>
                     let currentPayAmount = <?= $initial_pay_amount ?>;

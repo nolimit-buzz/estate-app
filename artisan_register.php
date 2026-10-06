@@ -283,6 +283,81 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             font-size: 0.78rem;
             font-weight: 600;
         }
+
+        /* Artisan Selling Points Sidebar & Cards */
+        .artisan-usp-sidebar {
+            position: sticky;
+            top: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+        .artisan-selling-card {
+            background: #ffffff;
+            border-radius: 1.25rem;
+            border: 1px solid #e2e8f0;
+            padding: 1.75rem 1.5rem;
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.05);
+        }
+        .artisan-selling-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.85rem;
+            padding: 0.85rem 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .artisan-selling-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        .artisan-selling-item:first-child {
+            padding-top: 0;
+        }
+        .artisan-usp-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+        .artisan-usp-title {
+            font-weight: 700;
+            color: var(--slate-900);
+            font-size: 0.95rem;
+            margin-bottom: 0.2rem;
+            line-height: 1.3;
+        }
+        .artisan-usp-text {
+            font-size: 0.82rem;
+            color: #64748b;
+            line-height: 1.45;
+            margin: 0;
+        }
+        .trust-seal-card {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #ffffff;
+            border-radius: 1.25rem;
+            padding: 1.5rem;
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.2);
+        }
+        .trust-seal-item {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 0.82rem;
+            color: #cbd5e1;
+            margin-bottom: 0.6rem;
+        }
+        .trust-seal-item:last-child {
+            margin-bottom: 0;
+        }
+        .trust-seal-item i {
+            color: #10b981;
+            font-size: 0.88rem;
+        }
     </style>
 </head>
 <body>
@@ -320,10 +395,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     </header>
 
     <div class="container py-4">
-        <div class="row justify-content-center">
-            <div class="col-lg-9 col-xl-8">
-
-                <?php if ($success_data): ?>
+        <?php if ($success_data): ?>
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
                     <!-- Success Confirmation Card -->
                     <div class="portal-card p-4 p-md-5 text-center mt-3">
                         <div style="width: 80px; height: 80px; border-radius: 50%; background: #dcfce7; color: #16a34a; font-size: 2.2rem; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1.5rem;">
@@ -372,8 +446,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                             <?php endif; ?>
                         </div>
                     </div>
+                </div>
+            </div>
 
-                <?php else: ?>
+        <?php else: ?>
+
+            <div class="row g-4 align-items-start">
+                <div class="col-lg-7 col-xl-8">
 
                     <!-- Registration Form -->
                     <div class="portal-card">
@@ -559,10 +638,103 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                             </form>
                         </div>
                     </div>
-                <?php endif; ?>
+                </div>
 
+                <!-- Artisan Selling Points & Trust Hub Sidebar -->
+                <div class="col-lg-5 col-xl-4">
+                    <div class="artisan-usp-sidebar">
+                        
+                        <!-- 5 Key Trade Advantages Card -->
+                        <div class="artisan-selling-card">
+                            <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                                <h5 class="fw-bold text-slate-900 mb-0" style="font-size: 1.05rem;">
+                                    <i class="fa-solid fa-gem text-primary me-1"></i> Partner Advantages
+                                </h5>
+                                <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-2.5 py-1" style="font-size: 0.72rem;">Top 5 Perks</span>
+                            </div>
+
+                            <div class="artisan-selling-item">
+                                <div class="artisan-usp-icon" style="background: rgba(37, 99, 235, 0.1); color: #2563eb;">
+                                    <i class="fa-solid fa-users-line"></i>
+                                </div>
+                                <div>
+                                    <div class="artisan-usp-title">Direct Resident Demand</div>
+                                    <p class="artisan-usp-text">Gain exclusive booking access to hundreds of verified estate homeowners and facility managers.</p>
+                                </div>
+                            </div>
+
+                            <div class="artisan-selling-item">
+                                <div class="artisan-usp-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
+                                    <i class="fa-solid fa-qrcode"></i>
+                                </div>
+                                <div>
+                                    <div class="artisan-usp-title">Express Gatehouse Clearance</div>
+                                    <p class="artisan-usp-text">Your official accredited badge grants rapid pass-through at security gates — zero delays or questioning.</p>
+                                </div>
+                            </div>
+
+                            <div class="artisan-selling-item">
+                                <div class="artisan-usp-icon" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
+                                    <i class="fa-solid fa-wallet"></i>
+                                </div>
+                                <div>
+                                    <div class="artisan-usp-title">100% Direct Settlement</div>
+                                    <p class="artisan-usp-text">Zero platform commission cuts. Set your transparent inspection rates and receive direct payment from residents.</p>
+                                </div>
+                            </div>
+
+                            <div class="artisan-selling-item">
+                                <div class="artisan-usp-icon" style="background: rgba(234, 179, 8, 0.12); color: #ca8a04;">
+                                    <i class="fa-solid fa-star"></i>
+                                </div>
+                                <div>
+                                    <div class="artisan-usp-title">Prestige &amp; 5-Star Reviews</div>
+                                    <p class="artisan-usp-text">Build your reputation. Highly-rated artisans gain first preference for estate-wide commercial contracts.</p>
+                                </div>
+                            </div>
+
+                            <div class="artisan-selling-item">
+                                <div class="artisan-usp-icon" style="background: rgba(239, 68, 68, 0.1); color: #ef4444;">
+                                    <i class="fa-solid fa-bolt"></i>
+                                </div>
+                                <div>
+                                    <div class="artisan-usp-title">Priority Emergency Callouts</div>
+                                    <p class="artisan-usp-text">Emergency-ready artisans are called first for urgent burst pipes, power failures, and priority repair calls.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Trust, Vetting & Security Seal Card -->
+                        <div class="trust-seal-card">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <i class="fa-solid fa-shield-halved text-warning fs-5"></i>
+                                <h6 class="fw-bold mb-0 text-white" style="font-size: 0.95rem;">Accreditation Standard</h6>
+                            </div>
+                            <p class="small text-white-50 mb-3" style="line-height: 1.45;">
+                                To protect households and reward genuine craftsmen, applications are vetted according to estate security standards:
+                            </p>
+                            <div class="trust-seal-item">
+                                <i class="fa-solid fa-circle-check"></i>
+                                <span>Government NIN &amp; Identity Verification</span>
+                            </div>
+                            <div class="trust-seal-item">
+                                <i class="fa-solid fa-circle-check"></i>
+                                <span>Guarantor &amp; Physical Workshop Address Audit</span>
+                            </div>
+                            <div class="trust-seal-item">
+                                <i class="fa-solid fa-circle-check"></i>
+                                <span>Official Estate Gate Badge ID Generated</span>
+                            </div>
+                            <div class="trust-seal-item">
+                                <i class="fa-solid fa-circle-check"></i>
+                                <span>Central Administration Facility Endorsement</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
             </div>
-        </div>
+        <?php endif; ?>
     </div>
 
 </body>

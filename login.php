@@ -155,10 +155,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </button>
             </form>
 
-            <div style="margin-top: 1.5rem; text-align: center;">
+            <div style="margin-top: 1.25rem; text-align: center;">
                 <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.76rem; color: #64748b; background: #f8fafc; border: 1px solid #e2e8f0; padding: 0.35rem 0.75rem; border-radius: 9999px; cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('email').value='admin@admin.com'; document.getElementById('password').value='admin123';" title="Click to auto-fill demo credentials">
                     <i class="fa-solid fa-key" style="color: #6366f1; font-size: 0.7rem;"></i> Demo Admin: <strong style="color: #334155;">admin@admin.com</strong>
                 </span>
+            </div>
+
+            <!-- Platform Security & Selling Points Banner -->
+            <div class="auth-usp-banner">
+                <div class="auth-usp-item">
+                    <i class="fa-solid fa-lock text-success"></i>
+                    <span><strong>Strict RBAC Isolation:</strong> Central &amp; Zonal data boundary guard.</span>
+                </div>
+                <div class="auth-usp-item">
+                    <i class="fa-solid fa-bolt text-warning"></i>
+                    <span><strong>Instant Gate Clearance:</strong> Sub-5s QR scan at security gatehouse.</span>
+                </div>
+                <div class="auth-usp-item">
+                    <i class="fa-solid fa-scale-balanced text-info"></i>
+                    <span><strong>Audited Ledgers:</strong> 100% verified accounting &amp; instant receipts.</span>
+                </div>
             </div>
         </div>
     </div>

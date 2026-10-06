@@ -1459,3 +1459,327 @@ body.landing-page {
     }
 }
 
+/* ==========================================================================
+   SMART ESTATE PLATFORM SELLING POINTS (USPs) & VALUE PROPOSITIONS
+   ========================================================================== */
+.selling-points-section {
+    padding: 6rem 2rem;
+    position: relative;
+    background: radial-gradient(circle at 50% 20%, rgba(59, 130, 246, 0.08) 0%, transparent 70%),
+                linear-gradient(180deg, #0b0f19 0%, #0d1322 50%, #0b0f19 100%);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.usp-container {
+    max-width: 1280px;
+    margin: 0 auto;
+}
+
+.selling-points-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.75rem;
+    margin-top: 3.5rem;
+}
+
+.usp-card {
+    background: rgba(17, 24, 39, 0.65);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1.25rem;
+    padding: 2.25rem 1.85rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+}
+
+.usp-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--usp-accent, #3b82f6), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.usp-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5), 0 0 25px -5px var(--usp-glow, rgba(59, 130, 246, 0.25));
+}
+
+.usp-card:hover::before {
+    opacity: 1;
+}
+
+.usp-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.35rem;
+}
+
+.usp-icon-wrap {
+    width: 54px;
+    height: 54px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.45rem;
+    background: var(--usp-icon-bg, rgba(59, 130, 246, 0.15));
+    color: var(--usp-accent, #3b82f6);
+    border: 1px solid var(--usp-icon-border, rgba(59, 130, 246, 0.3));
+    box-shadow: 0 8px 16px -4px var(--usp-glow, rgba(59, 130, 246, 0.2));
+}
+
+.usp-metric-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #e2e8f0;
+}
+
+.usp-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 0.65rem;
+    line-height: 1.3;
+}
+
+.usp-desc {
+    font-size: 0.92rem;
+    color: #94a3b8;
+    line-height: 1.6;
+    margin-bottom: 1.35rem;
+}
+
+.usp-perks-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    margin-top: auto;
+    padding-top: 1.15rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.usp-perk-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    font-size: 0.85rem;
+    color: #cbd5e1;
+    line-height: 1.45;
+}
+
+.usp-perk-item i {
+    color: var(--usp-accent, #3b82f6);
+    font-size: 0.85rem;
+    margin-top: 3px;
+    flex-shrink: 0;
+}
+
+/* ==========================================================================
+   SMART ESTATE VS LEGACY COMPARISON MATRIX
+   ========================================================================== */
+.comparison-section {
+    padding: 6rem 2rem;
+    position: relative;
+    background: #0b0f19;
+}
+
+.comparison-wrapper {
+    max-width: 1100px;
+    margin: 3rem auto 0;
+    background: rgba(17, 24, 39, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1.5rem;
+    overflow-x: auto;
+    backdrop-filter: blur(16px);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.comparison-table {
+    width: 100%;
+    min-width: 680px;
+    border-collapse: collapse;
+}
+
+.comparison-table th {
+    padding: 1.4rem 1.75rem;
+    font-size: 1rem;
+    font-weight: 800;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.comparison-table th.col-feature {
+    width: 32%;
+    color: #94a3b8;
+    background: rgba(15, 23, 42, 0.6);
+}
+
+.comparison-table th.col-legacy {
+    width: 34%;
+    color: #f87171;
+    background: rgba(239, 68, 68, 0.06);
+    border-left: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.comparison-table th.col-smart {
+    width: 34%;
+    color: #34d399;
+    background: rgba(16, 185, 129, 0.08);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.comparison-table td {
+    padding: 1.15rem 1.75rem;
+    font-size: 0.9rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    vertical-align: middle;
+}
+
+.comparison-table tr:last-child td {
+    border-bottom: none;
+}
+
+.comparison-table td.col-feature {
+    font-weight: 700;
+    color: #ffffff;
+    background: rgba(15, 23, 42, 0.3);
+}
+
+.comparison-table td.col-legacy {
+    color: #94a3b8;
+    background: rgba(239, 68, 68, 0.02);
+    border-left: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.comparison-table td.col-legacy i {
+    color: #ef4444;
+    margin-right: 0.5rem;
+}
+
+.comparison-table td.col-smart {
+    color: #f1f5f9;
+    font-weight: 600;
+    background: rgba(16, 185, 129, 0.03);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.comparison-table td.col-smart i {
+    color: #10b981;
+    margin-right: 0.5rem;
+}
+
+/* ==========================================================================
+   TRUST & ASSURANCE STRIP (AUTHENTICATION & PUBLIC PAGES)
+   ========================================================================== */
+.trust-strip-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+    padding: 1.25rem 2rem;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 9999px;
+    max-width: 960px;
+    margin: 2.5rem auto 0;
+}
+
+.trust-strip-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #cbd5e1;
+}
+
+.trust-strip-item i {
+    color: #38bdf8;
+    font-size: 1rem;
+}
+
+/* ==========================================================================
+   AUTH PAGE VALUE & SELLING POINTS BANNER
+   ========================================================================== */
+.auth-usp-banner {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1rem;
+    padding: 1rem 1.25rem;
+    margin-top: 1.5rem;
+    text-align: left;
+}
+
+.auth-usp-item {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    font-size: 0.8rem;
+    color: #cbd5e1;
+}
+
+.auth-usp-item i {
+    color: #38bdf8;
+    font-size: 0.9rem;
+    width: 18px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN FOR SELLING POINTS
+   ========================================================================== */
+@media (max-width: 1080px) {
+    .selling-points-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .selling-points-grid {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+    .selling-points-section, .comparison-section {
+        padding: 4rem 1rem;
+    }
+    .comparison-table th, .comparison-table td {
+        padding: 0.9rem 1rem;
+        font-size: 0.82rem;
+    }
+    .trust-strip-bar {
+        border-radius: 1.25rem;
+        gap: 1rem;
+        padding: 1rem;
+    }
+}
+

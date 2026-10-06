@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MRA Estate Platform — Comprehensive Functional Blueprint & Executive Manual</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+/* ============================================================
+   MRA ESTATE PLATFORM — EXECUTIVE FUNCTIONAL SPECIFICATION (PDF READY)
+   Design System: MRA Power-Design System (Outfit, 8pt Grid, A4 Multi-Page)
+   ============================================================ */
+:root {
+  --accent: #F59E0B;
+  --accent-dark: #B45309;
+  --accent-light: #FEF3C7;
+  --ink: #111418;
+  --ink-2: #334155;
+  --ink-3: #64748B;
+  --ground: #FBFAF8;
+  --surface: #FFFFFF;
+  --line: #E2E8F0;
+  --pos: #059669;
+  --pos-light: #D1FAE5;
+  --alert: #DC2626;
+  --alert-light: #FEE2E2;
+  --purple: #7E22CE;
+  --purple-light: #F3E8FF;
+  --sky: #0284C7;
+  --sky-light: #E0F2FE;
+  --s1: 8px;
+  --s2: 16px;
+  --s3: 24px;
+  --s4: 32px;
+  --s5: 48px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+  background: #E2E8F0;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  padding: 40px 20px;
+}
+
+/* Print Toolbar Floating */
+.doc-toolbar {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 9999;
+  display: flex;
+  gap: 10px;
+  background: rgba(17, 20, 24, 0.95);
+  padding: 10px 18px;
+  border-radius: 9999px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+  backdrop-filter: blur(8px);
+}
+.btn-doc {
+  background: var(--accent);
+  color: #111418;
+  font-weight: 700;
+  font-size: 13px;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 9999px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+.btn-doc:hover {
+  background: #D97706;
+  transform: translateY(-1px);
+  color: #ffffff;
+}
+.btn-doc-ghost {
+  background: rgba(255,255,255,0.15);
+  color: #ffffff;
+}
+.btn-doc-ghost:hover {
+  background: rgba(255,255,255,0.25);
+  color: #ffffff;
+}
+
+/* Page Geometry (A4 Exact Ratio) */
+.page {
+  width: 820px;
+  min-height: 1160px;
+  margin: 0 auto 36px;
+  background: var(--ground);
+  padding: 44px 50px;
+  position: relative;
+  box-shadow: 0 6px 30px rgba(0,0,0,0.12);
+  display: flex;
+  flex-direction: column;
+  page-break-after: always;
+}
+
+/* Header & Kicker */
+.kicker {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.kicker .rule {
+  flex: 1;
+  height: 1.5px;
+  background: var(--line);
+}
+.kicker .badge-tag {
+  background: var(--accent-light);
+  color: var(--accent-dark);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+h1 {
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  margin-top: 12px;
+}
+h2 {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+h2 i {
+  color: var(--accent-dark);
+  font-size: 17px;
+}
+h3 {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+p {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-2);
+  margin-bottom: 8px;
+}
+.lede {
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ink-2);
+  margin-top: 8px;
+  margin-bottom: 16px;
+  border-left: 3px solid var(--accent);
+  padding-left: 12px;
+}
+
+/* Callout Box */
+.pull-highlight {
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  border-left: 4px solid var(--accent);
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin: 12px 0;
+}
+.pull-highlight p {
+  color: #92400E;
+  font-size: 12.5px;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Tables */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0 16px;
+  font-size: 12px;
+}
+.data-table th {
+  background: #F1F5F9;
+  text-align: left;
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  font-weight: 700;
+  padding: 8px 12px;
+  border-bottom: 2px solid var(--line);
+}
+.data-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  color: var(--ink-2);
+  line-height: 1.4;
+}
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+.data-table .strong-col {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* Badges & Pills */
+.pill {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.pill-amber { background: var(--accent-light); color: var(--accent-dark); }
+.pill-emerald { background: var(--pos-light); color: var(--pos); }
+.pill-alert { background: var(--alert-light); color: var(--alert); }
+.pill-purple { background: var(--purple-light); color: var(--purple); }
+.pill-sky { background: var(--sky-light); color: var(--sky); }
+
+/* Grids */
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 10px 0 14px;
+}
+.grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin: 10px 0 14px;
+}
+.grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin: 10px 0 14px;
+}
+
+/* Cards */
+.card-box {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+}
+.card-box .box-num {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-dark);
+  margin-bottom: 4px;
+}
+.card-box h3 {
+  font-size: 13.5px;
+  margin-bottom: 4px;
+}
+.card-box p {
+  font-size: 12px;
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* Check lists */
+.check-list {
+  list-style: none;
+  margin: 8px 0 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.check-list li {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--ink-2);
+}
+.check-list .check-icon {
+  color: var(--accent-dark);
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+/* Linear Flow Strips */
+.flow-strip {
+  display: flex;
+  gap: 8px;
+  margin: 10px 0 16px;
+}
+.flow-step {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 8px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.flow-step .num {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #111418;
+  font-size: 10.5px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.flow-step .step-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.flow-step .step-desc {
+  font-size: 10px;
+  color: var(--ink-3);
+  line-height: 1.25;
+}
+
+/* Footer of Each Page */
+.page-foot {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.page-foot strong {
+  color: var(--ink);
+}
+
+@media print {
+  body { background: transparent; padding: 0; }
+  .doc-toolbar { display: none !important; }
+  .page {
+    width: 100% !important;
+    min-height: 100vh !important;
+    margin: 0 !important;
+    padding: 34px 44px !important;
+    box-shadow: none !important;
+    border: none !important;
+    page-break-after: always;
+  }
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- Floating Print & Presentation Toolbar -->
+<div class="doc-toolbar">
+  <button onclick="window.print()" class="btn-doc">
+    <i class="fa-solid fa-file-pdf"></i> Print / Save as PDF
+  </button>
+  <a href="MRA_Platform_Presentation.html" class="btn-doc btn-doc-ghost" target="_blank">
+    <i class="fa-solid fa-display"></i> Open Slide Presentation
+  </a>
+</div>
+
+<!-- ========================================================
+     PAGE 1: EXECUTIVE OVERVIEW & HIERARCHICAL MULTI-TENANCY
+     ======================================================== -->
+<div class="page">
+  <div class="kicker">
+    <span>Magodo Residents Association</span>
+    <span class="rule"></span>
+    <span class="badge-tag">Executive Functional Blueprint</span>
+  </div>
+
+  <h1>Estate Operating Platform &amp; Governance System</h1>
+  <p class="lede">
+    An exhaustive architectural breakdown of the single-estate, multi-tiered software ecosystem engineered for <strong>Hierarchical Zonal Multi-Tenancy</strong>, <strong>Sub-5s Gate Access</strong>, <strong>Omnichannel Automated Messaging</strong>, <strong>Zero-Leakage Finance</strong>, and <strong>Rapid Emergency Dispatch</strong>.
+  </p>
+
+  <div class="pull-highlight">
+    <p>
+      <strong>Core Architectural Tenet:</strong> One estate, one ground truth. Paper gatebooks, fragmented WhatsApp group notices, and handwritten bank payment slips are eradicated. Every physical entry, levy assessment, maintenance work order, and security incident is cryptographically linked to a verified unit and resident dossier.
+    </p>
+  </div>
+
+  <h2><i class="fa-solid fa-sitemap"></i> Multi-Tier Role-Based Access Control (RBAC)</h2>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width: 22%;">Portal / Tier</th>
+        <th style="width: 40%;">Administrative Capabilities</th>
+        <th style="width: 38%;">Data Boundary &amp; Privacy Scoping</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="strong-col"><span class="pill pill-amber">Central Super Admin</span><br>MRA Apex Executive</td>
+        <td>Global estate settings, payment gateway keys, zonal boundary mapping, guard shift rosters, ID card generator, bylaw builder, and audit ledgers.</td>
+        <td>Full visibility across all sectors. Executive access to cross-estate financials, police liaison desks, and system telemetry.</td>
+      </tr>
+      <tr>
+        <td class="strong-col"><span class="pill pill-purple">Zone Admin</span><br>Sector Secretariats</td>
+        <td>Zone-level resident onboarding, street definitions, zonal levy billing, local announcements, violation citations, and local bank settlement tracking.</td>
+        <td><strong>Strict Zero-Leakage:</strong> Zero access to other zones' residents, ledgers, or streets. Query layer strictly bound by <code>$_SESSION['zone_id']</code>.</td>
+      </tr>
+      <tr>
+        <td class="strong-col"><span class="pill pill-sky">Resident Self-Service</span><br>Homeowners &amp; Tenants</td>
+        <td>Pre-register guests (QR &amp; 6-digit OTP), pay dues online via Paystack DVA, book accredited artisans, request RFID car stickers, and trigger panic alerts.</td>
+        <td>Scoped strictly to personal flat and household dependents. Encrypted credentials, multi-channel receipts, and visitor log history.</td>
+      </tr>
+      <tr>
+        <td class="strong-col"><span class="pill pill-emerald">Staff &amp; Gatehouse</span><br>Security Officers</td>
+        <td>Sub-5-second QR code scanner, 6-digit OTP verification, vehicle license plate search, incident logging, and emergency dispatch acknowledgement.</td>
+        <td>Operational gate terminal only. Strictly blocked from financial ledgers, private resident phone directories, and administrative settings.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2><i class="fa-solid fa-layer-group"></i> Core Architectural Foundations</h2>
+  <div class="grid-4">
+    <div class="card-box">
+      <span class="box-num">01 &bull; Security</span>
+      <h3>Guaranteed Gate Lock</h3>
+      <p>Sub-5s verification with instant host arrival alerts and zero-data offline SMS resilience.</p>
+    </div>
+    <div class="card-box">
+      <span class="box-num">02 &bull; Governance</span>
+      <h3>Tamper-Proof Audit</h3>
+      <p>Every admin action, guard verification, and receipt timestamped with user ID and IP.</p>
+    </div>
+    <div class="card-box">
+      <span class="box-num">03 &bull; Omnichannel</span>
+      <h3>Kapso Meta WhatsApp</h3>
+      <p>13 automated trigger events dispatched instantly via WhatsApp Cloud API &amp; SMTP email.</p>
+    </div>
+    <div class="card-box">
+      <span class="box-num">04 &bull; Artisans</span>
+      <h3>Quarantine Gate</h3>
+      <p>12 trade classifications vetted with NIN and resident guarantors before public listing.</p>
+    </div>
+  </div>
+
+  <div class="page-foot">
+    <span>Magodo Residents Association &bull; Comprehensive Functional Manual</span>
+    <span>Page <strong>1</strong> of 6</span>
+  </div>
+</div>
+
+
+<!-- ========================================================
+     PAGE 2: SECURITY, GATEHOUSE OPERATIONS & VEHICLE LOGS
+     ======================================================== -->
+<div class="page">
+  <div class="kicker">
+    <span>Module Deep Dive 01</span>
+    <span class="rule"></span>
+    <span class="badge-tag">Security &amp; Gatehouse Operations</span>
+  </div>
+
+  <h1>Sub-5s Gate Access, RFID Stickers &amp; Guard Rosters</h1>
+  <p class="lede">
+    Eliminating estate gatehouse bottlenecks and securing entry points 24/7/365. How passes are generated, scanned, logged, and backed up during power and internet outages.
+  </p>
+
+  <h2><i class="fa-solid fa-qrcode"></i> The End-to-End Visitor Access Life-Cycle</h2>
+  <div class="flow-strip">
+    <div class="flow-step">
+      <div class="num">1</div>
+      <div class="step-title">Resident Pre-Registers</div>
+      <div class="step-desc">From mobile in 5 seconds. Input guest name, phone, plate, and date.</div>
+    </div>
+    <div class="flow-step">
+      <div class="num">2</div>
+      <div class="step-title">Dual Credential</div>
+      <div class="step-desc">QR code &amp; 6-digit numeric OTP generated and sent to visitor &amp; host.</div>
+    </div>
+    <div class="flow-step">
+      <div class="num">3</div>
+      <div class="step-title">Gate Verification</div>
+      <div class="step-desc">Guard scans QR via camera or types 6-digit OTP into terminal.</div>
+    </div>
+    <div class="flow-step">
+      <div class="num">4</div>
+      <div class="step-title">Arrival WhatsApp</div>
+      <div class="step-desc">Resident receives instant WhatsApp ping: "Guest John has checked in at Main Gate".</div>
+    </div>
+    <div class="flow-step">
+      <div class="num">5</div>
+      <div class="step-title">Checkout &amp; Invalidate</div>
+      <div class="step-desc">Pass locks permanently upon checkout; live roster marks guest departed.</div>
+    </div>
+  </div>
+
+  <h2><i class="fa-solid fa-wifi"></i> Zero-Data &amp; Power Failure Resiliency</h2>
+  <div class="grid-2">
+    <div class="card-box">
+      <span class="box-num">Failover A &bull; Cellular SMS Relay</span>
+      <h3>SMS Passcode Redundancy</h3>
+      <p>Visitor codes are delivered via standard cellular SMS to both guest and the gate backup GSM handset. If fiber internet drops, guards verify codes via estate GSM SMS line.</p>
+    </div>
+    <div class="card-box">
+      <span class="box-num">Failover B &bull; Local Client Caching</span>
+      <h3>IndexedDB &amp; Offline Sync Queue</h3>
+      <p>Gatehouse tablets cache active daily passes locally. Check-in timestamps store in local client memory and automatically sync to cloud ledgers once network reconnects.</p>
+    </div>
+  </div>
+
+  <h2><i class="fa-solid fa-car"></i> Holographic RFID Resident Vehicle Stickers</h2>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Vehicle Security Feature</th>
+        <th>Technical Implementation</th>
+        <th>Operational Advantage</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="strong-col">Serialized Holographic QR / Barcode</td>
+        <td>Generated via <code>car_sticker.php</code>. Binds license plate, vehicle color, chassis number, and registered resident photo dossier.</td>
+        <td>Prevents resident stickers from being swapped to unauthorized or commercial vehicles.</td>
+      </tr>
+      <tr>
+        <td class="strong-col">Instant Plate Search Engine</td>
+        <td>Guard terminal features real-time plate lookup (<code>api/search_vehicle.php</code>) returning resident name and unit in &lt; 200ms.</td>
+        <td>Fast-tracks resident entry during peak rush hours (07:00–09:00 and 17:00–20:00).</td>
+      </tr>
+      <tr>
+        <td class="strong-col">1-Click Stolen Vehicle Blacklist</td>
+        <td>Homeowners or security admins can instantly flag any car as "Compromised/Stolen" from the resident portal.</td>
+        <td>Gate barrier locks immediately upon plate scan; audible alarm alerts armed guard patrol.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2><i class="fa-solid fa-user-shield"></i> Security Guard Roster &amp; Shift Operations</h2>
+  <ul class="check-list">
+    <li><span class="check-icon">&#10003;</span> <strong>Post Assignments:</strong> Guards scheduled across Main Gate, Sector B Gatehouse, Patrol Team Alpha, and Visitor Inspection Bay.</li>
+    <li><span class="check-icon">&#10003;</span> <strong>Clock-In Telemetry:</strong> Guard arrival timestamps and biometric/device clock-in logs monitored live in <code>admin/roster.php</code>.</li>
+    <li><span class="check-icon">&#10003;</span> <strong>Live Emergency Snapshot:</strong> The active duty roster is automatically snapshotted whenever a resident panic alert is triggered.</li>
+  </ul>
+
+  <div class="page-foot">
+    <span>Magodo Residents Association &bull; Comprehensive Functional Manual</span>
+    <span>Page <strong>2</strong> of 6</span>
+  </div>
+</div>
+
+
+<!-- ========================================================
+     PAGE 3: 90-SECOND EMERGENCY SOS & RAPID RESPONSE
+     ======================================================== -->
+<div class="page">
+  <div class="kicker">
+    <span>Module Deep Dive 02</span>
+    <span class="rule"></span>
+    <span class="badge-tag">Crisis Management &amp; Emergency SOS</span>
+  </div>
+
+  <h1>The 90-Second Emergency SOS Cascade</h1>
+  <p class="lede">
+    Engineering life-saving crisis response. How the platform captures GPS coordinates, snapshots guards on duty, triggers klaxon alarms, and dispatches multi-channel alerts within 90 seconds.
+  </p>
+
+  <h2><i class="fa-solid fa-triangle-exclamation text-danger"></i> The Emergency Trigger Engine (<code>api/emergency.php</code>)</h2>
+  <div class="flow-strip">
+    <div class="flow-step">
+      <div class="num">1</div>
+      <div class="step-title">Resident Holds SOS</div>
+      <div class="step-desc">Holds Panic Button for 3s. Mobile captures exact GPS lat/long.</div>
+    </div>
+    <div class="flow-step">
+      <div class="num">2</div>
+      <div class="step-title">Guards Snapshotted</div>
+      <div class="step-desc">System captures active officers on duty, their gate posts &amp; phone lines.</div>
+    </div>
+    <div class="flow-step">
+      <div class="num">3</div>
+      <div class="step-title">Gate Siren Sounds</div>
+      <div class="step-desc">Terminal sounds continuous klaxon; incident code <code>SOS-YYMMDD-XXX</code> logged.</div>
+    </div>
+    <div class="flow-step">
+      <div class="num">4</div>
+      <div class="step-title">Omnichannel Dispatch</div>
+      <div class="step-desc">High-priority WhatsApp + HTML email sent to guard, patrol, admin &amp; kin.</div>
+    </div>
+    <div class="flow-step">
+      <div class="num">5</div>
+      <div class="step-title">Responder Claim</div>
+      <div class="step-desc">Patrol clicks "Acknowledge"; real-time ticker updates all parties.</div>
+    </div>
+  </div>
+
+  <h2><i class="fa-solid fa-users-rays"></i> 4-Tier Target Stakeholder Routing</h2>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Stakeholder Scope</th>
+        <th>Alarm &amp; Dispatch Behavior</th>
+        <th>Primary Use Cases</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="strong-col"><span class="pill pill-alert">all_residents</span><br>Estate-Wide Alarm</td>
+        <td>Full audible klaxon on guard terminals + high-priority WhatsApp broadcast + pinned marquee alert on all resident portal screens.</td>
+        <td>Armed robbery attempt, major fire outbreak, gas explosion, or unauthorized armed intrusion.</td>
+      </tr>
+      <tr>
+        <td class="strong-col"><span class="pill pill-purple">guards_only</span><br>Silent Guard Alarm</td>
+        <td>Silent alert sent directly to duty patrol officers and gatehouse terminals with GPS pin. Zero community siren triggered.</td>
+        <td>Hostage situation, prowler / domestic burglary in progress where sirens could endanger victims.</td>
+      </tr>
+      <tr>
+        <td class="strong-col"><span class="pill pill-amber">guards_and_admin</span><br>Executive Escalation</td>
+        <td>Dispatched simultaneously to guard post, patrol squad, Zone Chairman, and Central Security Chief.</td>
+        <td>Civil unrest, severe neighborhood property boundary disputes, or utility grid collapse.</td>
+      </tr>
+      <tr>
+        <td class="strong-col"><span class="pill pill-sky">guards_and_medical</span><br>Medical ER Cascade</td>
+        <td>Dispatches gate patrol while auto-forwarding resident address &amp; GPS coordinates to designated medical emergency hospital.</td>
+        <td>Cardiac arrest, sudden health collapse, domestic accident requiring rapid ambulance escort.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2><i class="fa-solid fa-location-dot"></i> Live GPS Pinpointing &amp; Duty Guard Telemetry</h2>
+  <div class="grid-2">
+    <div class="card-box">
+      <span class="box-num">Telemetry A &bull; Google Maps Geolocation</span>
+      <h3>Exact Incident Pin</h3>
+      <p>Alerts capture browser GPS coordinates and embed a direct clickable Google Maps link (<code>https://maps.google.com/?q=lat,lng</code>) into every SMS, email, and WhatsApp notification, guiding patrol directly to the house.</p>
+    </div>
+    <div class="card-box">
+      <span class="box-num">Telemetry B &bull; Security Duty Snapshot</span>
+      <h3>Roster Audit Accountability</h3>
+      <p>The system freezes a JSON snapshot of every security officer on shift at that second (Officer name, gate post, phone extension). At the AGM, leadership knows exactly who responded and in how many seconds.</p>
+    </div>
+  </div>
+
+  <h2><i class="fa-solid fa-phone-volume"></i> Direct Emergency Hotlines Desk (No Alarm Sounded)</h2>
+  <p>Residents requiring advisory contact can tap hotlines in <code>resident/emergency.php</code> to place direct phone calls to:</p>
+  <ul class="check-list">
+    <li><span class="check-icon">&#10003;</span> <strong>Area Police Command Liaison Desk</strong> (Dedicated Magodo divisional lines).</li>
+    <li><span class="check-icon">&#10003;</span> <strong>Lagos State Fire &amp; Rescue Service Station</strong> (Direct local dispatch).</li>
+    <li><span class="check-icon">&#10003;</span> <strong>Estate Medical &amp; Ambulance Response Unit</strong>.</li>
+    <li><span class="check-icon">&#10003;</span> <strong>Central Security Operations Command Room</strong> (24/7 Desk).</li>
+  </ul>
+
+  <div class="page-foot">
+    <span>Magodo Residents Association &bull; Comprehensive Functional Manual</span>
+    <span>Page <strong>3</strong> of 6</span>
+  </div>
+</div>
+
+
+<!-- ========================================================
+     PAGE 4: OMNICHANNEL MESSAGING (WHATSAPP & MAILER)
+     ======================================================== -->
+<div class="page">
+  <div class="kicker">
+    <span>Module Deep Dive 03</span>
+    <span class="rule"></span>
+    <span class="badge-tag">Communication Architecture</span>
+  </div>
+
+  <h1>Omnichannel Messaging Engine: WhatsApp &amp; Mailer</h1>
+  <p class="lede">
+    Uncompromising communication delivery. Powered by Kapso Meta WhatsApp Cloud API and PHPMailer SMTP, dispatching 13 automated event triggers with delivery tracking and audit logging.
+  </p>
+
+  <h2><i class="fa-brands fa-whatsapp text-pos"></i> Kapso Meta Cloud WhatsApp API Integration</h2>
+  <p>The platform embeds enterprise WhatsApp messaging (<code>includes/WhatsApp.php</code>) connected directly to Meta's Business API via Kapso Gateway:</p>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Automated Trigger</th>
+        <th>Recipient &amp; Timing</th>
+        <th>Delivered Content &amp; Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="strong-col">1. Invoice Issued</td>
+        <td>Resident &bull; Immediate upon billing</td>
+        <td>Itemized levy breakdown, total amount due, due date, and 1-click Pay Online link.</td>
+      </tr>
+      <tr>
+        <td class="strong-col">2. Official Payment Receipt</td>
+        <td>Resident &bull; Instant on payment success</td>
+        <td>Official receipt number, payment channel, reference, and link to view/print official PDF receipt.</td>
+      </tr>
+      <tr>
+        <td class="strong-col">3. Visitor Access Pass</td>
+        <td>Visitor &amp; Host &bull; Immediate on creation</td>
+        <td>Access code, encrypted QR pass link, arrival date, host unit destination, and estate speed rules.</td>
+      </tr>
+      <tr>
+        <td class="strong-col">4. Gate Arrival Alert</td>
+        <td>Host Resident &bull; Instant on gate scan</td>
+        <td>Alerts resident the second their guest arrives: Gate name, guest name, and security check-in time.</td>
+      </tr>
+      <tr>
+        <td class="strong-col">5. Onboarding Welcome</td>
+        <td>New Resident / Staff &bull; On creation</td>
+        <td>Welcome dossier, portal login URL, registered email, and temporary password.</td>
+      </tr>
+      <tr>
+        <td class="strong-col">6. Password Reset OTP</td>
+        <td>User &bull; On forgot password request</td>
+        <td>15-minute secure 6-digit numeric OTP and one-tap direct password reset URL.</td>
+      </tr>
+      <tr>
+        <td class="strong-col">7. Emergency SOS Alert</td>
+        <td>Patrol, Guards, Admin &bull; Panic trigger</td>
+        <td>Incident code, category, location, resident name, details, and Google Maps GPS navigation pin.</td>
+      </tr>
+      <tr>
+        <td class="strong-col">8. Artisan Clearance Pass</td>
+        <td>Artisan &amp; Resident &bull; On work booking</td>
+        <td>Clearance code, host unit, allowed work hours (08:00–18:00), and heavy power tool declaration rules.</td>
+      </tr>
+      <tr>
+        <td class="strong-col">9. Penalty &amp; Bylaw Citation</td>
+        <td>Violator &bull; On infraction citation</td>
+        <td>Violation code, photo citation brief, fine amount, due date, online pay link, and appeal window.</td>
+      </tr>
+      <tr>
+        <td class="strong-col">10. Estate Broadcast Blast</td>
+        <td>Selected Zone / All Residents</td>
+        <td>High-priority community advisory, maintenance outages, election schedules, or security warnings.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2><i class="fa-solid fa-shield-halved"></i> WhatsApp 24-Hour Policy Handler &amp; Template Recovery</h2>
+  <div class="grid-2">
+    <div class="card-box">
+      <span class="box-num">Policy Defense A &bull; Meta Template Auto-Fallback</span>
+      <h3>Pre-Approved Meta Templates</h3>
+      <p>If a resident has not messaged the estate line in 24 hours, standard messages fail. The platform automatically detects this and falls back to an approved Meta template (<code>estate_notice</code>) so notices never drop.</p>
+    </div>
+    <div class="card-box">
+      <span class="box-num">Policy Defense B &bull; 1-Tap Window Opener</span>
+      <h3>Direct wa.me Diagnostic Link</h3>
+      <p>Diagnostic tools generate direct <code>https://wa.me/234XXXXXXXXXX?text=Hi</code> links allowing residents to open their 24-hour customer service window with one tap.</p>
+    </div>
+  </div>
+
+  <h2><i class="fa-solid fa-envelope-open-text"></i> PHPMailer Enterprise SMTP Dispatcher</h2>
+  <ul class="check-list">
+    <li><span class="check-icon">&#10003;</span> <strong>Responsive HTML Styling:</strong> Brand-styled executive templates formatted for Apple Mail, Gmail, Outlook, and mobile screens.</li>
+    <li><span class="check-icon">&#10003;</span> <strong>Audit Trail Table (<code>email_logs</code>):</strong> Records recipient, subject, template name, delivery timestamp, and SMTP error codes.</li>
+    <li><span class="check-icon">&#10003;</span> <strong>Multi-Tenant Office Routing:</strong> Emails dispatch with estate-branded reply-to headers and zone-specific contact details.</li>
+  </ul>
+
+  <div class="page-foot">
+    <span>Magodo Residents Association &bull; Comprehensive Functional Manual</span>
+    <span>Page <strong>4</strong> of 6</span>
+  </div>
+</div>
+
+
+<!-- ========================================================
+     PAGE 5: ACCREDITED ARTISAN NETWORK & MARKETPLACE
+     ======================================================== -->
+<div class="page">
+  <div class="kicker">
+    <span>Module Deep Dive 04</span>
+    <span class="rule"></span>
+    <span class="badge-tag">Facilities &amp; Artisan Network</span>
+  </div>
+
+  <h1>Accredited Artisan Portal &amp; Marketplace</h1>
+  <p class="lede">
+    Eliminating roadside stranger risk. How artisans self-register, undergo NIN and guarantor vetting, receive digital badges, and clear security gates with work-hour restrictions.
+  </p>
+
+  <h2><i class="fa-solid fa-hammer"></i> 12 Master Trade Classifications (<code>ArtisanHelper.php</code>)</h2>
+  <div class="grid-4">
+    <div class="card-box" style="padding: 8px 10px;">
+      <span style="font-size: 11px; font-weight: 700; color: #0284c7;"><i class="fa-solid fa-wrench"></i> Plumbing Services</span>
+      <p style="font-size: 10px; margin: 2px 0 0;">Pipes, boreholes &amp; pumps</p>
+    </div>
+    <div class="card-box" style="padding: 8px 10px;">
+      <span style="font-size: 11px; font-weight: 700; color: #d97706;"><i class="fa-solid fa-bolt"></i> Electrical &amp; Wiring</span>
+      <p style="font-size: 10px; margin: 2px 0 0;">Conduit, panels &amp; fittings</p>
+    </div>
+    <div class="card-box" style="padding: 8px 10px;">
+      <span style="font-size: 11px; font-weight: 700; color: #0891b2;"><i class="fa-solid fa-snowflake"></i> HVAC &amp; AC Tech</span>
+      <p style="font-size: 10px; margin: 2px 0 0;">Gas refill, repair &amp; install</p>
+    </div>
+    <div class="card-box" style="padding: 8px 10px;">
+      <span style="font-size: 11px; font-weight: 700; color: #b45309;"><i class="fa-solid fa-hammer"></i> Carpentry &amp; Wood</span>
+      <p style="font-size: 10px; margin: 2px 0 0;">Doors, cabinets &amp; roofs</p>
+    </div>
+    <div class="card-box" style="padding: 8px 10px;">
+      <span style="font-size: 11px; font-weight: 700; color: #7c3aed;"><i class="fa-solid fa-paint-roller"></i> Painting &amp; POP</span>
+      <p style="font-size: 10px; margin: 2px 0 0;">Interior, exterior &amp; screed</p>
+    </div>
+    <div class="card-box" style="padding: 8px 10px;">
+      <span style="font-size: 11px; font-weight: 700; color: #db2777;"><i class="fa-solid fa-trowel-bricks"></i> Masonry &amp; Tiling</span>
+      <p style="font-size: 10px; margin: 2px 0 0;">Brickwork, screed &amp; tiles</p>
+    </div>
+    <div class="card-box" style="padding: 8px 10px;">
+      <span style="font-size: 11px; font-weight: 700; color: #059669;"><i class="fa-solid fa-plug-circle-bolt"></i> Generator &amp; Solar</span>
+      <p style="font-size: 10px; margin: 2px 0 0;">Inverters, panels &amp; diesel</p>
+    </div>
+    <div class="card-box" style="padding: 8px 10px;">
+      <span style="font-size: 11px; font-weight: 700; color: #15803d;"><i class="fa-solid fa-tree"></i> Gardening &amp; Lawn</span>
+      <p style="font-size: 10px; margin: 2px 0 0;">Horticulture &amp; trees</p>
+    </div>
+    <div class="card-box" style="padding: 8px 10px;">
+      <span style="font-size: 11px; font-weight: 700; color: #0d9488;"><i class="fa-solid fa-broom"></i> Deep Cleaning</span>
+      <p style="font-size: 10px; margin: 2px 0 0;">Fumigation &amp; post-build</p>
+    </div>
+    <div class="card-box" style="padding: 8px 10px;">
+      <span style="font-size: 11px; font-weight: 700; color: #ea580c;"><i class="fa-solid fa-fire-burner"></i> Welding &amp; Metal</span>
+      <p style="font-size: 10px; margin: 2px 0 0;">Gates, burglaries &amp; rail</p>
+    </div>
+    <div class="card-box" style="padding: 8px 10px;">
+      <span style="font-size: 11px; font-weight: 700; color: #475569;"><i class="fa-solid fa-tv"></i> Appliance Repair</span>
+      <p style="font-size: 10px; margin: 2px 0 0;">Fridges, washers &amp; ovens</p>
+    </div>
+    <div class="card-box" style="padding: 8px 10px;">
+      <span style="font-size: 11px; font-weight: 700; color: #2563eb;"><i class="fa-solid fa-screwdriver-wrench"></i> General Handyman</span>
+      <p style="font-size: 10px; margin: 2px 0 0;">All-round maintenance</p>
+    </div>
+  </div>
+
+  <h2><i class="fa-solid fa-user-check"></i> The 4-Stage Vetting &amp; Accreditation Lifecycle</h2>
+  <div class="flow-strip">
+    <div class="flow-step">
+      <div class="num">1</div>
+      <div class="step-title">Self-Register</div>
+      <div class="step-desc">Artisan fills <code>artisan_register.php</code> with NIN, trade, workshop address &amp; guarantor.</div>
+    </div>
+    <div class="flow-step">
+      <div class="num">2</div>
+      <div class="step-title">Admin Alert</div>
+      <div class="step-desc">In-app bell counter, WhatsApp ping &amp; email sent to Central Admin. Status = QUARANTINED.</div>
+    </div>
+    <div class="flow-step">
+      <div class="num">3</div>
+      <div class="step-title">Vetting Gateway</div>
+      <div class="step-desc">Admin verifies NIN ID &amp; guarantor; approves or rejects with custom explanation.</div>
+    </div>
+    <div class="flow-step">
+      <div class="num">4</div>
+      <div class="step-title">Badge Generation</div>
+      <div class="step-desc">Auto-generates official badge code (e.g. <code>ART-2026-0001</code>); published in directory.</div>
+    </div>
+    <div class="flow-step">
+      <div class="num">5</div>
+      <div class="step-title">Pass &amp; Rating</div>
+      <div class="step-desc">Resident books service, generates gate pass, and submits star rating after work completion.</div>
+    </div>
+  </div>
+
+  <h2><i class="fa-solid fa-id-badge"></i> Digital Artisan Gate Clearance Pass (<code>WhatsApp.php</code>)</h2>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Security Restriction</th>
+        <th>System Enforcement Mechanism</th>
+        <th>Community Protection Impact</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="strong-col">Permitted Work Hours Window</td>
+        <td>Artisan passes are strictly valid between <strong>08:00 AM – 06:00 PM</strong> (Monday through Saturday). Gate scanner rejects access outside hours.</td>
+        <td>Prevents loud drilling, unannounced workers, and after-hours security vulnerabilities.</td>
+      </tr>
+      <tr>
+        <td class="strong-col">Mandatory Tool Declaration</td>
+        <td>Pass mandates declaring heavy equipment (welding machines, chainsaws, ladders) upon entry; verified on exit.</td>
+        <td>Prevents contractor theft of homeowner tools or copper piping upon departure.</td>
+      </tr>
+      <tr>
+        <td class="strong-col">Dual-Party WhatsApp Copy</td>
+        <td>Both the artisan and host resident receive the digital clearance pass and instant gate check-in alerts.</td>
+        <td>Homeowner knows the exact minute the technician crosses the main gate.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="page-foot">
+    <span>Magodo Residents Association &bull; Comprehensive Functional Manual</span>
+    <span>Page <strong>5</strong> of 6</span>
+  </div>
+</div>
+
+
+<!-- ========================================================
+     PAGE 6: GOVERNANCE, BYLAWS, FINANCE & PILOT ROADMAP
+     ======================================================== -->
+<div class="page">
+  <div class="kicker">
+    <span>Module Deep Dive 05 &amp; Roadmap</span>
+    <span class="rule"></span>
+    <span class="badge-tag">Governance, Finance &amp; Rollout</span>
+  </div>
+
+  <h1>Bylaws, ID Cards, Split Finance &amp; Pilot Plan</h1>
+  <p class="lede">
+    Completing the operating platform. Disciplinary bylaw enforcement, high-res ID card printing, automated split banking via Paystack DVA, and a proven 30-day 3-zone rollout.
+  </p>
+
+  <h2><i class="fa-solid fa-gavel"></i> Digital Bylaws &amp; Automated Violation Fine Invoicing</h2>
+  <div class="grid-2">
+    <div class="card-box">
+      <span class="box-num">Infraction Flow A &bull; Digital Citation</span>
+      <h3>1-Click Patrol Citation</h3>
+      <p>Security officers log violations (Speeding &gt; 25km/h, illegal street parking, noise disturbances &gt; 22:00, unauthorized building) with attached photographic evidence.</p>
+    </div>
+    <div class="card-box">
+      <span class="box-num">Infraction Flow B &bull; Automatic Fine Invoice</span>
+      <h3>WhatsApp Notice &amp; Appeal Desk</h3>
+      <p>Generates an official citation (e.g. <code>PEN-1042</code>) sent via WhatsApp &amp; Email with fine amount, citation brief, settlement link, and a 5-day formal appeal window.</p>
+    </div>
+  </div>
+
+  <h2><i class="fa-solid fa-id-card"></i> High-Resolution Photo ID Card Generator (<code>generate_id.php</code>)</h2>
+  <ul class="check-list">
+    <li><span class="check-icon">&#10003;</span> <strong>3 Multi-Role Templates:</strong> Instant generation of high-resolution printable ID badges for <strong>Residents</strong>, <strong>Security Guards</strong>, and <strong>Accredited Artisans</strong>.</li>
+    <li><span class="check-icon">&#10003;</span> <strong>Embedded Security QR &amp; Barcode:</strong> Badges contain encrypted verification QR codes and serialized barcodes for rapid gatehouse scanner verification.</li>
+  </ul>
+
+  <h2><i class="fa-solid fa-money-bill-transfer"></i> Split Banking &amp; Paystack Dedicated Virtual Accounts (DVA)</h2>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Financial Flow</th>
+        <th>Settlement Route</th>
+        <th>Accountability &amp; Ledger Safeguards</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="strong-col">Zonal Maintenance Levies</td>
+        <td>Settles directly into the <strong>Zone’s Commercial Bank Account</strong> via Paystack Sub-Account.</td>
+        <td>Zero apex secretariat interception; Zone executives have direct access to their infrastructure funds.</td>
+      </tr>
+      <tr>
+        <td class="strong-col">Apex Estate Dues</td>
+        <td>Direct settlement to Central MRA Secretariat commercial account.</td>
+        <td>Automated split remittance prevents manual transfer disputes or reconciliation backlogs.</td>
+      </tr>
+      <tr>
+        <td class="strong-col">Partial Installment Milestones</td>
+        <td>Configurable installment milestones (e.g. 40% initial, balance across 90 days).</td>
+        <td>Residents in temporary illiquidity remain compliant without triggering abrupt gate access lockouts.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2><i class="fa-solid fa-road"></i> Recommended 30-Day 3-Zone Pilot Deployment</h2>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Pilot Week</th>
+        <th>Milestones &amp; Deliverables</th>
+        <th>Target Benchmark</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="strong-col">Week 1: Setup &amp; Onboarding</td>
+        <td>Configure 3 pilot zones. Connect zone bank accounts. Import streets, buildings, and initial resident records.</td>
+        <td>System live. Resident logins dispatched via SMS/WhatsApp.</td>
+      </tr>
+      <tr>
+        <td class="strong-col">Week 2: Gate Deployment</td>
+        <td>Deploy QR scanner terminals at main gate. Train security officers on Sub-5s scanner and offline fallback.</td>
+        <td>100% digital visitor check-ins across pilot zones. Zero paper logbooks.</td>
+      </tr>
+      <tr>
+        <td class="strong-col">Week 3: Invoicing &amp; Artisans</td>
+        <td>Issue monthly service levies via Paystack DVA. Activate WhatsApp automated reminders &amp; onboard first 30 artisans.</td>
+        <td>Over 75% online dues settlement rate within first 10 days.</td>
+      </tr>
+      <tr>
+        <td class="strong-col">Week 4: Executive Review</td>
+        <td>Audit gate logs, collection velocity, and artisan tickets. Present comprehensive AGM report to Board.</td>
+        <td>Green light for full Magodo-wide zonal expansion.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Final CTA & Contact Box -->
+  <div class="card-box" style="margin-top: 10px; background: #111418; color: #ffffff; border-color: #111418; padding: 16px 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+      <div>
+        <h3 style="color: #FBBF24; font-size: 16px; margin-bottom: 2px;">Deploy on Magodo Residents Association</h3>
+        <p style="color: #94A3B8; font-size: 12px; margin: 0;">NoLimitBuzz Technical Delivery &bull; Complete turnkey setup, training, and 24/7 technical support.</p>
+      </div>
+      <div style="text-align: right;">
+        <div style="font-size: 13.5px; font-weight: 700; color: #ffffff;">Felix Ekpa &bull; Lead Solution Architect</div>
+        <div style="font-size: 12px; color: #38BDF8;">08093699678 &bull; Felix@nolimitbuzz.net</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-foot">
+    <span>Magodo Residents Association &bull; Comprehensive Functional Manual</span>
+    <span>Page <strong>6</strong> of 6</span>
+  </div>
+</div>
+
+</body>
+</html>
