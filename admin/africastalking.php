@@ -79,7 +79,7 @@ $o_res = $conn->query("SELECT COUNT(*) as cnt FROM offline_sync_logs WHERE estat
 if ($o_res) $total_offline_synced_cnt = intval($o_res->fetch_assoc()['cnt'] ?? 0);
 
 // Fetch sample resident and guard for the simulator
-$sample_resident = $conn->query("SELECT u.name, u.phone FROM users u JOIN residents r ON u.id = r.user_id WHERE u.estate_id = $estate_id AND u.phone IS NOT NULL AND u.phone != '' LIMIT 1")->fetch_assoc();
+$sample_resident = $conn->query("SELECT u.name, u.phone FROM users u JOIN residents r ON u.id = r.user_id WHERE u.estate_id = $estate_id AND u.phone IS NOT NULL AND u.phone != '' AND u.role != 'security' LIMIT 1")->fetch_assoc();
 $sample_guard = $conn->query("SELECT u.name, u.phone FROM users u WHERE u.estate_id = $estate_id AND u.role IN ('security', 'staff') AND u.phone IS NOT NULL AND u.phone != '' LIMIT 1")->fetch_assoc();
 
 // Determine Server Webhook URL
@@ -566,23 +566,40 @@ include '../includes/sidebar.php';
             <div class="modal-body p-4 bg-light">
                 <!-- Phone Profile Switcher -->
                 <div class="mb-3">
-                    <label class="form-label small fw-bold text-secondary">Simulate Caller Profile:</label>
+                    <label class="form-label small fw-bold text-secondary d-flex justify-content-between align-items-center">
+                        <span>Simulate Caller Profile:</span>
+                        <span id="simActiveRoleBadge" class="badge bg-primary text-white" style="font-size: 0.7rem;">Gate Security</span>
+                    </label>
+
+                    <!-- Quick Role Switcher Buttons -->
+                    <div class="btn-group w-100 mb-2 shadow-sm" role="group">
+                        <button type="button" class="btn btn-sm btn-outline-primary active fw-bold" id="btnRoleGuard" onclick="selectSimRole('guard')">
+                            👮 Gate Officer
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary fw-bold" id="btnRoleGuest" onclick="selectSimRole('guest')">
+                            🚶 Walk-In Guest
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary fw-bold" id="btnRoleResident" onclick="selectSimRole('resident')">
+                            🏠 Resident
+                        </button>
+                    </div>
+
                     <select class="form-select form-select-sm rounded-3" id="simPhonePreset" onchange="applySimPreset()">
-                        <option value="<?php echo htmlspecialchars($sample_resident['phone'] ?? '+2348011223344'); ?>" data-role="resident">
-                            Resident: <?php echo htmlspecialchars($sample_resident['name'] ?? 'Adeyemi'); ?> (<?php echo htmlspecialchars($sample_resident['phone'] ?? '+2348011223344'); ?>)
+                        <option value="<?php echo htmlspecialchars($sample_guard['phone'] ?? '09066832352'); ?>" data-role="guard">
+                            Security Officer: <?php echo htmlspecialchars($sample_guard['name'] ?? 'Officer Femi'); ?> (<?php echo htmlspecialchars($sample_guard['phone'] ?? '09066832352'); ?>)
                         </option>
-                        <option value="<?php echo htmlspecialchars($sample_guard['phone'] ?? '+2348099887766'); ?>" data-role="guard">
-                            Security Officer: <?php echo htmlspecialchars($sample_guard['name'] ?? 'Gate Guard'); ?> (<?php echo htmlspecialchars($sample_guard['phone'] ?? '+2348099887766'); ?>)
+                        <option value="+2348001112222" data-role="guest">
+                            Unregistered Walk-In Guest (+2348001112222)
                         </option>
-                        <option value="+2348000000000" data-role="guest">
-                            Unregistered Guest / Visitor (+2348000000000)
+                        <option value="<?php echo htmlspecialchars($sample_resident['phone'] ?? '+2348034000010'); ?>" data-role="resident">
+                            Resident: <?php echo htmlspecialchars($sample_resident['name'] ?? 'Amina Mohammed'); ?> (<?php echo htmlspecialchars($sample_resident['phone'] ?? '+2348034000010'); ?>)
                         </option>
                     </select>
                 </div>
 
                 <div class="row g-2 mb-3">
                     <div class="col-7">
-                        <input type="text" class="form-control form-control-sm rounded-3 font-monospace" id="simPhoneNumber" value="<?php echo htmlspecialchars($sample_resident['phone'] ?? '+2348011223344'); ?>" placeholder="Caller Phone Number">
+                        <input type="text" class="form-control form-control-sm rounded-3 font-monospace" id="simPhoneNumber" value="<?php echo htmlspecialchars($sample_guard['phone'] ?? '09066832352'); ?>" placeholder="Caller Phone Number">
                     </div>
                     <div class="col-5">
                         <input type="text" class="form-control form-control-sm rounded-3 font-monospace" id="simServiceCode" value="<?php echo htmlspecialchars($cfg['ussd_code']); ?>" placeholder="*384*777#">
@@ -650,10 +667,45 @@ function copyCallbackUrl() {
     });
 }
 
+function selectSimRole(role) {
+    const select = document.getElementById('simPhonePreset');
+    for (let i = 0; i < select.options.length; i++) {
+        if (select.options[i].getAttribute('data-role') === role) {
+            select.selectedIndex = i;
+            break;
+        }
+    }
+    applySimPreset();
+}
+
 function applySimPreset() {
     const select = document.getElementById('simPhonePreset');
     const phoneInput = document.getElementById('simPhoneNumber');
     phoneInput.value = select.value;
+
+    const opt = select.options[select.selectedIndex];
+    const role = opt ? opt.getAttribute('data-role') : 'guard';
+
+    // Update active button state
+    ['btnRoleGuard', 'btnRoleGuest', 'btnRoleResident'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.classList.remove('active');
+    });
+
+    const badge = document.getElementById('simActiveRoleBadge');
+    if (role === 'guard') {
+        document.getElementById('btnRoleGuard')?.classList.add('active');
+        if (badge) { badge.textContent = 'Gate Security'; badge.className = 'badge bg-primary text-white'; }
+    } else if (role === 'guest') {
+        document.getElementById('btnRoleGuest')?.classList.add('active');
+        if (badge) { badge.textContent = 'Walk-In Guest'; badge.className = 'badge bg-warning text-dark'; }
+    } else {
+        document.getElementById('btnRoleResident')?.classList.add('active');
+        if (badge) { badge.textContent = 'Host Resident'; badge.className = 'badge bg-success text-white'; }
+    }
+
+    // Auto-dial session immediately with fresh caller profile
+    startSimSession();
 }
 
 function updateSimClock() {
@@ -744,6 +796,16 @@ document.getElementById('simUserInput').addEventListener('keyup', function(e) {
         sendSimInput();
     }
 });
+
+// Auto-dial when simulator modal is opened
+const simModal = document.getElementById('ussdSimulatorModal');
+if (simModal) {
+    simModal.addEventListener('shown.bs.modal', function() {
+        if (!simSessionId) {
+            applySimPreset();
+        }
+    });
+}
 </script>
 
 <?php include '../includes/footer.php'; ?>
