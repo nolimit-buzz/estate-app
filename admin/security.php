@@ -360,6 +360,9 @@ $vehicle_logs_admin = $conn->query("
         <a href="security?tab=audit_logs" class="btn-export-ghost" title="Gate Logs Archive">
             <i class="fa-solid fa-clipboard-list text-primary"></i> Gate Logs
         </a>
+        <button type="button" class="btn btn-warning rounded-pill fw-bold px-3 py-2 text-dark shadow-sm d-inline-flex align-items-center gap-1" onclick="window.EstateOfflineSync && window.EstateOfflineSync.openGenerateModal();" title="Generate Access Passcode Offline">
+            <i class="fa-solid fa-ticket"></i> Generate Code (Offline)
+        </button>
         <button type="button" class="btn-primary-action-pill" data-bs-toggle="modal" data-bs-target="#walkinModal">
             <i class="fa-solid fa-user-plus"></i> + Walk-in Visitor
         </button>
@@ -1811,5 +1814,8 @@ function viewAuditCard(data) {
     modal.show();
 }
 </script>
+
+<!-- High-Resilience Offline Caching & USSD Sync Engine -->
+<script src="../js/estate_offline_sync.js"></script>
 
 <?php include '../includes/footer.php'; ?>

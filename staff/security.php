@@ -302,6 +302,9 @@ include 'sidebar.php';
         </div>
     </div>
     <div class="hero-actions-group">
+        <button type="button" class="btn btn-warning rounded-pill fw-bold px-3 py-2 text-dark shadow-sm d-inline-flex align-items-center gap-1" onclick="window.EstateOfflineSync && window.EstateOfflineSync.openGenerateModal();" title="Generate Access Passcode Offline">
+            <i class="fa-solid fa-ticket"></i> Generate Code (Offline)
+        </button>
         <a href="incidents" class="btn-export-ghost text-danger" title="Report Security Incident">
             <i class="fa-solid fa-triangle-exclamation text-danger"></i> Log Incident
         </a>
@@ -1462,5 +1465,8 @@ function viewAuditTrail(v) {
     });
 })();
 </script>
+
+<!-- High-Resilience Offline Caching & USSD Sync Engine -->
+<script src="../js/estate_offline_sync.js"></script>
 
 <?php include 'footer.php'; ?>

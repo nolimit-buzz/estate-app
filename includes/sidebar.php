@@ -114,6 +114,7 @@ if ($sb_uid > 0 && isset($conn)) {
             <li><a href="../admin/incidents" class="<?php echo ($current_page == 'incidents') ? 'active' : ''; ?>"><i class="fa-solid fa-book-skull text-danger"></i> Incident &amp; Occurrence Book</a></li>
             <li><a href="../admin/roster" class="<?php echo ($current_page == 'roster') ? 'active' : ''; ?>"><i class="fa-solid fa-calendar-check"></i> Security Duty Roster</a></li>
             <li><a href="../admin/security" class="<?php echo ($current_page == 'security') ? 'active' : ''; ?>"><i class="fa-solid fa-shield-halved"></i> Gate Visitor Passes</a></li>
+            <li><a href="../admin/africastalking" class="<?php echo ($current_page == 'africastalking') ? 'active' : ''; ?>"><i class="fa-solid fa-signal text-primary"></i> USSD &amp; Offline Sync</a></li>
             <li><a href="../admin/email_logs" class="<?php echo ($current_page == 'email_logs') ? 'active' : ''; ?>"><i class="fa-solid fa-envelope-open-text"></i> Email Logs</a></li>
             <li><a href="../admin/whatsapp_logs" class="<?php echo ($current_page == 'whatsapp_logs') ? 'active' : ''; ?>"><i class="fa-brands fa-whatsapp text-success"></i> WhatsApp Logs</a></li>
             <li><a href="../admin/users" class="<?php echo ($current_page == 'users') ? 'active' : ''; ?>"><i class="fa-solid fa-user-shield"></i> User Accounts &amp; Security</a></li>
