@@ -55,6 +55,15 @@ if ($sb_uid > 0 && isset($conn)) {
     
     <nav class="sidebar-nav">
         <ul>
+            <?php if (($_SESSION['role'] ?? '') === 'superadmin' || intval($_SESSION['user_id'] ?? 0) === 1): ?>
+                <li class="nav-label text-warning" style="color: #f59e0b !important;">SaaS Governance</li>
+                <li>
+                    <a href="../superadmin/index" class="text-warning fw-bold d-flex align-items-center" style="background: rgba(245, 158, 11, 0.08); border-left: 3px solid #f59e0b; border-radius: 8px; margin-bottom: 8px;">
+                        <i class="fa-solid fa-bolt text-warning"></i> Super Admin Console
+                        <span class="badge bg-warning text-dark ms-auto" style="font-size: 0.65rem;">SAAS</span>
+                    </a>
+                </li>
+            <?php endif; ?>
             <li class="nav-label">Core Operations</li>
             <li><a href="../admin/index" class="<?php echo ($current_page == 'index') ? 'active' : ''; ?>"><i class="fa-solid fa-chart-pie"></i> Dashboard</a></li>
             <li>
@@ -281,6 +290,11 @@ if ($sb_uid > 0 && isset($conn)) {
                         <div class="fw-bold text-dark small"><?php echo htmlspecialchars($_SESSION['name'] ?? 'Admin User'); ?></div>
                         <div class="text-muted" style="font-size: 0.72rem;"><?php echo htmlspecialchars($_SESSION['email'] ?? 'admin@estate.com'); ?></div>
                     </div>
+                    <?php if (($_SESSION['role'] ?? '') === 'superadmin' || intval($_SESSION['user_id'] ?? 0) === 1): ?>
+                        <a href="../superadmin/index" class="dropdown-item py-2 px-3 rounded-2 small d-flex align-items-center gap-2 text-warning fw-bold" style="background: rgba(245, 158, 11, 0.08);">
+                            <i class="fa-solid fa-bolt text-warning"></i> Super Admin Console
+                        </a>
+                    <?php endif; ?>
                     <a href="../admin/settings" class="dropdown-item py-2 px-3 rounded-2 small d-flex align-items-center gap-2">
                         <i class="fa-solid fa-sliders text-secondary"></i> System Settings
                     </a>
