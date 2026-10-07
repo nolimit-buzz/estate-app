@@ -2,8 +2,12 @@
 // superadmin/impersonate.php - Instant Estate Impersonation Engine
 require_once '../config.php';
 
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'superadmin') {
-    redirectWithFlash('../login', null, 'Super Administrator access required.');
+if (!isset($_SESSION['user_id'])) {
+    redirectWithFlash('../login', null, 'Please sign in to access the system.');
+}
+
+if (($_SESSION['role'] ?? '') !== 'superadmin' && intval($_SESSION['user_id'] ?? 0) !== 1) {
+    redirectWithFlash('index', null, 'Super Administrator access required.');
 }
 
 $estate_id = intval($_GET['estate_id'] ?? 0);

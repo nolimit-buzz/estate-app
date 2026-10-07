@@ -2,9 +2,12 @@
 // superadmin/create_estate.php - Multi-Tenant Estate Provisioning Wizard
 require_once '../config.php';
 
-// Check if user is superadmin
-if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'superadmin') {
-    redirectWithFlash('../login', null, 'Super Administrator privileges required.');
+if (!isset($_SESSION['user_id'])) {
+    redirectWithFlash('../login', null, 'Please sign in to access the system.');
+}
+
+if (($_SESSION['role'] ?? '') !== 'superadmin' && intval($_SESSION['user_id'] ?? 0) !== 1) {
+    redirectWithFlash('../admin/index', null, 'Super Administrator privileges required.');
 }
 
 $error = "";

@@ -2,9 +2,25 @@
 // superadmin/index.php - Central SaaS Command Center & Multi-Tenant Control Panel
 require_once '../config.php';
 
-// Check if user is superadmin
-if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'superadmin') {
-    redirectWithFlash('../login', null, 'Super Administrator privileges required.');
+// Check if user is authenticated
+if (!isset($_SESSION['user_id'])) {
+    redirectWithFlash('../login', null, 'Please sign in to access the system.');
+}
+
+// Refresh role from database in case role was updated
+if (isset($conn) && isset($_SESSION['user_id'])) {
+    $uid = intval($_SESSION['user_id']);
+    $roleChk = $conn->query("SELECT role FROM users WHERE id = $uid LIMIT 1");
+    if ($roleChk && $rRow = $roleChk->fetch_assoc()) {
+        $_SESSION['role'] = $rRow['role'];
+    }
+}
+
+// Allow superadmin or primary admin (user ID 1)
+$user_role = $_SESSION['role'] ?? '';
+$user_id = intval($_SESSION['user_id'] ?? 0);
+if ($user_role !== 'superadmin' && $user_id !== 1) {
+    redirectWithFlash('../admin/index', null, 'Super Administrator privileges required.');
 }
 
 $message = getFlashMessage('success') ?? '';

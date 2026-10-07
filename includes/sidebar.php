@@ -145,7 +145,7 @@ if ($sb_uid > 0 && isset($conn)) {
             <li><a href="../admin/branding" class="<?php echo ($current_page == 'branding') ? 'active' : ''; ?>"><i class="fa-solid fa-paintbrush text-info"></i> White-Label &amp; Branding</a></li>
             <li><a href="../admin/settings" class="<?php echo ($current_page == 'settings') ? 'active' : ''; ?>"><i class="fa-solid fa-sliders"></i> Settings</a></li>
             
-            <?php if (($_SESSION['role'] ?? '') === 'superadmin' || is_impersonating_estate()): ?>
+            <?php if (($_SESSION['role'] ?? '') === 'superadmin' || is_impersonating_estate() || intval($_SESSION['user_id'] ?? 0) === 1): ?>
                 <li class="nav-label text-warning">Super Admin HQ</li>
                 <li><a href="../superadmin/index" style="color: #f59e0b; font-weight: 700;"><i class="fa-solid fa-layer-group text-warning"></i> SaaS Command Center</a></li>
             <?php endif; ?>

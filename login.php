@@ -6,8 +6,16 @@ require_once 'includes/auth_helper.php';
 
 // If already logged in, redirect to respective dashboard
 if (isset($_SESSION['user_id'])) {
+    if (isset($conn)) {
+        $uid = intval($_SESSION['user_id']);
+        $r_chk = $conn->query("SELECT role FROM users WHERE id = $uid LIMIT 1");
+        if ($r_chk && $r_row = $r_chk->fetch_assoc()) {
+            $_SESSION['role'] = $r_row['role'];
+        }
+    }
+
     $role = $_SESSION['role'] ?? 'resident';
-    if ($role === 'superadmin') {
+    if ($role === 'superadmin' || intval($_SESSION['user_id'] ?? 0) === 1) {
         header("Location: superadmin/index");
     } elseif (in_array($role, ['admin', 'manager'])) {
         header("Location: admin/index");
