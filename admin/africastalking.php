@@ -5,6 +5,7 @@ require_once '../includes/auth_guard.php';
 require_once '../includes/AfricasTalking.php';
 
 requireAdminAccess();
+requireModule('ussd_offline_sync');
 
 $estate_id = get_estate_id();
 EstateAfricasTalking::ensureDatabaseTables($conn);

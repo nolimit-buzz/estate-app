@@ -69,7 +69,9 @@ if ($sb_uid > 0 && isset($conn)) {
             </li>
             
             <li class="nav-label">Real Estate & Assets</li>
-            <li><a href="../admin/zones" class="<?php echo ($current_page == 'zones') ? 'active' : ''; ?>"><i class="fa-solid fa-layer-group"></i> Zones & Sectors</a></li>
+            <?php if (isModuleEnabled('zonal_divisions')): ?>
+                <li><a href="../admin/zones" class="<?php echo ($current_page == 'zones') ? 'active' : ''; ?>"><i class="fa-solid fa-layer-group"></i> Zones & Sectors</a></li>
+            <?php endif; ?>
             <li><a href="../admin/properties" class="<?php echo ($current_page == 'properties' || $current_page == 'property_details') ? 'active' : ''; ?>"><i class="fa-solid fa-city"></i> Properties & Units</a></li>
             <li><a href="../admin/owners" class="<?php echo ($current_page == 'owners') ? 'active' : ''; ?>"><i class="fa-solid fa-id-card-clip"></i> Property Owners</a></li>
             <li>
@@ -83,43 +85,71 @@ if ($sb_uid > 0 && isset($conn)) {
                 </a>
             </li>
             <li><a href="../admin/directory" class="<?php echo ($current_page == 'directory') ? 'active' : ''; ?>"><i class="fa-solid fa-address-book"></i> Member Directory</a></li>
-            <li><a href="../admin/broadcasts" class="<?php echo ($current_page == 'broadcasts') ? 'active' : ''; ?>"><i class="fa-solid fa-bullhorn"></i> Broadcasts &amp; Notices</a></li>
+            <?php if (isModuleEnabled('broadcast_messaging')): ?>
+                <li><a href="../admin/broadcasts" class="<?php echo ($current_page == 'broadcasts') ? 'active' : ''; ?>"><i class="fa-solid fa-bullhorn"></i> Broadcasts &amp; Notices</a></li>
+            <?php endif; ?>
             <li><a href="../admin/community_chat" class="<?php echo ($current_page == 'community_chat') ? 'active' : ''; ?>"><i class="fa-solid fa-comments"></i> Estate Forum</a></li>
             <li><a href="../admin/staff" class="<?php echo ($current_page == 'staff') ? 'active' : ''; ?>"><i class="fa-solid fa-user-gear"></i> Estate Staff</a></li>
             <li><a href="../admin/archives" class="<?php echo ($current_page == 'archives') ? 'active' : ''; ?>"><i class="fa-solid fa-box-archive"></i> Archives Vault</a></li>
-            <li><a href="../admin/policies" class="<?php echo ($current_page == 'policies') ? 'active' : ''; ?>"><i class="fa-solid fa-gavel"></i> Policies &amp; Bylaws</a></li>
+            <?php if (isModuleEnabled('bylaws_policies')): ?>
+                <li><a href="../admin/policies" class="<?php echo ($current_page == 'policies') ? 'active' : ''; ?>"><i class="fa-solid fa-gavel"></i> Policies &amp; Bylaws</a></li>
+            <?php endif; ?>
             
-            <li class="nav-label">Finance & Facilities</li>
-            <li><a href="../admin/finance" class="<?php echo ($current_page == 'finance' || $current_page == 'receipt') ? 'active' : ''; ?>"><i class="fa-solid fa-wallet"></i> Finance Hub</a></li>
-            <li><a href="../admin/charges" class="<?php echo ($current_page == 'charges') ? 'active' : ''; ?>"><i class="fa-solid fa-tags"></i> Charge Catalog</a></li>
-            <li><a href="../admin/billing_config" class="<?php echo ($current_page == 'billing_config') ? 'active' : ''; ?>"><i class="fa-solid fa-sliders"></i> Billing & Installments</a></li>
+            <?php if (isModuleEnabled('billing_invoicing')): ?>
+                <li class="nav-label">Finance & Facilities</li>
+                <li><a href="../admin/finance" class="<?php echo ($current_page == 'finance' || $current_page == 'receipt') ? 'active' : ''; ?>"><i class="fa-solid fa-wallet"></i> Finance Hub</a></li>
+                <li><a href="../admin/charges" class="<?php echo ($current_page == 'charges') ? 'active' : ''; ?>"><i class="fa-solid fa-tags"></i> Charge Catalog</a></li>
+                <li><a href="../admin/billing_config" class="<?php echo ($current_page == 'billing_config') ? 'active' : ''; ?>"><i class="fa-solid fa-sliders"></i> Billing & Installments</a></li>
+            <?php endif; ?>
+
             <li><a href="../admin/maintenance" class="<?php echo ($current_page == 'maintenance') ? 'active' : ''; ?>"><i class="fa-solid fa-screwdriver-wrench"></i> Maintenance Dispatch</a></li>
-            <li>
-                <a href="../admin/artisans" class="<?php echo ($current_page == 'artisans') ? 'active' : ''; ?> d-flex align-items-center">
-                    <i class="fa-solid fa-user-check"></i> Artisan Registry
-                    <?php if ($sb_pending_artisans_cnt > 0): ?>
-                        <span class="badge bg-warning text-dark rounded-pill ms-auto" style="font-size: 0.65rem; padding: 2px 7px;" title="<?php echo $sb_pending_artisans_cnt; ?> pending artisan verification(s)">
-                            <?php echo $sb_pending_artisans_cnt; ?> new
-                        </span>
-                    <?php endif; ?>
-                </a>
-            </li>
+            <?php if (isModuleEnabled('artisan_marketplace')): ?>
+                <li>
+                    <a href="../admin/artisans" class="<?php echo ($current_page == 'artisans') ? 'active' : ''; ?> d-flex align-items-center">
+                        <i class="fa-solid fa-user-check"></i> Artisan Registry
+                        <?php if ($sb_pending_artisans_cnt > 0): ?>
+                            <span class="badge bg-warning text-dark rounded-pill ms-auto" style="font-size: 0.65rem; padding: 2px 7px;" title="<?php echo $sb_pending_artisans_cnt; ?> pending artisan verification(s)">
+                                <?php echo $sb_pending_artisans_cnt; ?> new
+                            </span>
+                        <?php endif; ?>
+                    </a>
+                </li>
+            <?php endif; ?>
             
             <li class="nav-label">Portals</li>
-            <li><a href="../zone/index" target="_blank"><i class="fa-solid fa-network-wired"></i> Zone Portal <i class="fa-solid fa-arrow-up-right-from-square ms-auto small opacity-50"></i></a></li>
+            <?php if (isModuleEnabled('zonal_divisions')): ?>
+                <li><a href="../zone/index" target="_blank"><i class="fa-solid fa-network-wired"></i> Zone Portal <i class="fa-solid fa-arrow-up-right-from-square ms-auto small opacity-50"></i></a></li>
+            <?php endif; ?>
             <li><a href="../resident/index" target="_blank"><i class="fa-solid fa-house-chimney-user"></i> Resident Portal <i class="fa-solid fa-arrow-up-right-from-square ms-auto small opacity-50"></i></a></li>
 
             <li class="nav-label">Security & System</li>
-            <li><a href="../admin/emergency" class="<?php echo ($current_page == 'emergency') ? 'active' : ''; ?> text-danger fw-bold"><i class="fa-solid fa-truck-medical text-danger"></i> Emergency &amp; Panic Hub</a></li>
+            <?php if (isModuleEnabled('emergency_sos')): ?>
+                <li><a href="../admin/emergency" class="<?php echo ($current_page == 'emergency') ? 'active' : ''; ?> text-danger fw-bold"><i class="fa-solid fa-truck-medical text-danger"></i> Emergency &amp; Panic Hub</a></li>
+            <?php endif; ?>
             <li><a href="../admin/incidents" class="<?php echo ($current_page == 'incidents') ? 'active' : ''; ?>"><i class="fa-solid fa-book-skull text-danger"></i> Incident &amp; Occurrence Book</a></li>
-            <li><a href="../admin/roster" class="<?php echo ($current_page == 'roster') ? 'active' : ''; ?>"><i class="fa-solid fa-calendar-check"></i> Security Duty Roster</a></li>
-            <li><a href="../admin/security" class="<?php echo ($current_page == 'security') ? 'active' : ''; ?>"><i class="fa-solid fa-shield-halved"></i> Gate Visitor Passes</a></li>
-            <li><a href="../admin/africastalking" class="<?php echo ($current_page == 'africastalking') ? 'active' : ''; ?>"><i class="fa-solid fa-signal text-primary"></i> USSD &amp; Offline Sync</a></li>
+            <?php if (isModuleEnabled('security_patrol')): ?>
+                <li><a href="../admin/roster" class="<?php echo ($current_page == 'roster') ? 'active' : ''; ?>"><i class="fa-solid fa-calendar-check"></i> Security Duty Roster</a></li>
+            <?php endif; ?>
+            <?php if (isModuleEnabled('visitor_passes')): ?>
+                <li><a href="../admin/security" class="<?php echo ($current_page == 'security') ? 'active' : ''; ?>"><i class="fa-solid fa-shield-halved"></i> Gate Visitor Passes</a></li>
+            <?php endif; ?>
+            <?php if (isModuleEnabled('ussd_offline_sync')): ?>
+                <li><a href="../admin/africastalking" class="<?php echo ($current_page == 'africastalking') ? 'active' : ''; ?>"><i class="fa-solid fa-signal text-primary"></i> USSD &amp; Offline Sync</a></li>
+            <?php endif; ?>
             <li><a href="../admin/email_logs" class="<?php echo ($current_page == 'email_logs') ? 'active' : ''; ?>"><i class="fa-solid fa-envelope-open-text"></i> Email Logs</a></li>
             <li><a href="../admin/whatsapp_logs" class="<?php echo ($current_page == 'whatsapp_logs') ? 'active' : ''; ?>"><i class="fa-brands fa-whatsapp text-success"></i> WhatsApp Logs</a></li>
             <li><a href="../admin/users" class="<?php echo ($current_page == 'users') ? 'active' : ''; ?>"><i class="fa-solid fa-user-shield"></i> User Accounts &amp; Security</a></li>
             <li><a href="../admin/audit_logs" class="<?php echo ($current_page == 'audit_logs') ? 'active' : ''; ?>"><i class="fa-solid fa-clock-rotate-left"></i> System Audit</a></li>
+            
+            <li class="nav-label">Settings &amp; White-Label</li>
+            <li><a href="../admin/branding" class="<?php echo ($current_page == 'branding') ? 'active' : ''; ?>"><i class="fa-solid fa-paintbrush text-info"></i> White-Label &amp; Branding</a></li>
             <li><a href="../admin/settings" class="<?php echo ($current_page == 'settings') ? 'active' : ''; ?>"><i class="fa-solid fa-sliders"></i> Settings</a></li>
+            
+            <?php if (($_SESSION['role'] ?? '') === 'superadmin' || is_impersonating_estate()): ?>
+                <li class="nav-label text-warning">Super Admin HQ</li>
+                <li><a href="../superadmin/index" style="color: #f59e0b; font-weight: 700;"><i class="fa-solid fa-layer-group text-warning"></i> SaaS Command Center</a></li>
+            <?php endif; ?>
+
             <li><a href="../logout"><i class="fa-solid fa-arrow-right-from-bracket text-danger"></i> Logout</a></li>
         </ul>
     </nav>

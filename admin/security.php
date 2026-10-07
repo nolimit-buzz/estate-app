@@ -11,6 +11,7 @@ if (isZoneAdminRole()) {
 require_once '../includes/Mailer.php';
 require_once '../includes/vehicle_helper.php';
 requirePermission('visitors.view_log');
+requireModule('visitor_passes');
 
 include '../includes/header.php';
 include '../includes/sidebar.php';

@@ -107,4 +107,22 @@ if (!isset($_SESSION['user_id'])) {
     </style>
 </head>
 <body>
+<?php if (function_exists('is_impersonating_estate') && is_impersonating_estate()): ?>
+    <div style="background: linear-gradient(90deg, #92400e, #d97706); color: #ffffff; padding: 10px 24px; font-weight: 600; font-size: 0.88rem; display: flex; align-items: center; justify-content: space-between; z-index: 999999; position: sticky; top: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.25);">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <i class="fa-solid fa-triangle-exclamation fs-5 text-warning"></i>
+            <span>
+                <strong>SUPER ADMIN OPERATOR MODE:</strong> Managing <strong><?php echo htmlspecialchars(get_impersonated_estate_name($conn)); ?></strong> (Tenant ID: #<?php echo get_estate_id(); ?>).
+            </span>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <a href="../superadmin/index" class="btn btn-sm btn-light rounded-pill px-3 py-1 fw-bold text-dark shadow-sm" style="font-size: 0.78rem;">
+                <i class="fa-solid fa-layer-group me-1"></i> Switch Estate
+            </a>
+            <a href="../superadmin/exit_impersonation" class="btn btn-sm btn-dark rounded-pill px-3 py-1 fw-bold shadow-sm" style="font-size: 0.78rem;">
+                <i class="fa-solid fa-right-from-bracket me-1"></i> Exit Impersonation
+            </a>
+        </div>
+    </div>
+<?php endif; ?>
     <div class="app-container">

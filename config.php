@@ -138,13 +138,161 @@ function logAudit($conn, $action, $module, $details = "") {
     return $conn->query($sql);
 }
 
-// Global Tenant Helper
+// Global Tenant Helper (Supports Super Admin Impersonation & Subdomains)
 function get_estate_id() {
+    // 1. If Super Admin is actively impersonating an estate:
+    if (isset($_SESSION['impersonated_estate_id']) && (isset($_SESSION['role']) && $_SESSION['role'] === 'superadmin')) {
+        return intval($_SESSION['impersonated_estate_id']);
+    }
+    // 2. Standard authenticated session estate
     if (isset($_SESSION['estate_id'])) {
         return intval($_SESSION['estate_id']);
     }
+    // 3. Subdomain-based tenant resolution (e.g. sunrise.estateapp.com)
+    if (isset($_SERVER['HTTP_HOST'])) {
+        static $resolved_subdomain_id = null;
+        if ($resolved_subdomain_id !== null) {
+            return $resolved_subdomain_id;
+        }
+        $host = strtolower($_SERVER['HTTP_HOST']);
+        $parts = explode('.', $host);
+        if (count($parts) >= 3 && $parts[0] !== 'www' && $parts[0] !== 'localhost') {
+            global $conn;
+            if ($conn instanceof mysqli) {
+                $sub = $conn->real_escape_string($parts[0]);
+                $chk = $conn->query("SELECT id FROM estates WHERE domain_prefix = '$sub' LIMIT 1");
+                if ($chk && $r = $chk->fetch_assoc()) {
+                    $resolved_subdomain_id = intval($r['id']);
+                    return $resolved_subdomain_id;
+                }
+            }
+        }
+    }
     return 1; // Default fallback to Main Estate
 }
+
+// Impersonation Helper
+function is_impersonating_estate() {
+    return (isset($_SESSION['impersonated_estate_id']) && (isset($_SESSION['role']) && $_SESSION['role'] === 'superadmin'));
+}
+
+// Get Impersonated Estate Meta
+function get_impersonated_estate_name($conn = null) {
+    if (!is_impersonating_estate()) return null;
+    $eid = intval($_SESSION['impersonated_estate_id']);
+    if (!$conn) {
+        global $conn;
+    }
+    if ($conn instanceof mysqli) {
+        $res = $conn->query("SELECT name FROM estates WHERE id = $eid LIMIT 1");
+        if ($res && $r = $res->fetch_assoc()) return $r['name'];
+    }
+    return "Estate #$eid";
+}
+
+// Global Standard SaaS Platform Modules
+function getAllPlatformModules() {
+    return [
+        'visitor_passes' => [
+            'name' => 'Visitor & Gate Pass Management',
+            'desc' => 'Generate visitor passcodes, check-in guests, entry/exit logs & QR codes',
+            'icon' => 'fa-ticket',
+            'category' => 'Security & Access'
+        ],
+        'vehicle_registry' => [
+            'name' => 'Vehicle Registry & Stickers',
+            'desc' => 'Resident vehicle verification, RFID/car tags, parking & gate logs',
+            'icon' => 'fa-car-side',
+            'category' => 'Security & Access'
+        ],
+        'billing_invoicing' => [
+            'name' => 'Invoicing, Dues & Paystack',
+            'desc' => 'Estate dues, levies, automated invoices, receipts & Paystack online gateway',
+            'icon' => 'fa-file-invoice-dollar',
+            'category' => 'Finance'
+        ],
+        'ussd_offline_sync' => [
+            'name' => 'Africa\'s Talking USSD & Offline Terminal',
+            'desc' => 'Zero-internet GSM USSD shortcode (*384#) access & local terminal browser caching',
+            'icon' => 'fa-tower-cell',
+            'category' => 'Telephony & Hardware'
+        ],
+        'security_patrol' => [
+            'name' => 'Security Guard Roster & Shifts',
+            'desc' => 'Security posts, guard shift roster assignment, and duty checkpoints',
+            'icon' => 'fa-user-shield',
+            'category' => 'Operations'
+        ],
+        'emergency_sos' => [
+            'name' => 'Emergency SOS & Panic Alerts',
+            'desc' => 'One-tap resident emergency panic alarms & guard mobilization alerts',
+            'icon' => 'fa-bell-exclamation',
+            'category' => 'Operations'
+        ],
+        'broadcast_messaging' => [
+            'name' => 'Broadcast SMS, WhatsApp & Email',
+            'desc' => 'Automated community announcements, meeting notices & circular broadcasts',
+            'icon' => 'fa-bullhorn',
+            'category' => 'Communications'
+        ],
+        'artisan_marketplace' => [
+            'name' => 'Vetted Artisans & Service Directory',
+            'desc' => 'Directory of approved electricians, plumbers, painters & domestic handymen',
+            'icon' => 'fa-wrench',
+            'category' => 'Community'
+        ],
+        'bylaws_policies' => [
+            'name' => 'Estate Bylaws & Policy Penalties',
+            'desc' => 'Publish estate rules, curfew policies, pet regulations & violation fines',
+            'icon' => 'fa-book-bookmark',
+            'category' => 'Governance'
+        ],
+        'zonal_divisions' => [
+            'name' => 'Zonal Sub-Committees & Zones',
+            'desc' => 'Zone-level administrative accounts, zonal levies, and street clusters',
+            'icon' => 'fa-layer-group',
+            'category' => 'Governance'
+        ]
+    ];
+}
+
+// Module Feature Flag Gatekeeper
+function isModuleEnabled($module_key, $estate_id = null) {
+    global $conn;
+    if (!$estate_id) $estate_id = get_estate_id();
+    $estate_id = intval($estate_id);
+
+    static $module_cache = [];
+    if (!isset($module_cache[$estate_id])) {
+        $module_cache[$estate_id] = [];
+        if ($conn instanceof mysqli) {
+            $m_res = $conn->query("SELECT module_key, is_enabled FROM estate_modules WHERE estate_id = $estate_id");
+            if ($m_res) {
+                while ($mrow = $m_res->fetch_assoc()) {
+                    $module_cache[$estate_id][$mrow['module_key']] = (intval($mrow['is_enabled']) === 1);
+                }
+            }
+        }
+    }
+
+    if (array_key_exists($module_key, $module_cache[$estate_id])) {
+        return $module_cache[$estate_id][$module_key];
+    }
+
+    // Default open if not explicitly disabled
+    return true;
+}
+
+// Require Module or Redirect
+function requireModule($module_key, $redirect_url = '../admin/index') {
+    if (!isModuleEnabled($module_key)) {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        $_SESSION['flash_error'] = "The requested module ('$module_key') is not enabled for this estate plan. Contact the platform administrator to activate this feature.";
+        header("Location: " . $redirect_url);
+        exit;
+    }
+}
+
 
 // Global Media URL Resolver (Normalizes uploads paths across any folder depth)
 if (!function_exists('get_media_url')) {

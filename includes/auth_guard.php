@@ -60,6 +60,22 @@ function requireLogin() {
         }
     }
 
+    // Multi-Tenant Estate Lifecycle & Suspension Guard
+    $tenant_id = get_estate_id();
+    $user_role = $_SESSION['role'] ?? '';
+    if ($user_role !== 'superadmin' && $tenant_id > 0 && $conn) {
+        $e_chk = $conn->query("SELECT status FROM estates WHERE id = $tenant_id LIMIT 1");
+        if ($e_chk && $e_row = $e_chk->fetch_assoc()) {
+            if ($e_row['status'] === 'suspended' || $e_row['status'] === 'expired') {
+                $current = basename($_SERVER['PHP_SELF']);
+                if ($current !== 'suspended.php' && $current !== 'logout.php') {
+                    header("Location: {$prefix}suspended");
+                    exit;
+                }
+            }
+        }
+    }
+
     // Intercept forced password change
     if (!empty($_SESSION['force_password_change'])) {
         $current = basename($_SERVER['PHP_SELF']);
