@@ -718,7 +718,7 @@ if ($pm_res) {
                             <?php while($p_row = $payments_result->fetch_assoc()): ?>
                             <tr>
                                 <td>
-                                    <span class="id-chip"><?= htmlspecialchars($p_row['reference'] ?: ('PAY-' . $p_row['id'])) ?></span>
+                                    <span class="id-chip"><?= htmlspecialchars(($p_row['payment_reference'] ?? $p_row['transaction_ref'] ?? '') ?: ('PAY-' . $p_row['id'])) ?></span>
                                 </td>
                                 <td>
                                     <div style="font-weight: 600; color: var(--text-color); font-size: 0.92rem;"><?= htmlspecialchars($p_row['resident_name'] ?: 'Resident') ?></div>
