@@ -173,6 +173,14 @@ code, kbd, samp, pre, .font-mono, [style*="font-family: monospace"], [style*="fo
     color: var(--primary-color);
 }
 
+.sidebar-header .logo img {
+    height: 32px;
+    width: auto;
+    max-width: 140px;
+    position: static;
+    object-fit: contain;
+}
+
 .sidebar-nav {
     flex: 1;
     overflow-y: auto;

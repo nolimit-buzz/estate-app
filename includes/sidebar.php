@@ -36,7 +36,7 @@ if ($sb_uid > 0 && isset($conn)) {
     <div class="sidebar-header">
         <div class="logo d-flex align-items-center">
             <?php if(!empty($app_company_logo_url)): ?>
-                <img src="<?php echo htmlspecialchars($app_company_logo_url); ?>" alt="<?php echo htmlspecialchars($app_company_name); ?>" style="height: 32px; border-radius: 6px; object-fit: contain;">
+                <img src="<?php echo htmlspecialchars($app_company_logo_url); ?>" alt="<?php echo htmlspecialchars($app_company_name); ?>" style="height: 32px; width: auto; max-width: 140px; border-radius: 6px; object-fit: contain;">
                 <div class="d-flex flex-column ms-2 text-start">
                     <span style="font-size: 1.02rem; font-weight: 800; letter-spacing: -0.01em; line-height: 1.2; color: inherit;"><?php echo htmlspecialchars($app_company_name); ?></span>
                     <span style="font-size: 0.65rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Estate Platform</span>
