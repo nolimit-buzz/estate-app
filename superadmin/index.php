@@ -35,6 +35,25 @@ $stat = fn($label, $value, $sub = '', $href = null) => '<div class="col-6 col-lg
     <?= $stat('Trial estates', intval($st['trial_c']), 'convert or expire', 'estates?status=trial') ?>
 </div>
 
+<div class="row g-3 mb-4">
+    <div class="col-lg-6"><div class="card-custom p-3 h-100">
+        <h6 class="fw-bold mb-3">Estate Status Distribution</h6>
+        <canvas id="estateStatusChart" height="250"></canvas>
+    </div></div>
+    <div class="col-lg-6"><div class="card-custom p-3 h-100">
+        <h6 class="fw-bold mb-3">Subscription Status Breakdown</h6>
+        <canvas id="subscriptionStatusChart" height="250"></canvas>
+    </div></div>
+    <div class="col-lg-6"><div class="card-custom p-3 h-100">
+        <h6 class="fw-bold mb-3">Monthly Revenue Trend (Last 12 Months)</h6>
+        <canvas id="revenueChart" height="250"></canvas>
+    </div></div>
+    <div class="col-lg-6"><div class="card-custom p-3 h-100">
+        <h6 class="fw-bold mb-3">Payment Status (Last 30 Days)</h6>
+        <canvas id="paymentStatusChart" height="250"></canvas>
+    </div></div>
+</div>
+
 <div class="row g-3">
     <div class="col-lg-6"><div class="card-custom p-3 h-100">
         <h6 class="fw-bold">Recent registrations</h6>
@@ -75,4 +94,157 @@ $stat = fn($label, $value, $sub = '', $href = null) => '<div class="col-6 col-lg
         ?></ul>
     </div></div>
 </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script>
+// Chart.js configuration
+const chartColors = {
+    success: '#10b981',
+    warning: '#f59e0b',
+    danger: '#ef4444',
+    info: '#3b82f6',
+    secondary: '#6b7280'
+};
+
+// 1. Estate Status Distribution (Doughnut)
+const estateStatusCtx = document.getElementById('estateStatusChart').getContext('2d');
+new Chart(estateStatusCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Active', 'Trial', 'Grace Period', 'Suspended', 'Retention', 'Onboarding'],
+        datasets: [{
+            data: [<?= intval($st['active_c']) ?>, <?= intval($st['trial_c']) ?>, <?= intval($st['grace_c']) ?>, <?= intval($st['susp_c']) ?>, <?= intval($st['ret_c']) ?>, <?= intval($st['onb_c']) ?>],
+            backgroundColor: [
+                chartColors.success,
+                chartColors.info,
+                chartColors.warning,
+                chartColors.danger,
+                '#d97706',
+                chartColors.secondary
+            ],
+            borderColor: '#fff',
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: 'bottom' }
+        }
+    }
+});
+
+// 2. Subscription Status (Pie)
+<?php
+$sub_stats = $platform->query("SELECT status, COUNT(*) c FROM subscriptions WHERE status IN ('active','renewed','grace_period','past_due','suspended','cancelled') GROUP BY status")->fetch_all(MYSQLI_ASSOC);
+$sub_labels = array_map(fn($s) => ucfirst(str_replace('_', ' ', $s['status'])), $sub_stats);
+$sub_data = array_map(fn($s) => intval($s['c']), $sub_stats);
+$sub_colors = array_map(fn($s) => match($s['status']) {
+    'active', 'renewed' => chartColors.success,
+    'grace_period' => chartColors.warning,
+    'past_due' => '#d97706',
+    'suspended' => chartColors.danger,
+    'cancelled' => chartColors.secondary,
+    default => chartColors.info
+}, $sub_stats);
+?>
+const subscriptionStatusCtx = document.getElementById('subscriptionStatusChart').getContext('2d');
+new Chart(subscriptionStatusCtx, {
+    type: 'pie',
+    data: {
+        labels: <?= json_encode($sub_labels) ?>,
+        datasets: [{
+            data: <?= json_encode($sub_data) ?>,
+            backgroundColor: <?= json_encode($sub_colors) ?>,
+            borderColor: '#fff',
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: 'bottom' }
+        }
+    }
+});
+
+// 3. Monthly Revenue Trend (Line)
+<?php
+$revenue_data = [];
+for ($i = 11; $i >= 0; $i--) {
+    $month = date('Y-m', strtotime("-$i months"));
+    $result = $platform->query("SELECT COALESCE(SUM(total),0) as revenue FROM invoices WHERE status='paid' AND DATE_FORMAT(paid_at,'%Y-%m') = '$month'")->fetch_assoc();
+    $revenue_data[] = floatval($result['revenue']);
+}
+$revenue_months = [];
+for ($i = 11; $i >= 0; $i--) {
+    $revenue_months[] = date('M', strtotime("-$i months"));
+}
+?>
+const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+new Chart(revenueCtx, {
+    type: 'line',
+    data: {
+        labels: <?= json_encode($revenue_months) ?>,
+        datasets: [{
+            label: 'Revenue',
+            data: <?= json_encode($revenue_data) ?>,
+            borderColor: chartColors.success,
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            y: { beginAtZero: true }
+        }
+    }
+});
+
+// 4. Payment Status (Bar)
+<?php
+$payment_stats = $platform->query("SELECT status, COUNT(*) c FROM payments WHERE entry_type='payment' AND created_at > NOW() - INTERVAL 30 DAY GROUP BY status")->fetch_all(MYSQLI_ASSOC);
+$payment_labels = array_map(fn($p) => ucfirst($p['status']), $payment_stats);
+$payment_data = array_map(fn($p) => intval($p['c']), $payment_stats);
+$payment_colors = array_map(fn($p) => match($p['status']) {
+    'paid' => chartColors.success,
+    'pending' => chartColors.warning,
+    'failed' => chartColors.danger,
+    default => chartColors.info
+}, $payment_stats);
+?>
+const paymentStatusCtx = document.getElementById('paymentStatusChart').getContext('2d');
+new Chart(paymentStatusCtx, {
+    type: 'bar',
+    data: {
+        labels: <?= json_encode($payment_labels) ?>,
+        datasets: [{
+            label: 'Payments',
+            data: <?= json_encode($payment_data) ?>,
+            backgroundColor: <?= json_encode($payment_colors) ?>,
+            borderRadius: 6
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            y: { beginAtZero: true }
+        }
+    }
+});
+</script>
+
 <?php require_once __DIR__ . '/includes/super_footer.php'; ?>
