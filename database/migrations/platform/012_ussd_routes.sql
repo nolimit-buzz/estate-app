@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS ussd_routes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  service_code VARCHAR(40) NOT NULL,
+  estate_id INT NOT NULL,
+  note VARCHAR(150) NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_code (service_code),
+  CONSTRAINT fk_ur_estate FOREIGN KEY (estate_id) REFERENCES estates(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -17,6 +17,8 @@ class EstateAfricasTalking
     {
         if (self::$initialized) return;
         self::$initialized = true;
+        // SaaS: schema + defaults are provisioned by database/tenant_schema.sql, migrations and tenant_seed.json.
+        return;
 
         if (!$conn || !($conn instanceof mysqli)) return;
 

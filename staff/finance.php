@@ -133,7 +133,7 @@ $residents_res = $conn->query("SELECT r.user_id, u.name, f.number as flat_number
     ORDER BY u.name ASC");
 
 // Fetch Charges
-$charges_res = $conn->query("SELECT * FROM estate_charges WHERE estate_id = $estate_id AND is_active = 1 ORDER BY name ASC");
+$charges_res = $conn->query("SELECT * FROM estate_charges WHERE estate_id = $estate_id AND status = 'Active' ORDER BY name ASC");
 
 // Fetch Dynamic Payment Methods
 $staff_pm_res = $conn->query("SELECT * FROM payment_methods WHERE estate_id = $estate_id AND status = 'active' ORDER BY is_system DESC, name ASC");

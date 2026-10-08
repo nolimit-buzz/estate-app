@@ -1,31 +1,24 @@
 <?php
-// superadmin/impersonate.php - Instant Estate Impersonation Engine
-require_once '../config.php';
-
-if (!isset($_SESSION['user_id'])) {
-    redirectWithFlash('../login', null, 'Please sign in to access the system.');
-}
-
-if (($_SESSION['role'] ?? '') !== 'superadmin' && intval($_SESSION['user_id'] ?? 0) !== 1) {
-    redirectWithFlash('index', null, 'Super Administrator access required.');
-}
-
-$estate_id = intval($_GET['estate_id'] ?? 0);
-if ($estate_id <= 0) {
-    redirectWithFlash('index', null, 'Invalid estate specified for impersonation.');
-}
-
-// Verify target estate exists
-$res = $conn->query("SELECT id, name, status FROM estates WHERE id = $estate_id LIMIT 1");
-if (!$res || $res->num_rows === 0) {
-    redirectWithFlash('index', null, 'Estate record not found.');
-}
-
-$estate = $res->fetch_assoc();
-
-// Set impersonation context
-$_SESSION['impersonated_estate_id'] = $estate_id;
-
-logAudit($conn, "Super Admin Impersonation", "System", "Super Admin entered estate '{$estate['name']}' (ID: $estate_id) in operator mode.");
-
-redirectWithFlash('../admin/index', "Switched into '{$estate['name']}' (ID: #$estate_id) in Super Admin Operator Mode. You can manage data or return to Super Admin anytime.");
+// superadmin/impersonate.php - POST only. A platform admin enters an estate as its Central Admin (support / onboarding).
+// The tenant session is minted from the estate's own admin account; the platform identity stays attached for auditing.
+require_once __DIR__ . '/includes/super_auth.php';
+sa_require_role(['superadmin', 'support']);
+if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') { header('Location: estates'); exit; }
+$estateId = intval($_POST['estate_id'] ?? 0);
+$estate = Tenancy::find($estateId);
+if (!$estate || empty($estate['db_name']) || in_array($estate['status'], ['deleted', 'archived'], true)) redirectWithFlash('estates', null, 'That estate has no accessible environment.');
+$reason = trim($_POST['reason'] ?? '');
+if ($reason === '') redirectWithFlash("estate?id=$estateId", null, 'Please enter a reason for entering the estate (recorded in the audit log).');
+$t = Tenancy::openTenant($estate);
+$admin = $t->query("SELECT id, name, role FROM users WHERE role = 'admin' AND status = 'active' ORDER BY id LIMIT 1")->fetch_assoc();
+if (!$admin) redirectWithFlash("estate?id=$estateId", null, 'This estate has no active Central Admin yet (account not verified).');
+$_SESSION['impersonated_estate_id'] = $estateId;
+$_SESSION['user_id'] = intval($admin['id']);
+$_SESSION['role'] = 'admin';
+$_SESSION['estate_id'] = $estateId;
+$_SESSION['name'] = $admin['name'];
+$_SESSION['force_password_change'] = 0;
+Audit::log('estate.impersonation_started', ['estate_id' => $estateId, 'module' => 'security', 'entity_type' => 'estate', 'entity_id' => $estateId, 'details' => "Entered as Central Admin {$admin['name']}. Reason: $reason"]);
+Audit::alert('impersonation', "{$SA['email']} entered estate '{$estate['name']}' (reason: $reason)", 'low', ['estate_id' => $estateId, 'user_ref' => $SA['email']]);
+header('Location: ../admin/index');
+exit;

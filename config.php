@@ -1,24 +1,45 @@
 <?php
-// Database Configuration
-define('DB_SERVER', 'localhost');
-define('DB_USERNAME', 'root'); 
-define('DB_PASSWORD', '');  
-define('DB_NAME', 'estate');
+// -------------------------------------------------------------------------
+// BOOTSTRAP: environment, hardened session, tenant resolution, shared services.
+// Credentials live in .env (never in source). $conn is the TENANT database of the
+// current estate (database-per-tenant); $platform is the control-plane database.
+// -------------------------------------------------------------------------
+require_once __DIR__ . '/includes/env.php';
+require_once __DIR__ . '/includes/Tenancy.php';
+require_once __DIR__ . '/includes/PlatformSettings.php';
+require_once __DIR__ . '/includes/Audit.php';
+require_once __DIR__ . '/includes/Entitlements.php';
+require_once __DIR__ . '/includes/Csrf.php';
+require_once __DIR__ . '/includes/SessionGuard.php';
+require_once __DIR__ . '/includes/Invitations.php';   // also loads Notifier, EstateService
 
-// Attempt to connect to MySQL database
+// Start Session globally (secure cookie flags, idle/absolute timeouts)
+SessionGuard::start();
+
 try {
-    $conn = new mysqli(DB_SERVER, DB_USERNAME, DB_PASSWORD, DB_NAME);
-} catch (mysqli_sql_exception $e) {
-    die("<h3>Database Connection Error</h3><p>Could not connect to MySQL. Please ensure the <strong>MySQL</strong> service is started in your XAMPP Control Panel.</p><small>(" . htmlspecialchars($e->getMessage()) . ")</small>");
+    $platform = Tenancy::platform();
+    $conn = Tenancy::boot();
+} catch (Throwable $e) {
+    error_log('Bootstrap DB error: ' . $e->getMessage());
+    http_response_code(503);
+    die("<h3>Service temporarily unavailable</h3><p>The database could not be reached. If you run this on XAMPP, make sure the <strong>MySQL</strong> service is started.</p>");
 }
 
-// Set charset to UTF-8
-$conn->set_charset("utf8");
-
-// Start Session globally
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+// Machine APIs cannot run without a resolved tenant (webhooks resolve their own tenant explicitly).
+if (!Tenancy::hasTenant() && Tenancy::$mode !== 'legacy'
+    && strpos(str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? ''), '/api/') !== false
+    && !in_array(basename($_SERVER['SCRIPT_NAME'] ?? ''), ['paystack_webhook.php', 'kapso_webhook.php', 'ussd.php', 'platform_webhook.php'], true)) {
+    http_response_code(401);
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'error' => 'Estate could not be identified. Please sign in again.']);
+    exit;
 }
+
+define('ASSET_VER', (string)max(@filemtime(__DIR__ . '/css/style.css'), @filemtime(__DIR__ . '/css/landing.css'), @filemtime(__DIR__ . '/js/mobile_app.js')));
+
+// CSRF: reject unsafe requests without a valid token, and auto-inject tokens into rendered forms/AJAX.
+Csrf::enforce();
+if (PHP_SAPI !== 'cli' && !defined('NO_CSRF_INJECT')) ob_start(['Csrf', 'inject']);
 
 // -------------------------------------------------------------------------
 // GLOBAL SECURITY HARDENING HEADERS
@@ -37,8 +58,9 @@ if (!headers_sent()) {
         header("Strict-Transport-Security: max-age=31536000; includeSubDomains; preload");
     }
 
-    // Balanced Content Security Policy allowing required stylesheets, fonts, icons and CDNs
-    header("Content-Security-Policy: default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:; img-src 'self' data: https: blob:; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://js.paystack.co; connect-src 'self' https://api.paystack.co https://*.paystack.co;");
+    // Hardened Content Security Policy with strict controls
+    // Note: unsafe-inline in style-src is needed for legitimate styling but should be audited
+    header("Content-Security-Policy: default-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self' https://*.paystack.co; frame-ancestors 'self'; img-src 'self' data: https: blob:; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://js.paystack.co; connect-src 'self' https://api.paystack.co https://*.paystack.co; media-src 'self'; upgrade-insecure-requests;");
 }
 
 // Universal Flash Messaging Helpers
@@ -123,176 +145,66 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
     }
 }
 
-// Global Audit Logger
-function logAudit($conn, $action, $module, $details = "") {
-    $user_id = $_SESSION['user_id'] ?? null;
-    $estate_id = get_estate_id();
-    $action = $conn->real_escape_string($action);
-    $module = $conn->real_escape_string($module);
-    $details = $conn->real_escape_string($details);
-    $ip = $_SERVER['REMOTE_ADDR'] ?? '';
-    
-    // NOTE: If audit_logs has estate_id, append it 
-    $sql = "INSERT INTO audit_logs (estate_id, user_id, action, module, details, ip_address) 
-            VALUES (" . ($estate_id ? $estate_id : "NULL") . ", " . ($user_id ? $user_id : "NULL") . ", '$action', '$module', '$details', '$ip')";
-    return $conn->query($sql);
-}
+// logAudit() now lives in includes/Audit.php (tenant audit_logs + platform audit trail).
 
-// Global Tenant Helper (Supports Super Admin Impersonation & Subdomains)
+// Global Tenant Helper: the id of the estate whose database $conn is connected to (0 = no tenant).
+// There is intentionally NO default estate - an unidentified visitor never reaches any estate's data.
 function get_estate_id() {
-    // 1. If Super Admin is actively impersonating an estate:
-    if (isset($_SESSION['impersonated_estate_id']) && (isset($_SESSION['role']) && $_SESSION['role'] === 'superadmin')) {
-        return intval($_SESSION['impersonated_estate_id']);
-    }
-    // 2. Standard authenticated session estate
-    if (isset($_SESSION['estate_id'])) {
-        return intval($_SESSION['estate_id']);
-    }
-    // 3. Subdomain-based tenant resolution (e.g. sunrise.estateapp.com)
-    if (isset($_SERVER['HTTP_HOST'])) {
-        static $resolved_subdomain_id = null;
-        if ($resolved_subdomain_id !== null) {
-            return $resolved_subdomain_id;
-        }
-        $host = strtolower($_SERVER['HTTP_HOST']);
-        $parts = explode('.', $host);
-        if (count($parts) >= 3 && $parts[0] !== 'www' && $parts[0] !== 'localhost') {
-            global $conn;
-            if ($conn instanceof mysqli) {
-                $sub = $conn->real_escape_string($parts[0]);
-                $chk = $conn->query("SELECT id FROM estates WHERE domain_prefix = '$sub' LIMIT 1");
-                if ($chk && $r = $chk->fetch_assoc()) {
-                    $resolved_subdomain_id = intval($r['id']);
-                    return $resolved_subdomain_id;
-                }
-            }
-        }
-    }
-    return 1; // Default fallback to Main Estate
+    return Tenancy::currentId();
 }
 
-// Impersonation Helper
+// Impersonation Helper (platform super admin viewing an estate; acts through that estate's Central Admin account)
 function is_impersonating_estate() {
-    return (isset($_SESSION['impersonated_estate_id']) && (isset($_SESSION['role']) && $_SESSION['role'] === 'superadmin'));
+    return !empty($_SESSION['platform_user_id']) && !empty($_SESSION['impersonated_estate_id']);
 }
 
 // Get Impersonated Estate Meta
 function get_impersonated_estate_name($conn = null) {
     if (!is_impersonating_estate()) return null;
-    $eid = intval($_SESSION['impersonated_estate_id']);
-    if (!$conn) {
-        global $conn;
-    }
-    if ($conn instanceof mysqli) {
-        $res = $conn->query("SELECT name FROM estates WHERE id = $eid LIMIT 1");
-        if ($res && $r = $res->fetch_assoc()) return $r['name'];
-    }
-    return "Estate #$eid";
+    return Tenancy::$estate['name'] ?? ('Estate #' . intval($_SESSION['impersonated_estate_id']));
 }
 
-// Global Standard SaaS Platform Modules
+// Platform module catalogue (managed by the Super Admin in the control-plane `modules` table).
 function getAllPlatformModules() {
-    return [
-        'visitor_passes' => [
-            'name' => 'Visitor & Gate Pass Management',
-            'desc' => 'Generate visitor passcodes, check-in guests, entry/exit logs & QR codes',
-            'icon' => 'fa-ticket',
-            'category' => 'Security & Access'
-        ],
-        'vehicle_registry' => [
-            'name' => 'Vehicle Registry & Stickers',
-            'desc' => 'Resident vehicle verification, RFID/car tags, parking & gate logs',
-            'icon' => 'fa-car-side',
-            'category' => 'Security & Access'
-        ],
-        'billing_invoicing' => [
-            'name' => 'Invoicing, Dues & Paystack',
-            'desc' => 'Estate dues, levies, automated invoices, receipts & Paystack online gateway',
-            'icon' => 'fa-file-invoice-dollar',
-            'category' => 'Finance'
-        ],
-        'ussd_offline_sync' => [
-            'name' => 'Africa\'s Talking USSD & Offline Terminal',
-            'desc' => 'Zero-internet GSM USSD shortcode (*384#) access & local terminal browser caching',
-            'icon' => 'fa-tower-cell',
-            'category' => 'Telephony & Hardware'
-        ],
-        'security_patrol' => [
-            'name' => 'Security Guard Roster & Shifts',
-            'desc' => 'Security posts, guard shift roster assignment, and duty checkpoints',
-            'icon' => 'fa-user-shield',
-            'category' => 'Operations'
-        ],
-        'emergency_sos' => [
-            'name' => 'Emergency SOS & Panic Alerts',
-            'desc' => 'One-tap resident emergency panic alarms & guard mobilization alerts',
-            'icon' => 'fa-bell-exclamation',
-            'category' => 'Operations'
-        ],
-        'broadcast_messaging' => [
-            'name' => 'Broadcast SMS, WhatsApp & Email',
-            'desc' => 'Automated community announcements, meeting notices & circular broadcasts',
-            'icon' => 'fa-bullhorn',
-            'category' => 'Communications'
-        ],
-        'artisan_marketplace' => [
-            'name' => 'Vetted Artisans & Service Directory',
-            'desc' => 'Directory of approved electricians, plumbers, painters & domestic handymen',
-            'icon' => 'fa-wrench',
-            'category' => 'Community'
-        ],
-        'bylaws_policies' => [
-            'name' => 'Estate Bylaws & Policy Penalties',
-            'desc' => 'Publish estate rules, curfew policies, pet regulations & violation fines',
-            'icon' => 'fa-book-bookmark',
-            'category' => 'Governance'
-        ],
-        'zonal_divisions' => [
-            'name' => 'Zonal Sub-Committees & Zones',
-            'desc' => 'Zone-level administrative accounts, zonal levies, and street clusters',
-            'icon' => 'fa-layer-group',
-            'category' => 'Governance'
-        ]
-    ];
-}
-
-// Module Feature Flag Gatekeeper
-function isModuleEnabled($module_key, $estate_id = null) {
-    global $conn;
-    if (!$estate_id) $estate_id = get_estate_id();
-    $estate_id = intval($estate_id);
-
-    static $module_cache = [];
-    if (!isset($module_cache[$estate_id])) {
-        $module_cache[$estate_id] = [];
-        if ($conn instanceof mysqli) {
-            $m_res = $conn->query("SELECT module_key, is_enabled FROM estate_modules WHERE estate_id = $estate_id");
-            if ($m_res) {
-                while ($mrow = $m_res->fetch_assoc()) {
-                    $module_cache[$estate_id][$mrow['module_key']] = (intval($mrow['is_enabled']) === 1);
-                }
-            }
+    static $cache = null;
+    if ($cache !== null) return $cache;
+    $cache = [];
+    try {
+        $r = Tenancy::platform()->query("SELECT module_key, name, description, icon, category FROM modules ORDER BY sort_order");
+        while ($r && $row = $r->fetch_assoc()) {
+            $cache[$row['module_key']] = ['name' => $row['name'], 'desc' => $row['description'], 'icon' => $row['icon'], 'category' => $row['category']];
         }
-    }
-
-    if (array_key_exists($module_key, $module_cache[$estate_id])) {
-        return $module_cache[$estate_id][$module_key];
-    }
-
-    // Default open if not explicitly disabled
-    return true;
+    } catch (Throwable $e) { error_log('getAllPlatformModules: ' . $e->getMessage()); }
+    return $cache;
+}
+// Module Feature Flag Gatekeeper - delegates to the entitlement engine (global -> estate override -> plan -> add-on).
+function isModuleEnabled($module_key, $estate_id = null) {
+    if (Tenancy::$mode === 'legacy') return true;
+    if (!$estate_id) $estate_id = get_estate_id();
+    if (!$estate_id) return false;
+    return Entitlements::allowed($estate_id, $module_key);
 }
 
-// Require Module or Redirect
-function requireModule($module_key, $redirect_url = '../admin/index') {
-    if (!isModuleEnabled($module_key)) {
-        if (session_status() === PHP_SESSION_NONE) session_start();
-        $_SESSION['flash_error'] = "The requested module ('$module_key') is not enabled for this estate plan. Contact the platform administrator to activate this feature.";
-        header("Location: " . $redirect_url);
+// Require Module or redirect with an explanatory message
+function requireModule($module_key, $redirect_url = null) {
+    if (isModuleEnabled($module_key)) return;
+    if (session_status() === PHP_SESSION_NONE) session_start();
+    $script = str_replace('\\', '/', $_SERVER["SCRIPT_NAME"] ?? "");
+    if ($redirect_url === null) {
+        foreach (["admin", "zone", "staff", "resident"] as $d) if (strpos($script, "/$d/") !== false) { $redirect_url = "../$d/index"; break; }
+        if ($redirect_url === null) $redirect_url = strpos($script, "/api/") !== false ? null : "index";
+    }
+    $dec = Entitlements::decide(get_estate_id(), $module_key);
+    $_SESSION["flash_error"] = "This feature (" . htmlspecialchars($module_key) . ") is not available on your estate plan (" . Entitlements::sourceLabel($dec["source"]) . "). Contact your Central Admin or upgrade your plan.";
+    if ($redirect_url === null || strpos($script, "/api/") !== false) {
+        http_response_code(403);
+        header("Content-Type: application/json");
+        echo json_encode(["success" => false, "error" => "Module not available on this plan"]);
         exit;
     }
+    header("Location: " . $redirect_url);
+    exit;
 }
-
 
 // Global Media URL Resolver (Normalizes uploads paths across any folder depth)
 if (!function_exists('get_media_url')) {
@@ -328,34 +240,51 @@ if (!function_exists('get_estate_branding')) {
             return $branding_cache[$estate_id];
         }
         
+        $platformName = class_exists('PlatformSettings') ? PlatformSettings::get('site_company_name', 'Estate Platform') : 'Estate Platform';
+        $platformLogo = class_exists('PlatformSettings') ? PlatformSettings::get('site_logo', '') : '';
+        
         $data = [
             'estate_id' => $estate_id,
-            'estate_name' => 'Main Estate',
-            'estate_logo' => '',
+            'estate_name' => $estate_id > 0 ? 'Main Estate' : $platformName,
+            'estate_logo' => $platformLogo,
             'estate_logo_url' => '',
-            'app_company_name' => 'NoLimitBuzz',
-            'app_company_logo' => '',
+            'app_company_name' => $platformName,
+            'app_company_logo' => $platformLogo,
             'app_company_logo_url' => '',
             'theme_color' => '#3b82f6'
         ];
         
         if ($conn instanceof mysqli) {
-            $e_res = $conn->query("SELECT name FROM estates WHERE id = $estate_id LIMIT 1");
-            if ($e_res && $e_row = $e_res->fetch_assoc()) {
-                if (!empty($e_row['name'])) {
-                    $data['estate_name'] = $e_row['name'];
-                }
-            }
-            
-            $s_res = $conn->query("SELECT setting_key, setting_value FROM system_settings WHERE estate_id = $estate_id AND setting_key IN ('estate_name', 'estate_logo', 'app_company_name', 'app_company_logo', 'theme_color')");
-            if ($s_res) {
-                while ($s_row = $s_res->fetch_assoc()) {
-                    $key = $s_row['setting_key'];
-                    $val = $s_row['setting_value'];
-                    if (!empty($val)) {
-                        $data[$key] = $val;
+            try {
+                // Control plane DB has no system_settings table; only query tenant tables if connected to a tenant DB
+                if (class_exists('Tenancy') && Tenancy::isPlatformConn($conn) && !Tenancy::hasTenant()) {
+                    if ($estate_id > 0) {
+                        $e_res = $conn->query("SELECT name FROM estates WHERE id = $estate_id LIMIT 1");
+                        if ($e_res && $e_row = $e_res->fetch_assoc()) {
+                            if (!empty($e_row['name'])) $data['estate_name'] = $e_row['name'];
+                        }
+                    }
+                } else {
+                    $e_res = $conn->query("SELECT name FROM estates WHERE id = $estate_id LIMIT 1");
+                    if ($e_res && $e_row = $e_res->fetch_assoc()) {
+                        if (!empty($e_row['name'])) {
+                            $data['estate_name'] = $e_row['name'];
+                        }
+                    }
+                    
+                    $s_res = $conn->query("SELECT setting_key, setting_value FROM system_settings WHERE estate_id = $estate_id AND setting_key IN ('estate_name', 'estate_logo', 'app_company_name', 'app_company_logo', 'theme_color')");
+                    if ($s_res) {
+                        while ($s_row = $s_res->fetch_assoc()) {
+                            $key = $s_row['setting_key'];
+                            $val = $s_row['setting_value'];
+                            if (!empty($val)) {
+                                $data[$key] = $val;
+                            }
+                        }
                     }
                 }
+            } catch (Throwable $e) {
+                // Silently fallback on missing tables or DB errors
             }
         }
         
@@ -487,50 +416,85 @@ if (!function_exists('generateReceiptNumber')) {
     }
 }
 
-// Initialize Security Roster & Emergency/Panic Alert Engine
-if (file_exists(__DIR__ . '/includes/emergency_roster_init.php')) {
-    require_once __DIR__ . '/includes/emergency_roster_init.php';
-    if (isset($conn) && $conn instanceof mysqli) {
-        initEmergencyAndRosterTables($conn);
+// NOTE: runtime CREATE TABLE / demo-data seeding was removed. Tenant schema = database/tenant_schema.sql + database/migrations/tenant,
+// system defaults = database/tenant_seed.json (applied once at provisioning). Helper files are still loaded for their functions.
+require_once __DIR__ . '/includes/emergency_roster_init.php';
+require_once __DIR__ . '/includes/policy_init.php';
+
+// -------------------------------------------------------------------------
+// PLAN LIMITS (resident capacity / staff-account cap) - read from the estate's subscription terms, never hardcoded
+// -------------------------------------------------------------------------
+if (!function_exists('estatePlanLimit')) {
+    /** @return int|null limit (0/null = unlimited) for 'resident_limit' or 'user_limit' */
+    function estatePlanLimit($which) {
+        if (Tenancy::$mode === 'legacy' || !Tenancy::$estate) return null;
+        $id = intval(Tenancy::$estate['id']);
+        $p = Tenancy::platform();
+        $sub = $p->query("SELECT resident_limit, plan_snapshot_json FROM subscriptions WHERE estate_id = $id AND status IN ('active','renewed','grace_period','past_due','suspended') ORDER BY id DESC LIMIT 1")->fetch_assoc();
+        if ($sub) {
+            if ($which === 'resident_limit') return intval($sub['resident_limit']);
+            $snap = json_decode($sub['plan_snapshot_json'] ?? '', true);
+            return intval($snap['plan']['user_limit'] ?? 0);
+        }
+        if ((Tenancy::$estate['status'] ?? '') === 'trial') return $which === 'resident_limit' ? PlatformSettings::int('trial_resident_limit', 25) : PlatformSettings::int('trial_user_limit', 5);
+        return null; // onboarding estates: no cap until a plan is chosen
+    }
+}
+if (!function_exists('residentLimitMessage')) {
+    /** Returns an error message when adding another resident would exceed the plan, else null. */
+    function residentLimitMessage($conn, $adding = 1) {
+        $limit = estatePlanLimit('resident_limit');
+        if (!$limit) return null;
+        $n = intval($conn->query("SELECT COUNT(*) c FROM residents WHERE status = 'active'")->fetch_assoc()['c']);
+        if ($n + $adding > $limit) return "Resident limit reached: your plan allows $limit residents and $n are already registered. Upgrade your plan under Subscription & Billing to add more.";
+        return null;
+    }
+}
+if (!function_exists('userLimitMessage')) {
+    /** Cap on staff/admin accounts (non-resident users). */
+    function userLimitMessage($conn) {
+        $limit = estatePlanLimit('user_limit');
+        if (!$limit) return null;
+        $n = intval($conn->query("SELECT COUNT(*) c FROM users WHERE role <> 'resident' AND status IN ('active','invited','pending')")->fetch_assoc()['c']);
+        if ($n >= $limit) return "Staff account limit reached: your plan allows $limit staff/admin accounts ($n in use). Upgrade your plan to add more.";
+        return null;
     }
 }
 
-// Initialize Estate & Zonal Policies, Offences & Punishments Engine
-if (file_exists(__DIR__ . '/includes/policy_init.php')) {
-    require_once __DIR__ . '/includes/policy_init.php';
-    if (isset($conn) && $conn instanceof mysqli) {
-        initPolicyAndOffenceTables($conn);
-    }
-}
+if (!function_exists('storageLimitMessage')) {
+    /** Check if estate has exceeded storage limit and return message if over. */
+    function storageLimitMessage($conn) {
+        if (!PlatformSettings::bool('storage_limit_enforcement', true)) return null;
 
-// -------------------------------------------------------------------------
-// CONTACT CHANGE REQUESTS & DUPLICATE PREVENTION HELPERS
-// -------------------------------------------------------------------------
-if (isset($conn) && $conn instanceof mysqli) {
-    $conn->query("
-        CREATE TABLE IF NOT EXISTS contact_change_requests (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            estate_id INT NOT NULL,
-            zone_id INT NULL,
-            user_id INT NOT NULL,
-            resident_id INT NULL,
-            current_email VARCHAR(100) NULL,
-            requested_email VARCHAR(100) NULL,
-            current_phone VARCHAR(20) NULL,
-            requested_phone VARCHAR(20) NULL,
-            reason TEXT NULL,
-            status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
-            admin_notes TEXT NULL,
-            reviewed_by INT NULL,
-            reviewed_at DATETIME NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            INDEX idx_estate (estate_id),
-            INDEX idx_zone (zone_id),
-            INDEX idx_user (user_id),
-            INDEX idx_status (status)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-    ");
+        $id = intval(Tenancy::$estate['id'] ?? 0);
+        if (!$id) return null;
+
+        $p = Tenancy::platform();
+        $sub = $p->query("SELECT storage_limit_mb FROM subscriptions WHERE estate_id = $id AND status IN ('active','renewed','grace_period','past_due','suspended') ORDER BY id DESC LIMIT 1")->fetch_assoc();
+        $limit = $sub ? intval($sub['storage_limit_mb']) : 0;
+
+        if ($limit === 0) return null; // unlimited
+
+        // Calculate current usage (uploads, backups, exports)
+        $uploads_size = 0;
+        $uploads_dir = __DIR__ . '/uploads';
+        if (is_dir($uploads_dir)) {
+            foreach (scandir($uploads_dir) as $f) {
+                if ($f !== '.' && $f !== '..') {
+                    $path = $uploads_dir . '/' . $f;
+                    if (is_file($path)) $uploads_size += filesize($path);
+                }
+            }
+        }
+        $uploads_mb = round($uploads_size / 1024 / 1024, 2);
+
+        if ($uploads_mb >= $limit) {
+            return "Storage limit exceeded: your plan allows {$limit} MB and you are using {$uploads_mb} MB. Delete old files or upgrade your plan.";
+        } elseif ($uploads_mb > $limit * 0.9) {
+            return "Storage limit warning: you are using {$uploads_mb} MB of {$limit} MB. Consider upgrading soon.";
+        }
+        return null;
+    }
 }
 
 if (!function_exists('isEmailTakenInEstate')) {

@@ -1,8 +1,6 @@
 <?php
 // staff/header.php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once __DIR__ . '/../config.php'; // boots hardened session + tenant
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../includes/auth_guard.php';
 
@@ -31,24 +29,24 @@ $estate_logo_url = $branding['estate_logo_url'] ?? '';
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../css/style.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="../css/estate_notifications.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="../css/estate_glassmorphism.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="../css/mobile_app.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="../css/hotline.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="../css/style.css?v=<?php echo ASSET_VER; ?>">
+    <link rel="stylesheet" href="../css/estate_notifications.css?v=<?php echo ASSET_VER; ?>">
+    <link rel="stylesheet" href="../css/estate_glassmorphism.css?v=<?php echo ASSET_VER; ?>">
+    <link rel="stylesheet" href="../css/mobile_app.css?v=<?php echo ASSET_VER; ?>">
+    <link rel="stylesheet" href="../css/hotline.css?v=<?php echo ASSET_VER; ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Global In-House Notification & Modal Alert Engine -->
-    <script src="../js/estate_notifications.js?v=<?php echo time(); ?>"></script>
+    <script src="../js/estate_notifications.js?v=<?php echo ASSET_VER; ?>"></script>
     <script src="../js/theme.js"></script>
-    <script src="../js/searchable_select.js?v=<?php echo time(); ?>" defer></script>
-    <script src="../js/mobile_app.js?v=<?php echo time(); ?>" defer></script>
+    <script src="../js/searchable_select.js?v=<?php echo ASSET_VER; ?>" defer></script>
+    <script src="../js/mobile_app.js?v=<?php echo ASSET_VER; ?>" defer></script>
     <!-- Universal Anti-Duplicate & Single-Click Submission Engine -->
-    <script src="../js/anti_duplicate.js?v=<?php echo time(); ?>"></script>
+    <script src="../js/anti_duplicate.js?v=<?php echo ASSET_VER; ?>"></script>
     <!-- Real-time Emergency & Panic Alarm Engine -->
     <script>window.ESTATE_IS_STAFF_OR_ADMIN = true; window.ESTATE_EMERGENCY_URL = '../staff/security';</script>
-    <script src="../js/emergency_alarm.js?v=<?php echo time(); ?>"></script>
+    <script src="../js/emergency_alarm.js?v=<?php echo ASSET_VER; ?>"></script>
     <!-- Direct Emergency Hotline Modal Engine -->
-    <script src="../js/hotline_modal.js?v=<?php echo time(); ?>" defer></script>
+    <script src="../js/hotline_modal.js?v=<?php echo ASSET_VER; ?>" defer></script>
 
     <?php require_once __DIR__ . '/../includes/mobile_nav.php'; ?>
     <style>

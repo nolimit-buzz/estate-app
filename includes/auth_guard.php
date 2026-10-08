@@ -1,79 +1,80 @@
 <?php
 // includes/auth_guard.php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once __DIR__ . '/../config.php'; // boots hardened session + tenant
 
 require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/ModuleRegistry.php';
 
-// Generate CSRF Token
-function generateCSRFToken() {
-    if (empty($_SESSION['csrf_token'])) {
-        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-    }
-    return $_SESSION['csrf_token'];
-}
-
-// Render CSRF Input Field
-function renderCSRFField() {
-    $token = generateCSRFToken();
-    return '<input type="hidden" name="csrf_token" value="' . htmlspecialchars($token) . '">';
-}
-
-// Verify CSRF Token
+// CSRF helpers (token is shared with includes/Csrf.php, which enforces it globally)
+function generateCSRFToken() { return Csrf::token(); }
+function renderCSRFField() { return Csrf::field(); }
 function verifyCSRFToken() {
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $token = $_POST['csrf_token'] ?? '';
-        if (empty($token) || !hash_equals($_SESSION['csrf_token'] ?? '', $token)) {
-            $_SESSION['error_message'] = "Invalid session token (CSRF check failed). Please try again.";
-            return false;
-        }
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && !Csrf::verify()) {
+        $_SESSION['error_message'] = "Invalid session token (CSRF check failed). Please try again.";
+        return false;
     }
     return true;
+}
+// Routes that stay reachable while an estate is suspended (so the Central Admin can renew / export).
+function suspendedAllowedRoutes() {
+    return ['suspended', 'logout', 'change_password', 'admin/subscription', 'admin/billing_pay', 'admin/export', 'admin/support', 'api/platform_pay'];
 }
 
 // Enforce User Login & Security Guard
 function requireLogin() {
-    $script = $_SERVER['SCRIPT_NAME'] ?? '';
-    $isInSubdir = (strpos($script, '/admin/') !== false || strpos($script, '/resident/') !== false || strpos($script, '/zone/') !== false || strpos($script, '/staff/') !== false);
+    $script = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+    $isInSubdir = (strpos($script, '/admin/') !== false || strpos($script, '/resident/') !== false || strpos($script, '/zone/') !== false || strpos($script, '/staff/') !== false || strpos($script, '/api/') !== false);
     $prefix = $isInSubdir ? '../' : '';
+    $isApi = strpos($script, '/api/') !== false;
 
-    if (!isset($_SESSION['user_id'])) {
-        header("Location: {$prefix}login?error=unauthenticated");
+    $deny = function ($reason) use ($prefix, $isApi) {
+        if ($isApi) { http_response_code(401); header('Content-Type: application/json'); echo json_encode(['success' => false, 'error' => 'Not authenticated']); exit; }
+        header("Location: {$prefix}login?error=$reason");
         exit;
+    };
+
+    if (!isset($_SESSION['user_id'])) $deny('unauthenticated');
+
+    // Tenant integrity: the session must belong to the estate whose database we are connected to.
+    if (!Tenancy::hasTenant() || intval($_SESSION['estate_id'] ?? 0) !== Tenancy::currentId()) {
+        if (!(is_impersonating_estate() && Tenancy::hasTenant())) {
+            $_SESSION = [];
+            $deny('unauthenticated');
+        }
     }
 
-    // Active Database Status & Force Password Change Check
     global $conn;
+    $route = ModuleRegistry::currentRoute();
+
+    // Active Database Status & Force Password Change Check
     if ($conn && isset($_SESSION['user_id'])) {
         $uid = intval($_SESSION['user_id']);
         $u_chk = $conn->query("SELECT status, force_password_change FROM users WHERE id = $uid LIMIT 1");
         if ($u_chk && $u_row = $u_chk->fetch_assoc()) {
-            // If account was disabled/suspended by admin in real-time
-            if (isset($u_row['status']) && in_array(strtolower($u_row['status']), ['disabled', 'suspended', 'inactive'])) {
-                $_SESSION = [];
-                if (session_id()) session_destroy();
+            // If account was disabled/suspended/not yet verified by admin in real-time
+            if (isset($u_row['status']) && in_array(strtolower($u_row['status']), ['disabled', 'suspended', 'inactive', 'pending', 'invited'])) {
+                SessionGuard::destroy();
+                if ($isApi) $deny('account_disabled');
                 header("Location: {$prefix}login?error=account_disabled");
                 exit;
             }
             $_SESSION['force_password_change'] = intval($u_row['force_password_change'] ?? 0);
+        } elseif (!is_impersonating_estate()) {
+            SessionGuard::destroy();
+            $deny('unauthenticated');
         }
     }
 
-    // Multi-Tenant Estate Lifecycle & Suspension Guard
-    $tenant_id = get_estate_id();
-    $user_role = $_SESSION['role'] ?? '';
-    if ($user_role !== 'superadmin' && $tenant_id > 0 && $conn) {
-        $e_chk = $conn->query("SELECT status FROM estates WHERE id = $tenant_id LIMIT 1");
-        if ($e_chk && $e_row = $e_chk->fetch_assoc()) {
-            if ($e_row['status'] === 'suspended' || $e_row['status'] === 'expired') {
-                $current = basename($_SERVER['PHP_SELF']);
-                if ($current !== 'suspended.php' && $current !== 'logout.php') {
-                    header("Location: {$prefix}suspended");
-                    exit;
-                }
-            }
-        }
+    // Multi-Tenant Estate Lifecycle & Suspension Guard (status comes from the control plane)
+    $estate = Tenancy::$estate;
+    $blocked = ['suspended', 'retention', 'deletion_pending'];
+    if ($estate && in_array($estate['status'], $blocked, true) && !is_impersonating_estate() && !in_array($route, suspendedAllowedRoutes(), true)) {
+        if ($isApi) { http_response_code(402); header('Content-Type: application/json'); echo json_encode(['success' => false, 'error' => 'Estate subscription suspended']); exit; }
+        header("Location: {$prefix}suspended");
+        exit;
+    }
+    if ($estate && in_array($estate['status'], ['pending', 'onboarding'], true) && ($_SESSION['role'] ?? '') !== 'resident') {
+        // Onboarding estates only have core modules; Entitlements handles module gating below.
     }
 
     // Intercept forced password change
@@ -84,8 +85,10 @@ function requireLogin() {
             exit;
         }
     }
-}
 
+    // Module gating: one enforcement point for every portal page and API
+    ModuleRegistry::enforceCurrent();
+}
 // Role Helper Functions
 function isAdminRole() {
     $role = $_SESSION['role'] ?? '';

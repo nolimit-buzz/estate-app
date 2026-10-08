@@ -65,12 +65,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register_resident']))
         } elseif (!empty($phone) && function_exists('isPhoneTakenInEstate') && ($taken = isPhoneTakenInEstate($conn, $phone, $estate_id))) {
             $message = "Duplicate Blocker: Phone number '$phone' is already registered in this estate to {$taken['name']}. Duplicate phone numbers are prohibited.";
             $message_type = "danger";
+        } elseif ($plan_msg = residentLimitMessage($conn)) {
+            $message = $plan_msg;
+            $message_type = "danger";
         } else {
-            $default_pass = !empty($first_name) ? trim($first_name) : 'welcome123';
-            $password = password_hash($default_pass, PASSWORD_DEFAULT);
-            $conn->query("INSERT INTO users (estate_id, first_name, last_name, name, email, phone, password, role) 
-                          VALUES ($estate_id, '$first_name', '$last_name', '$name', '$email', '$phone', '$password', 'resident')");
+            $password = Invitations::unusablePassword(); // account is activated by the invitation link
+            $conn->query("INSERT INTO users (estate_id, first_name, last_name, name, email, phone, password, role, status) 
+                          VALUES ($estate_id, '$first_name', '$last_name', '$name', '$email', '$phone', '$password', 'resident', 'invited')");
             $user_id = $conn->insert_id;
+            invite_new_user($conn, $user_id, $email, $name, 'resident');
 
         $custom_id = generateCustomID($conn, 'residents', 'RES');
         $image = handleResidentUpload($_FILES['image']);

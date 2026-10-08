@@ -131,21 +131,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         logAudit($conn, "Zone Admin Assigned", "Zones", "Assigned existing user #$existing_user_id as Zone Admin for Zone #$new_zone_id");
                         $message .= " Assigned selected user as Zone Admin.";
                     } elseif (!empty($admin_email)) {
-                        $hash = password_hash($zone_password, PASSWORD_DEFAULT);
+                        $hash = Invitations::unusablePassword();
                         // Check if user with this email already exists
                         $chk_u = $conn->query("SELECT id FROM users WHERE email = '$admin_email' LIMIT 1");
                         if ($chk_u && $chk_u->num_rows > 0) {
                             $existing_u = $chk_u->fetch_assoc();
                             $existing_id = $existing_u['id'];
-                            $conn->query("UPDATE users SET zone_id = $new_zone_id, role = 'zone_admin', password = '$hash', name = '$admin_name' WHERE id = $existing_id");
+                            $conn->query("UPDATE users SET zone_id = $new_zone_id, role = 'zone_admin', name = '$admin_name' WHERE id = $existing_id");
                             logAudit($conn, "Zone Admin Linked", "Zones", "Linked user #$existing_id ($admin_email) as Zone Admin for Zone #$new_zone_id");
                             $message .= " Configured Zone Admin login for '$admin_email'.";
                         } else {
-                            $u_sql = "INSERT INTO users (estate_id, zone_id, name, email, password, phone, role) 
-                                      VALUES ($estate_id, $new_zone_id, '$admin_name', '$admin_email', '$hash', '$phone', 'zone_admin')";
+                            $u_sql = "INSERT INTO users (estate_id, zone_id, name, email, password, phone, role, status) 
+                                      VALUES ($estate_id, $new_zone_id, '$admin_name', '$admin_email', '$hash', '$phone', 'zone_admin', 'invited')";
                             if ($conn->query($u_sql)) {
+                                $za_uid = $conn->insert_id;
                                 logAudit($conn, "Zone Admin Created", "Zones", "Created Zone Admin '$admin_name' ($admin_email) for Zone #$new_zone_id");
-                                $message .= " Created Zone Admin login: $admin_email with Password: $zone_password.";
+                                invite_new_user($conn, $za_uid, $admin_email, $admin_name, 'zone_admin');
+                                $message .= " Invitation sent to $admin_email - the Zone Admin must accept it to activate the account.";
                             }
                         }
                     }
@@ -230,8 +232,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 $conn->query("UPDATE users SET password = '$hash' WHERE id = $adm_id");
                             } elseif (!empty($email)) {
                                 $adm_name = $name . ' Admin';
-                                $conn->query("INSERT INTO users (estate_id, zone_id, name, email, password, phone, role) 
-                                              VALUES ($estate_id, $zone_id, '$adm_name', '$email', '$hash', '$phone', 'zone_admin')");
+                                $conn->query("INSERT INTO users (estate_id, zone_id, name, email, password, phone, role, status) 
+                                              VALUES ($estate_id, $zone_id, '$adm_name', '$email', '$hash', '$phone', 'zone_admin', 'invited')");
                             }
                         }
                     }

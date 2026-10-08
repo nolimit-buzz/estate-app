@@ -1,6 +1,7 @@
 <?php
 // reset_password.php - Set New Password After OTP Verification
 require_once 'config.php';
+require_once 'includes/login_gate.php';
 require_once 'includes/Mailer.php';
 
 // Auto-ensure tables exist
@@ -37,7 +38,8 @@ if (empty($token) || empty($email)) {
     exit;
 }
 
-$esc_token = $conn->real_escape_string($token);
+// the session carries the (already hashed) token after OTP/link verification; direct params carry the raw token
+$esc_token = $conn->real_escape_string(isset($_SESSION['verified_reset_token']) ? $token : hash('sha256', $token));
 $esc_email = $conn->real_escape_string($email);
 
 $token_chk = $conn->query("SELECT id, expires_at, used FROM password_resets 
@@ -56,8 +58,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($password) || empty($confirm_password)) {
         $error = "Please fill in both password fields.";
-    } elseif (strlen($password) < 8) {
-        $error = "Your new password must be at least 8 characters long.";
+    } elseif ($pw_err = EstateService::validatePassword($password)) {
+        $error = $pw_err;
     } elseif ($password !== $confirm_password) {
         $error = "Passwords do not match. Please verify and try again.";
     } else {
@@ -111,9 +113,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Landing & Auth Styles -->
-    <link rel="stylesheet" href="css/landing.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="css/estate_notifications.css?v=<?php echo time(); ?>">
-    <script src="js/estate_notifications.js?v=<?php echo time(); ?>"></script>
+    <link rel="stylesheet" href="css/landing.css?v=<?php echo ASSET_VER; ?>">
+    <link rel="stylesheet" href="css/estate_notifications.css?v=<?php echo ASSET_VER; ?>">
+    <script src="js/estate_notifications.js?v=<?php echo ASSET_VER; ?>"></script>
 
     <style>
         .pwd-strength-bar {

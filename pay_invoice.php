@@ -511,6 +511,7 @@ $amount_in_kobo = round($initial_pay_amount * 100);
                             channels: ['card', 'bank', 'ussd', 'qr', 'mobile_money', 'bank_transfer'],
                             metadata: {
                                 custom_fields: [
+                                    { display_name: "Estate ID", variable_name: "estate_id", value: <?= intval(get_estate_id()) ?> },
                                     {
                                         display_name: "Invoice ID",
                                         variable_name: "invoice_id",

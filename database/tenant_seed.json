@@ -1,0 +1,1840 @@
+{
+    "building_floor_types": {
+        "estate_scoped": false,
+        "columns": [
+            "id",
+            "name"
+        ],
+        "rows": []
+    },
+    "building_statuses": {
+        "estate_scoped": false,
+        "columns": [
+            "id",
+            "name"
+        ],
+        "rows": [
+            [
+                "1",
+                "Active"
+            ],
+            [
+                "4",
+                "Archived"
+            ],
+            [
+                "3",
+                "Maintenance"
+            ],
+            [
+                "2",
+                "Under Construction"
+            ]
+        ]
+    },
+    "building_types": {
+        "estate_scoped": false,
+        "columns": [
+            "id",
+            "name"
+        ],
+        "rows": [
+            [
+                "1",
+                "Apartment"
+            ],
+            [
+                "5",
+                "Bungalow"
+            ],
+            [
+                "3",
+                "Commercial"
+            ],
+            [
+                "4",
+                "Duplex"
+            ],
+            [
+                "2",
+                "Villa"
+            ]
+        ]
+    },
+    "domestic_staff_roles": {
+        "estate_scoped": false,
+        "columns": [
+            "id",
+            "name"
+        ],
+        "rows": [
+            [
+                "2",
+                "Cook"
+            ],
+            [
+                "1",
+                "Driver"
+            ],
+            [
+                "5",
+                "Gardner"
+            ],
+            [
+                "3",
+                "Maid"
+            ],
+            [
+                "4",
+                "Nanny"
+            ],
+            [
+                "6",
+                "Security"
+            ]
+        ]
+    },
+    "domestic_staff_status": {
+        "estate_scoped": false,
+        "columns": [
+            "id",
+            "name"
+        ],
+        "rows": [
+            [
+                "2",
+                "Daily"
+            ],
+            [
+                "1",
+                "Live-in"
+            ],
+            [
+                "3",
+                "Temporary"
+            ],
+            [
+                "4",
+                "Weekend Only"
+            ]
+        ]
+    },
+    "flat_statuses": {
+        "estate_scoped": false,
+        "columns": [
+            "id",
+            "name"
+        ],
+        "rows": [
+            [
+                "4",
+                "Archived"
+            ],
+            [
+                "3",
+                "Maintenance"
+            ],
+            [
+                "1",
+                "Occupied"
+            ],
+            [
+                "2",
+                "Vacant"
+            ]
+        ]
+    },
+    "flat_types": {
+        "estate_scoped": false,
+        "columns": [
+            "id",
+            "name"
+        ],
+        "rows": [
+            [
+                "1",
+                "1BHK"
+            ],
+            [
+                "2",
+                "2BHK"
+            ],
+            [
+                "3",
+                "3BHK"
+            ],
+            [
+                "4",
+                "4BHK"
+            ],
+            [
+                "5",
+                "Penthouse"
+            ],
+            [
+                "6",
+                "Studio"
+            ]
+        ]
+    },
+    "property_acquisition_types": {
+        "estate_scoped": false,
+        "columns": [
+            "id",
+            "name"
+        ],
+        "rows": [
+            [
+                "3",
+                "Gift"
+            ],
+            [
+                "2",
+                "Inheritance"
+            ],
+            [
+                "4",
+                "Lease"
+            ],
+            [
+                "1",
+                "Purchase"
+            ]
+        ]
+    },
+    "property_ownership_types": {
+        "estate_scoped": false,
+        "columns": [
+            "id",
+            "name"
+        ],
+        "rows": [
+            [
+                "2",
+                "Company"
+            ],
+            [
+                "3",
+                "Family Trust"
+            ],
+            [
+                "1",
+                "Individual"
+            ]
+        ]
+    },
+    "resident_relationships": {
+        "estate_scoped": false,
+        "columns": [
+            "id",
+            "name"
+        ],
+        "rows": [
+            [
+                "3",
+                "Child"
+            ],
+            [
+                "6",
+                "Grandparent"
+            ],
+            [
+                "8",
+                "Other"
+            ],
+            [
+                "4",
+                "Parent"
+            ],
+            [
+                "1",
+                "Self (Head)"
+            ],
+            [
+                "5",
+                "Sibling"
+            ],
+            [
+                "2",
+                "Spouse"
+            ],
+            [
+                "7",
+                "Staff"
+            ]
+        ]
+    },
+    "resident_statuses": {
+        "estate_scoped": false,
+        "columns": [
+            "id",
+            "name"
+        ],
+        "rows": [
+            [
+                "1",
+                "Active"
+            ],
+            [
+                "4",
+                "Archived"
+            ],
+            [
+                "2",
+                "Moved Out"
+            ],
+            [
+                "3",
+                "Temporary"
+            ]
+        ]
+    },
+    "permissions": {
+        "estate_scoped": false,
+        "columns": [
+            "id",
+            "name",
+            "slug",
+            "module",
+            "description"
+        ],
+        "rows": [
+            [
+                "1",
+                "View Properties",
+                "properties.view",
+                "Properties",
+                "View streets, buildings, and flats"
+            ],
+            [
+                "2",
+                "Manage Properties",
+                "properties.manage",
+                "Properties",
+                "Add, edit, or delete properties"
+            ],
+            [
+                "3",
+                "Manage Property Owners",
+                "owners.manage",
+                "Properties",
+                "Manage property ownership records"
+            ],
+            [
+                "4",
+                "View Residents",
+                "residents.view",
+                "Residents",
+                "View resident directory"
+            ],
+            [
+                "5",
+                "Register & Manage Residents",
+                "residents.manage",
+                "Residents",
+                "Add, edit, or register residents"
+            ],
+            [
+                "6",
+                "Manage Tenancies",
+                "tenancies.manage",
+                "Residents",
+                "Manage tenant move-in and leases"
+            ],
+            [
+                "7",
+                "View Invoices & Bills",
+                "finance.view_invoices",
+                "Finance",
+                "View estate bills, invoices, and payment status"
+            ],
+            [
+                "8",
+                "Create Charges & Bills",
+                "finance.create_invoice",
+                "Finance",
+                "Generate bills, charges, and invoices"
+            ],
+            [
+                "9",
+                "Record & Confirm Payments",
+                "finance.record_payment",
+                "Finance",
+                "Record payments and confirm collections"
+            ],
+            [
+                "10",
+                "Financial Reports",
+                "finance.view_reports",
+                "Finance",
+                "Access revenue and collection analytics"
+            ],
+            [
+                "11",
+                "Manage Estate Charges",
+                "charges.manage",
+                "Finance",
+                "Configure recurring estate service charges"
+            ],
+            [
+                "12",
+                "View Visitor Log",
+                "visitors.view_log",
+                "Visitors",
+                "View gate visitor entries and history"
+            ],
+            [
+                "13",
+                "Check-in \/ Check-out Visitors",
+                "visitors.check_in_out",
+                "Visitors",
+                "Verify access codes and check visitors in\/out"
+            ],
+            [
+                "14",
+                "Manage Estate Staff",
+                "staff.manage",
+                "Staff",
+                "Manage staff records and assignments"
+            ],
+            [
+                "15",
+                "General Settings",
+                "settings.general",
+                "Settings",
+                "Update estate configuration and payment keys"
+            ],
+            [
+                "16",
+                "Roles & Permissions Settings",
+                "settings.roles_permissions",
+                "Settings",
+                "Manage roles and permission slugs"
+            ],
+            [
+                "46",
+                "Emergency SOS Alerts",
+                "visitors.emergency_alerts",
+                "Visitors",
+                "View and respond to security alerts"
+            ],
+            [
+                "48",
+                "Access Staff Portal",
+                "staff.portal_access",
+                "Staff",
+                "Access the staff portal interface"
+            ],
+            [
+                "49",
+                "View Assigned Work Orders",
+                "maintenance.view_assigned",
+                "Maintenance",
+                "View work orders assigned to staff"
+            ],
+            [
+                "50",
+                "Update Work Orders",
+                "maintenance.update_status",
+                "Maintenance",
+                "Update maintenance task status and add notes"
+            ],
+            [
+                "53",
+                "Generate & View Receipts",
+                "finance.view_receipts",
+                "Finance",
+                "Generate, view, and print official receipts"
+            ],
+            [
+                "54",
+                "Create & Manage Estate Zones",
+                "zones.manage",
+                "Zones",
+                "Create & Manage Estate Zones"
+            ],
+            [
+                "55",
+                "View Estate Zones",
+                "zones.view",
+                "Zones",
+                "View Estate Zones"
+            ],
+            [
+                "56",
+                "View Incident & Occurrence Log",
+                "incidents.view",
+                "Security & Incidents",
+                "Allows viewing estate incident history, occurrence logbook and forensics"
+            ],
+            [
+                "57",
+                "Log Incident & Strange Events",
+                "incidents.create",
+                "Security & Incidents",
+                "Allows guards & staff to register new occurrences and security incidents"
+            ],
+            [
+                "58",
+                "Flag Bad Behavior \/ Blacklist",
+                "incidents.flag_behavior",
+                "Security & Incidents",
+                "Allows flagging unruly residents or visitors for security review & blacklisting"
+            ],
+            [
+                "59",
+                "Manage & Resolve Incidents",
+                "incidents.manage",
+                "Security & Incidents",
+                "Allows updating investigation status, resolving incidents and escalating to police"
+            ],
+            [
+                "60",
+                "Export Occurrence Logbook",
+                "incidents.export",
+                "Security & Incidents",
+                "Allows exporting occurrence books, incident logs and analytics to CSV"
+            ],
+            [
+                "61",
+                "View Duty Rosters",
+                "roster.view",
+                "Roster & Attendance",
+                "Allows viewing staff duty rosters, calendar shifts and station allocations"
+            ],
+            [
+                "62",
+                "Manage & Distribute Rosters",
+                "roster.manage",
+                "Roster & Attendance",
+                "Allows creating shifts, configuring stations\/posts and distributing recurring rosters"
+            ],
+            [
+                "63",
+                "Clock In & Out (Personal)",
+                "attendance.clock_in_out",
+                "Roster & Attendance",
+                "Allows staff to record clock in and clock out timestamps for assigned shifts"
+            ],
+            [
+                "64",
+                "Attendance Override & Roll Call",
+                "attendance.admin_override",
+                "Roster & Attendance",
+                "Allows manual clock in\/out overrides, attendance verification and roll call management"
+            ],
+            [
+                "65",
+                "Flag & Blacklist Visitors",
+                "visitors.blacklist_flag",
+                "Gate & Visitor Passes",
+                "Allows flagging unruly visitors or blacklisting suspicious vehicles at the gate"
+            ],
+            [
+                "66",
+                "Bypass Resident Confirmation",
+                "visitors.bypass_confirmation",
+                "Gate & Visitor Passes",
+                "Allows staff to approve visitor gate exit without requiring resident confirmation code"
+            ]
+        ]
+    },
+    "incident_entity_types": {
+        "estate_scoped": true,
+        "columns": [
+            "id",
+            "estate_id",
+            "name",
+            "slug",
+            "created_at"
+        ],
+        "rows": [
+            [
+                "1",
+                "1",
+                "Estate Resident",
+                "resident",
+                "2026-09-19 11:57:53"
+            ],
+            [
+                "2",
+                "1",
+                "Visitor \/ Guest",
+                "visitor",
+                "2026-09-19 11:57:53"
+            ],
+            [
+                "3",
+                "1",
+                "Staff \/ Contractor",
+                "staff_contractor",
+                "2026-09-19 11:57:53"
+            ],
+            [
+                "4",
+                "1",
+                "Unknown \/ Third Party",
+                "unknown_third_party",
+                "2026-09-19 11:57:53"
+            ]
+        ]
+    },
+    "incident_severities": {
+        "estate_scoped": true,
+        "columns": [
+            "id",
+            "estate_id",
+            "name",
+            "slug",
+            "created_at"
+        ],
+        "rows": [
+            [
+                "1",
+                "1",
+                "Low \/ Routine Observation",
+                "low",
+                "2026-09-19 11:57:53"
+            ],
+            [
+                "2",
+                "1",
+                "Medium \/ Disruption",
+                "medium",
+                "2026-09-19 11:57:53"
+            ],
+            [
+                "3",
+                "1",
+                "High \/ Serious Security Matter",
+                "high",
+                "2026-09-19 11:57:53"
+            ],
+            [
+                "4",
+                "1",
+                "Critical \/ Life & Safety Threat",
+                "critical",
+                "2026-09-19 11:57:53"
+            ]
+        ]
+    },
+    "incident_statuses": {
+        "estate_scoped": true,
+        "columns": [
+            "id",
+            "estate_id",
+            "name",
+            "slug",
+            "created_at"
+        ],
+        "rows": [
+            [
+                "1",
+                "1",
+                "Open \/ Unresolved",
+                "open",
+                "2026-09-19 11:57:53"
+            ],
+            [
+                "2",
+                "1",
+                "Under Investigation",
+                "investigating",
+                "2026-09-19 11:57:53"
+            ],
+            [
+                "3",
+                "1",
+                "Resolved",
+                "resolved",
+                "2026-09-19 11:57:53"
+            ],
+            [
+                "4",
+                "1",
+                "Escalated to Police \/ Law Enforcement",
+                "escalated_police",
+                "2026-09-19 11:57:53"
+            ],
+            [
+                "5",
+                "1",
+                "Escalated to Management",
+                "escalated_mgmt",
+                "2026-09-19 11:57:53"
+            ],
+            [
+                "6",
+                "1",
+                "Dismissed \/ False Alarm",
+                "dismissed",
+                "2026-09-19 11:57:53"
+            ]
+        ]
+    },
+    "incident_types": {
+        "estate_scoped": true,
+        "columns": [
+            "id",
+            "estate_id",
+            "name",
+            "slug",
+            "created_at"
+        ],
+        "rows": [
+            [
+                "1",
+                "1",
+                "General Occurrence \/ Routine Log",
+                "general_occurrence",
+                "2026-09-19 11:57:53"
+            ],
+            [
+                "2",
+                "1",
+                "Bad Behavior \/ Misconduct",
+                "bad_behavior",
+                "2026-09-19 11:57:53"
+            ],
+            [
+                "3",
+                "1",
+                "Noise Disturbance",
+                "noise_disturbance",
+                "2026-09-19 11:57:53"
+            ],
+            [
+                "4",
+                "1",
+                "Speeding & Traffic Violation",
+                "speeding_traffic",
+                "2026-09-19 11:57:53"
+            ],
+            [
+                "5",
+                "1",
+                "Unauthorized Entry \/ Gate Breach",
+                "unauthorized_entry",
+                "2026-09-19 11:57:53"
+            ],
+            [
+                "6",
+                "1",
+                "Suspicious Person \/ Vehicle",
+                "suspicious_activity",
+                "2026-09-19 11:57:53"
+            ],
+            [
+                "7",
+                "1",
+                "Property Damage \/ Vandalism",
+                "property_damage",
+                "2026-09-19 11:57:53"
+            ],
+            [
+                "8",
+                "1",
+                "Theft \/ Attempted Burglary",
+                "theft_burglary",
+                "2026-09-19 11:57:53"
+            ],
+            [
+                "9",
+                "1",
+                "Altercation \/ Physical Fight",
+                "altercation_fight",
+                "2026-09-19 11:57:53"
+            ],
+            [
+                "10",
+                "1",
+                "Access Denied at Gate",
+                "access_denied",
+                "2026-09-19 11:57:53"
+            ],
+            [
+                "11",
+                "1",
+                "Lost & Found",
+                "lost_found",
+                "2026-09-19 11:57:53"
+            ]
+        ]
+    },
+    "zonal_billing_frequencies": {
+        "estate_scoped": true,
+        "columns": [
+            "id",
+            "estate_id",
+            "zone_id",
+            "name",
+            "code",
+            "interval_days",
+            "description",
+            "status",
+            "sort_order",
+            "created_at"
+        ],
+        "rows": [
+            [
+                "1",
+                "1",
+                null,
+                "Monthly",
+                "monthly",
+                "30",
+                "Billed every 30 days",
+                "Active",
+                "1",
+                "2026-09-12 12:19:04"
+            ],
+            [
+                "2",
+                "1",
+                null,
+                "Bi-Monthly",
+                "bi-monthly",
+                "60",
+                "Billed every 2 months (60 days)",
+                "Active",
+                "2",
+                "2026-09-12 12:19:04"
+            ],
+            [
+                "3",
+                "1",
+                null,
+                "Quarterly",
+                "quarterly",
+                "90",
+                "Billed every 3 months (90 days)",
+                "Active",
+                "3",
+                "2026-09-12 12:19:04"
+            ],
+            [
+                "4",
+                "1",
+                null,
+                "Semi-Annually",
+                "semi-annually",
+                "180",
+                "Billed every 6 months (180 days)",
+                "Active",
+                "4",
+                "2026-09-12 12:19:04"
+            ],
+            [
+                "5",
+                "1",
+                null,
+                "Yearly",
+                "yearly",
+                "365",
+                "Billed once per year (365 days)",
+                "Active",
+                "5",
+                "2026-09-12 12:19:04"
+            ],
+            [
+                "6",
+                "1",
+                null,
+                "One-Time",
+                "one-time",
+                "0",
+                "One-off ad-hoc levy or setup charge",
+                "Active",
+                "6",
+                "2026-09-12 12:19:04"
+            ],
+            [
+                "7",
+                "1",
+                null,
+                "Weekly",
+                "weekly",
+                "7",
+                "Billed every 7 days",
+                "Active",
+                "7",
+                "2026-09-12 12:19:04"
+            ],
+            [
+                "8",
+                "1",
+                "1",
+                "Bi-Weekly Cycle",
+                "bi-weekly",
+                "14",
+                "Every two weeks billing",
+                "Active",
+                "8",
+                "2026-09-12 12:47:10"
+            ]
+        ]
+    },
+    "zonal_charge_types": {
+        "estate_scoped": true,
+        "columns": [
+            "id",
+            "estate_id",
+            "zone_id",
+            "name",
+            "code",
+            "icon",
+            "color",
+            "description",
+            "status",
+            "created_at"
+        ],
+        "rows": [
+            [
+                "1",
+                "1",
+                null,
+                "Security & Vigilante Levy",
+                "security",
+                "fa-shield-halved",
+                "#3b82f6",
+                "Zonal security patrols, gate personnel, and surveillance maintenance",
+                "Active",
+                "2026-09-12 12:19:04"
+            ],
+            [
+                "2",
+                "1",
+                null,
+                "Waste Disposal & Sanitation",
+                "waste",
+                "fa-trash-can",
+                "#10b981",
+                "Refuse collection, drainage cleaning, and zonal hygiene",
+                "Active",
+                "2026-09-12 12:19:04"
+            ],
+            [
+                "3",
+                "1",
+                null,
+                "Power & Generator Diesel",
+                "power",
+                "fa-bolt",
+                "#f59e0b",
+                "Backup central generators, diesel fuel, and transformer servicing",
+                "Active",
+                "2026-09-12 12:19:04"
+            ],
+            [
+                "4",
+                "1",
+                null,
+                "Infrastructure & Road Repair",
+                "infrastructure",
+                "fa-road",
+                "#8b5cf6",
+                "Pothole repairs, streetlight fixtures, and road paving dues",
+                "Active",
+                "2026-09-12 12:19:04"
+            ],
+            [
+                "5",
+                "1",
+                null,
+                "Water Supply & Sewage",
+                "water",
+                "fa-faucet-drip",
+                "#06b6d4",
+                "Borehole pumping, water testing, and plumbing line repairs",
+                "Active",
+                "2026-09-12 12:19:04"
+            ],
+            [
+                "6",
+                "1",
+                null,
+                "Environmental & Landscaping",
+                "environment",
+                "fa-tree",
+                "#22c55e",
+                "Grass trimming, hedge pruning, and recreational park upkeep",
+                "Active",
+                "2026-09-12 12:19:04"
+            ],
+            [
+                "7",
+                "1",
+                null,
+                "Development & Capital Levy",
+                "development",
+                "fa-building-columns",
+                "#ec4899",
+                "Long-term zone development projects and asset acquisitions",
+                "Active",
+                "2026-09-12 12:19:04"
+            ],
+            [
+                "8",
+                "1",
+                null,
+                "General Administrative Dues",
+                "general",
+                "fa-file-invoice",
+                "#64748b",
+                "General zonal administration and community dues",
+                "Active",
+                "2026-09-12 12:19:04"
+            ],
+            [
+                "9",
+                "1",
+                "1",
+                "Beautification & Gardening",
+                "beautification",
+                "fa-leaf",
+                "#10b981",
+                "Zone park and gardening dues",
+                "Active",
+                "2026-09-12 12:47:10"
+            ]
+        ]
+    },
+    "roles": {
+        "estate_scoped": true,
+        "columns": [
+            "id",
+            "estate_id",
+            "name",
+            "slug",
+            "description",
+            "is_system",
+            "created_at"
+        ],
+        "rows": [
+            [
+                "2",
+                "1",
+                "Estate Manager",
+                "admin",
+                "Full estate administrative access",
+                "1",
+                "2026-09-01 16:28:36"
+            ],
+            [
+                "3",
+                "1",
+                "Finance Manager",
+                "manager",
+                "Handles invoicing, charges, and payment verification",
+                "1",
+                "2026-09-01 16:28:36"
+            ],
+            [
+                "4",
+                "1",
+                "Accountant",
+                "accountant",
+                "Manages collections, payments, and financial reporting",
+                "0",
+                "2026-09-01 16:28:36"
+            ],
+            [
+                "5",
+                "1",
+                "Security Officer",
+                "security",
+                "Handles visitor verification and gate pass logs",
+                "0",
+                "2026-09-01 16:28:36"
+            ],
+            [
+                "6",
+                "1",
+                "Resident",
+                "resident",
+                "Resident portal access for bills, receipts, and visitors",
+                "1",
+                "2026-09-01 16:28:36"
+            ],
+            [
+                "7",
+                "1",
+                "Technician",
+                "technician",
+                "Handles estate maintenance work orders",
+                "0",
+                "2026-09-02 09:42:59"
+            ],
+            [
+                "10",
+                "1",
+                "Zone Administrator",
+                "zone_admin",
+                "Administrative authority strictly scoped to an assigned zone",
+                "1",
+                "2026-09-11 17:07:30"
+            ]
+        ]
+    },
+    "role_permissions": {
+        "estate_scoped": false,
+        "columns": [
+            "role_id",
+            "permission_id"
+        ],
+        "rows": [
+            [
+                "2",
+                "1"
+            ],
+            [
+                "2",
+                "2"
+            ],
+            [
+                "2",
+                "3"
+            ],
+            [
+                "2",
+                "4"
+            ],
+            [
+                "2",
+                "5"
+            ],
+            [
+                "2",
+                "6"
+            ],
+            [
+                "2",
+                "7"
+            ],
+            [
+                "2",
+                "8"
+            ],
+            [
+                "2",
+                "9"
+            ],
+            [
+                "2",
+                "10"
+            ],
+            [
+                "2",
+                "11"
+            ],
+            [
+                "2",
+                "12"
+            ],
+            [
+                "2",
+                "13"
+            ],
+            [
+                "2",
+                "14"
+            ],
+            [
+                "2",
+                "15"
+            ],
+            [
+                "2",
+                "16"
+            ],
+            [
+                "2",
+                "46"
+            ],
+            [
+                "2",
+                "48"
+            ],
+            [
+                "2",
+                "49"
+            ],
+            [
+                "2",
+                "50"
+            ],
+            [
+                "2",
+                "56"
+            ],
+            [
+                "2",
+                "57"
+            ],
+            [
+                "2",
+                "58"
+            ],
+            [
+                "2",
+                "59"
+            ],
+            [
+                "2",
+                "60"
+            ],
+            [
+                "2",
+                "61"
+            ],
+            [
+                "2",
+                "62"
+            ],
+            [
+                "2",
+                "63"
+            ],
+            [
+                "2",
+                "64"
+            ],
+            [
+                "2",
+                "65"
+            ],
+            [
+                "2",
+                "66"
+            ],
+            [
+                "3",
+                "56"
+            ],
+            [
+                "3",
+                "57"
+            ],
+            [
+                "3",
+                "58"
+            ],
+            [
+                "3",
+                "59"
+            ],
+            [
+                "3",
+                "60"
+            ],
+            [
+                "3",
+                "61"
+            ],
+            [
+                "3",
+                "62"
+            ],
+            [
+                "3",
+                "63"
+            ],
+            [
+                "3",
+                "64"
+            ],
+            [
+                "3",
+                "65"
+            ],
+            [
+                "3",
+                "66"
+            ],
+            [
+                "5",
+                "12"
+            ],
+            [
+                "5",
+                "13"
+            ],
+            [
+                "5",
+                "46"
+            ],
+            [
+                "5",
+                "48"
+            ],
+            [
+                "5",
+                "56"
+            ],
+            [
+                "5",
+                "57"
+            ],
+            [
+                "5",
+                "58"
+            ],
+            [
+                "5",
+                "61"
+            ],
+            [
+                "5",
+                "63"
+            ],
+            [
+                "5",
+                "65"
+            ],
+            [
+                "7",
+                "48"
+            ],
+            [
+                "7",
+                "49"
+            ],
+            [
+                "7",
+                "50"
+            ],
+            [
+                "10",
+                "1"
+            ],
+            [
+                "10",
+                "2"
+            ],
+            [
+                "10",
+                "3"
+            ],
+            [
+                "10",
+                "4"
+            ],
+            [
+                "10",
+                "5"
+            ],
+            [
+                "10",
+                "6"
+            ],
+            [
+                "10",
+                "7"
+            ],
+            [
+                "10",
+                "8"
+            ],
+            [
+                "10",
+                "9"
+            ],
+            [
+                "10",
+                "10"
+            ],
+            [
+                "10",
+                "11"
+            ],
+            [
+                "10",
+                "53"
+            ],
+            [
+                "10",
+                "55"
+            ],
+            [
+                "10",
+                "56"
+            ],
+            [
+                "10",
+                "57"
+            ],
+            [
+                "10",
+                "58"
+            ],
+            [
+                "10",
+                "59"
+            ],
+            [
+                "10",
+                "60"
+            ],
+            [
+                "10",
+                "61"
+            ],
+            [
+                "10",
+                "62"
+            ],
+            [
+                "10",
+                "63"
+            ],
+            [
+                "10",
+                "64"
+            ],
+            [
+                "10",
+                "65"
+            ],
+            [
+                "10",
+                "66"
+            ]
+        ]
+    },
+    "estate_emergency_categories": {
+        "estate_scoped": true,
+        "columns": [
+            "id",
+            "estate_id",
+            "category_name",
+            "emoji",
+            "icon",
+            "color",
+            "use_case_description",
+            "priority",
+            "target_stakeholders",
+            "emergency_contact_phone",
+            "display_order",
+            "is_active",
+            "created_at"
+        ],
+        "rows": [
+            [
+                "1",
+                "1",
+                "Medical Emergency",
+                "????",
+                "fa-solid fa-heart-pulse",
+                "#ef4444",
+                "Someone is injured, unconscious, having a medical crisis, etc.",
+                "critical",
+                "all_residents",
+                "112",
+                "1",
+                "1",
+                "2026-09-16 21:01:57"
+            ],
+            [
+                "2",
+                "1",
+                "Security Threat",
+                "????️",
+                "fa-solid fa-shield-halved",
+                "#b91c1c",
+                "Intruder, assault, suspicious person, confrontation, etc.",
+                "critical",
+                "all_residents",
+                "08000000001",
+                "2",
+                "1",
+                "2026-09-16 21:01:57"
+            ],
+            [
+                "3",
+                "1",
+                "Fire \/ Smoke",
+                "????",
+                "fa-solid fa-fire",
+                "#ea580c",
+                "Fire, smoke, explosion or suspected fire hazard",
+                "critical",
+                "all_residents",
+                "08000000002",
+                "3",
+                "1",
+                "2026-09-16 21:01:57"
+            ],
+            [
+                "4",
+                "1",
+                "Break-In \/ Burglary",
+                "????",
+                "fa-solid fa-person-shelter",
+                "#dc2626",
+                "Active or suspected break-in or burglary in progress",
+                "critical",
+                "all_residents",
+                "08000000001",
+                "4",
+                "1",
+                "2026-09-16 21:01:57"
+            ],
+            [
+                "5",
+                "1",
+                "Personal Safety",
+                "????",
+                "fa-solid fa-user-shield",
+                "#f97316",
+                "Resident feels threatened, followed, or unsafe",
+                "high",
+                "all_residents",
+                "08000000001",
+                "5",
+                "1",
+                "2026-09-16 21:01:57"
+            ],
+            [
+                "6",
+                "1",
+                "Vehicle Emergency",
+                "????",
+                "fa-solid fa-car-burst",
+                "#d97706",
+                "Accident, vehicle-related threat, hit-and-run, or blockage",
+                "high",
+                "all_residents",
+                "08000000003",
+                "6",
+                "1",
+                "2026-09-16 21:01:57"
+            ],
+            [
+                "7",
+                "1",
+                "Child Emergency",
+                "????",
+                "fa-solid fa-child-reaching",
+                "#e11d48",
+                "Missing child or child requiring urgent immediate assistance",
+                "critical",
+                "all_residents",
+                "08000000001",
+                "7",
+                "1",
+                "2026-09-16 21:01:57"
+            ],
+            [
+                "8",
+                "1",
+                "Electrical Emergency",
+                "⚡",
+                "fa-solid fa-bolt-lightning",
+                "#eab308",
+                "Electrical hazard, exposed high-voltage wire, sparking transformer",
+                "high",
+                "all_residents",
+                "08000000004",
+                "8",
+                "1",
+                "2026-09-16 21:01:57"
+            ],
+            [
+                "9",
+                "1",
+                "Flood \/ Water Emergency",
+                "????",
+                "fa-solid fa-droplet",
+                "#0284c7",
+                "Major flooding, burst water main, dangerous water leak",
+                "medium",
+                "all_residents",
+                "08000000004",
+                "9",
+                "1",
+                "2026-09-16 21:01:57"
+            ],
+            [
+                "10",
+                "1",
+                "Other Emergency",
+                "????",
+                "fa-solid fa-triangle-exclamation",
+                "#64748b",
+                "Anything urgent requiring security\/management dispatch that does not fit above",
+                "high",
+                "all_residents",
+                "08000000001",
+                "10",
+                "1",
+                "2026-09-16 21:01:57"
+            ]
+        ]
+    },
+    "estate_emergency_actions": {
+        "estate_scoped": true,
+        "columns": [
+            "id",
+            "estate_id",
+            "action_title",
+            "description",
+            "target_status",
+            "display_order",
+            "is_active",
+            "created_at"
+        ],
+        "rows": [
+            [
+                "1",
+                "1",
+                "Security Patrol Dispatched to Unit",
+                "Gate patrol dispatched immediately to inspect location and secure premises",
+                "dispatched",
+                "1",
+                "1",
+                "2026-09-19 09:23:27"
+            ],
+            [
+                "2",
+                "1",
+                "Medical Team Responded & Assisted",
+                "First-aid desk or external medical ambulance assisted resident on-site",
+                "resolved",
+                "2",
+                "1",
+                "2026-09-19 09:23:27"
+            ],
+            [
+                "3",
+                "1",
+                "Fire Neutralized \/ Extinguished",
+                "Estate fire extinguishers utilized, threat neutralized",
+                "resolved",
+                "3",
+                "1",
+                "2026-09-19 09:23:27"
+            ],
+            [
+                "4",
+                "1",
+                "Intruder Apprehended \/ Perimeter Secured",
+                "Security personnel intercepted threat and restored order",
+                "resolved",
+                "4",
+                "1",
+                "2026-09-19 09:23:27"
+            ],
+            [
+                "5",
+                "1",
+                "Verified False Alarm - Resident Safe",
+                "Direct contact established with resident; confirmed accidental trigger or safe",
+                "false_alarm",
+                "5",
+                "1",
+                "2026-09-19 09:23:27"
+            ],
+            [
+                "6",
+                "1",
+                "Direct Phone Contact Established",
+                "CSO \/ Admin called resident directly and resolved query",
+                "resolved",
+                "6",
+                "1",
+                "2026-09-19 09:23:27"
+            ],
+            [
+                "7",
+                "1",
+                "Police Escalation & Escort",
+                "State police emergency division notified and escorted on-site",
+                "resolved",
+                "7",
+                "1",
+                "2026-09-19 09:23:27"
+            ],
+            [
+                "8",
+                "1",
+                "Facility Hazard Repaired & Made Safe",
+                "Maintenance\/technical staff isolated electrical or water hazard",
+                "resolved",
+                "8",
+                "1",
+                "2026-09-19 09:23:27"
+            ]
+        ]
+    },
+    "estate_policy_categories": {
+        "estate_scoped": true,
+        "columns": [
+            "id",
+            "estate_id",
+            "slug",
+            "name",
+            "icon",
+            "color",
+            "description",
+            "display_order",
+            "created_at"
+        ],
+        "rows": [
+            [
+                "1",
+                "1",
+                "security",
+                "Security & Gate Access Control",
+                "fa-shield-halved",
+                "#ef4444",
+                "Rules concerning access control, visitor validation, gate passes, perimeter security, and checkpoint compliance.",
+                "1",
+                "2026-09-21 14:15:05"
+            ],
+            [
+                "2",
+                "1",
+                "traffic",
+                "Traffic, Parking & Speed Regulations",
+                "fa-car-side",
+                "#f59e0b",
+                "Estate speed limits, designated parking slots, visitor parking, anti-blocking, and vehicle clamping.",
+                "2",
+                "2026-09-21 14:15:05"
+            ],
+            [
+                "3",
+                "1",
+                "noise",
+                "Noise Control & Peaceful Living",
+                "fa-volume-xmark",
+                "#8b5cf6",
+                "Estate quiet hours, decibel levels, generator noise restrictions, party permits, and neighbor tranquility.",
+                "3",
+                "2026-09-21 14:15:05"
+            ],
+            [
+                "4",
+                "1",
+                "sanitation",
+                "Sanitation & Environmental Waste",
+                "fa-recycle",
+                "#10b981",
+                "Garbage collection schedules, standard bin bagging, hazardous waste, littering, and lawn maintenance.",
+                "4",
+                "2026-09-21 14:15:05"
+            ],
+            [
+                "5",
+                "1",
+                "pets",
+                "Pets & Domestic Animals",
+                "fa-paw",
+                "#ec4899",
+                "Leash requirements, vaccination certificates, dangerous dog breeds, waste cleanup, and barking nuisance.",
+                "5",
+                "2026-09-21 14:15:05"
+            ],
+            [
+                "6",
+                "1",
+                "construction",
+                "Building & Structural Alterations",
+                "fa-trowel-bricks",
+                "#6366f1",
+                "Permitted renovation hours, architectural permits, heavy truck access, scaffolding, and site cleanliness.",
+                "6",
+                "2026-09-21 14:15:05"
+            ],
+            [
+                "7",
+                "1",
+                "amenities",
+                "Common Amenities & Recreational Facilities",
+                "fa-swimming-pool",
+                "#06b6d4",
+                "Usage rules for clubhouse, sports facilities, swimming pool, children play areas, and facility bookings.",
+                "7",
+                "2026-09-21 14:15:05"
+            ],
+            [
+                "8",
+                "1",
+                "levies",
+                "Levies, Fines & Financial Compliance",
+                "fa-money-bill-transfer",
+                "#14b8a6",
+                "Estate development dues, utility payment deadlines, penalty surcharges, and default enforcement.",
+                "8",
+                "2026-09-21 14:15:05"
+            ],
+            [
+                "9",
+                "1",
+                "conduct",
+                "Resident Conduct & Tenancy Ethics",
+                "fa-handshake-angle",
+                "#3b82f6",
+                "Ethical neighbor relations, anti-harassment rules, domestic worker documentation, and disputes.",
+                "9",
+                "2026-09-21 14:15:05"
+            ]
+        ]
+    },
+    "payment_methods": {
+        "estate_scoped": true,
+        "columns": [
+            "id",
+            "estate_id",
+            "name",
+            "code",
+            "is_system",
+            "status",
+            "created_at",
+            "created_by"
+        ],
+        "rows": [
+            [
+                "1",
+                "1",
+                "Cash \/ Counter",
+                "cash",
+                "1",
+                "active",
+                "2026-09-05 17:42:20",
+                null
+            ],
+            [
+                "2",
+                "1",
+                "Bank Transfer",
+                "bank_transfer",
+                "1",
+                "active",
+                "2026-09-05 17:42:20",
+                null
+            ],
+            [
+                "3",
+                "1",
+                "POS Terminal",
+                "pos",
+                "1",
+                "active",
+                "2026-09-05 17:42:20",
+                null
+            ],
+            [
+                "4",
+                "1",
+                "Cheque",
+                "cheque",
+                "1",
+                "active",
+                "2026-09-05 17:42:20",
+                null
+            ]
+        ]
+    }
+}

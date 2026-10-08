@@ -37,8 +37,20 @@ if (empty($sessionId) || empty($phoneNumber)) {
     exit;
 }
 
-// Global Estate ID Context
-$estate_id = function_exists('get_estate_id') ? get_estate_id() : 1;
+// Estate context: the dialled service code is routed to exactly one estate by the platform (no default estate)
+$route = Tenancy::platform()->prepare("SELECT estate_id FROM ussd_routes WHERE service_code = ? LIMIT 1");
+$route->bind_param('s', $serviceCode);
+$route->execute();
+$routeRow = $route->get_result()->fetch_assoc();
+if (!$routeRow || !Tenancy::useEstate($routeRow['estate_id'])) {
+    echo "END This service code is not available. Please contact your estate management.";
+    exit;
+}
+if (!isModuleEnabled('ussd_offline_sync', $routeRow['estate_id'])) {
+    echo "END USSD service is not enabled for this estate.";
+    exit;
+}
+$estate_id = get_estate_id();
 $estate_branding = get_estate_branding($conn, $estate_id);
 $estate_name = $estate_branding['estate_name'] ?? 'Estate Admin';
 

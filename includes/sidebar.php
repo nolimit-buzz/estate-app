@@ -55,7 +55,7 @@ if ($sb_uid > 0 && isset($conn)) {
     
     <nav class="sidebar-nav">
         <ul>
-            <?php if (($_SESSION['role'] ?? '') === 'superadmin' || intval($_SESSION['user_id'] ?? 0) === 1): ?>
+            <?php if (is_impersonating_estate()): ?>
                 <li class="nav-label text-warning" style="color: #f59e0b !important;">SaaS Governance</li>
                 <li>
                     <a href="../superadmin/index" class="text-warning fw-bold d-flex align-items-center" style="background: rgba(245, 158, 11, 0.08); border-left: 3px solid #f59e0b; border-radius: 8px; margin-bottom: 8px;">
@@ -153,8 +153,17 @@ if ($sb_uid > 0 && isset($conn)) {
             <li class="nav-label">Settings &amp; White-Label</li>
             <li><a href="../admin/branding" class="<?php echo ($current_page == 'branding') ? 'active' : ''; ?>"><i class="fa-solid fa-paintbrush text-info"></i> White-Label &amp; Branding</a></li>
             <li><a href="../admin/settings" class="<?php echo ($current_page == 'settings') ? 'active' : ''; ?>"><i class="fa-solid fa-sliders"></i> Settings</a></li>
-            
-            <?php if (($_SESSION['role'] ?? '') === 'superadmin' || is_impersonating_estate() || intval($_SESSION['user_id'] ?? 0) === 1): ?>
+
+            <?php if (in_array($_SESSION['role'] ?? '', ['admin', 'manager'], true)): ?>
+                <li class="nav-label">Subscription &amp; Support</li>
+                <li><a href="../admin/subscription" class="<?php echo ($current_page == 'subscription') ? 'active' : ''; ?>"><i class="fa-solid fa-receipt"></i> Subscription &amp; Billing</a></li>
+                <li><a href="../admin/onboarding" class="<?php echo ($current_page == 'onboarding') ? 'active' : ''; ?>"><i class="fa-solid fa-list-check"></i> Onboarding</a></li>
+                <li><a href="../admin/invitations" class="<?php echo ($current_page == 'invitations') ? 'active' : ''; ?>"><i class="fa-solid fa-envelope-open-text"></i> Invitations</a></li>
+                <li><a href="../admin/support" class="<?php echo ($current_page == 'support') ? 'active' : ''; ?>"><i class="fa-solid fa-life-ring"></i> Support</a></li>
+                <li><a href="../admin/export" class="<?php echo ($current_page == 'export') ? 'active' : ''; ?>"><i class="fa-solid fa-file-export"></i> Data Export</a></li>
+            <?php endif; ?>
+
+            <?php if (is_impersonating_estate()): ?>
                 <li class="nav-label text-warning">Super Admin HQ</li>
                 <li><a href="../superadmin/index" style="color: #f59e0b; font-weight: 700;"><i class="fa-solid fa-layer-group text-warning"></i> SaaS Command Center</a></li>
             <?php endif; ?>
@@ -290,7 +299,7 @@ if ($sb_uid > 0 && isset($conn)) {
                         <div class="fw-bold text-dark small"><?php echo htmlspecialchars($_SESSION['name'] ?? 'Admin User'); ?></div>
                         <div class="text-muted" style="font-size: 0.72rem;"><?php echo htmlspecialchars($_SESSION['email'] ?? 'admin@estate.com'); ?></div>
                     </div>
-                    <?php if (($_SESSION['role'] ?? '') === 'superadmin' || intval($_SESSION['user_id'] ?? 0) === 1): ?>
+                    <?php if (is_impersonating_estate()): ?>
                         <a href="../superadmin/index" class="dropdown-item py-2 px-3 rounded-2 small d-flex align-items-center gap-2 text-warning fw-bold" style="background: rgba(245, 158, 11, 0.08);">
                             <i class="fa-solid fa-bolt text-warning"></i> Super Admin Console
                         </a>

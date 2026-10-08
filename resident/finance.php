@@ -624,6 +624,7 @@ include 'sidebar.php';
                 channels: ['card', 'bank', 'ussd', 'qr', 'mobile_money', 'bank_transfer'],
                 metadata: {
                     custom_fields: [
+                        { display_name: "Estate ID", variable_name: "estate_id", value: <?= intval(get_estate_id()) ?> },
                         { display_name: "Invoice ID", variable_name: "invoice_id", value: currentInvoice.id },
                         { display_name: "Invoice Number", variable_name: "invoice_number", value: currentInvoice.number },
                         { display_name: "Resident Name", variable_name: "resident_name", value: userName },

@@ -162,16 +162,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         throw new Exception("Duplicate Blocker: Phone number '$phone' is already registered in this estate to {$taken['name']} (ID: " . ($taken['res_id'] ?? 'User #' . $taken['id']) . "). Two residents cannot share the same phone number.");
                     }
 
-                    $default_pass = !empty($first_name) ? trim($first_name) : 'welcome123';
-                    $password = password_hash($default_pass, PASSWORD_DEFAULT);
-                    $conn->query("INSERT INTO users (estate_id, first_name, last_name, name, email, phone, password, role) 
-                                  VALUES ($estate_id, '$first_name', '$last_name', '$name', '$email', '$phone', '$password', 'resident')");
+                    if ($plan_msg = residentLimitMessage($conn, 1 + (isset($_POST['family_first_name']) ? count(array_filter((array)$_POST['family_first_name'])) : 0))) throw new Exception($plan_msg);
+                    $password = Invitations::unusablePassword(); // account is activated by the invitation link
+                    $conn->query("INSERT INTO users (estate_id, first_name, last_name, name, email, phone, password, role, status) 
+                                  VALUES ($estate_id, '$first_name', '$last_name', '$name', '$email', '$phone', '$password', 'resident', 'invited')");
                     $user_id = $conn->insert_id;
                     
                     // Dispatch Welcome Email with Credentials to New Resident
-                    if (class_exists('EstateMailer')) {
-                        EstateMailer::sendWelcomeCredentialsEmail($conn, $user_id, $default_pass);
-                    }
+                    invite_new_user($conn, $user_id, $email, $name, 'resident');
                     
                     $custom_id = generateCustomID($conn, 'residents', 'RES');
                     $image = isset($_FILES['image']) ? handleUpload($_FILES['image']) : null;
@@ -249,11 +247,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                         $batch_phones[] = $cl_f_phone;
                                     }
 
-                                    $d_pass = !empty($fname) ? trim($fname) : 'welcome123';
-                                    $d_password = password_hash($d_pass, PASSWORD_DEFAULT);
-                                    $conn->query("INSERT INTO users (estate_id, first_name, last_name, name, email, phone, password, role) 
-                                                  VALUES ($estate_id, '$fname', '$lname', '$fname_full', '$d_email', '$f_phone', '$d_password', 'resident')");
+                                    $d_password = Invitations::unusablePassword();
+                                    $conn->query("INSERT INTO users (estate_id, first_name, last_name, name, email, phone, password, role, status) 
+                                                  VALUES ($estate_id, '$fname', '$lname', '$fname_full', '$d_email', '$f_phone', '$d_password', 'resident', 'invited')");
                                     $d_uid = $conn->insert_id;
+                                if (!empty($d_email)) invite_new_user($conn, $d_uid, $d_email, $fname_full, 'resident');
 
                                     $d_custom_id = generateCustomID($conn, 'residents', 'RES');
                                     $conn->query("INSERT INTO residents (estate_id, custom_id, user_id, flat_id, type, relationship, status, image_path, registration_date) 

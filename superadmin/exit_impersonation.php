@@ -1,11 +1,11 @@
 <?php
-// superadmin/exit_impersonation.php - Return from Estate to Super Admin
-require_once '../config.php';
-
-if (isset($_SESSION['impersonated_estate_id'])) {
-    $prev_id = intval($_SESSION['impersonated_estate_id']);
-    unset($_SESSION['impersonated_estate_id']);
-    logAudit($conn, "Exit Impersonation", "System", "Super Admin exited estate ID $prev_id back to Super Admin console.");
+require_once __DIR__ . '/includes/super_auth.php';
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && !empty($_SESSION['impersonated_estate_id'])) {
+    $eid = intval($_SESSION['impersonated_estate_id']);
+    Audit::log('estate.impersonation_ended', ['estate_id' => $eid, 'module' => 'security', 'details' => 'Left estate']);
+    foreach (['impersonated_estate_id', 'user_id', 'role', 'estate_id', 'zone_id', 'zone_name', 'zone_code', 'is_staff', 'role_id', 'force_password_change'] as $k) unset($_SESSION[$k]);
+    $_SESSION['name'] = $SA['name'];
+    header("Location: estate?id=$eid");
+    exit;
 }
-
-redirectWithFlash('index', "Exited estate mode. Returned to Super Admin Command Center.");
+header('Location: index');

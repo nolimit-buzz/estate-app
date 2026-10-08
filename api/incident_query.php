@@ -8,9 +8,7 @@ require_once '../config.php';
 require_once '../includes/auth_guard.php';
 require_once '../includes/emergency_roster_init.php';
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once __DIR__ . '/../config.php'; // boots hardened session + tenant
 
 if (!isset($_SESSION['user_id'])) {
     echo json_encode(['success' => false, 'error' => 'Unauthenticated session']);

@@ -15,7 +15,8 @@ if (!function_exists('getEmergencySetting')) {
 
 if (!function_exists('initEmergencyAndRosterTables')) {
 function initEmergencyAndRosterTables($conn) {
-    if (!$conn || !($conn instanceof mysqli)) return;
+    // SaaS: schema + defaults are provisioned by database/tenant_schema.sql, migrations and tenant_seed.json.
+    return;
 
     // 1. Security Posts (Gates, Patrol Units, Watchtowers, Command Centers)
     $conn->query("CREATE TABLE IF NOT EXISTS security_posts (

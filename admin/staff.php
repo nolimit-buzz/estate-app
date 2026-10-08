@@ -99,14 +99,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             } elseif (!empty($phone) && function_exists('isPhoneTakenInEstate') && ($taken = isPhoneTakenInEstate($conn, $phone, $estate_id))) {
                 $message = "Duplicate Blocker: Phone number '$phone' is already registered in this estate to {$taken['name']}. Duplicate phone numbers are prohibited.";
                 $message_type = "danger";
+            } elseif ($plan_msg = userLimitMessage($conn)) {
+                $message = $plan_msg;
+                $message_type = "danger";
             } else {
-                $default_pass = !empty($first_name) ? trim($first_name) : 'staff123';
-                $password = password_hash($default_pass, PASSWORD_DEFAULT);
-                $conn->query("INSERT INTO users (estate_id, first_name, last_name, name, email, phone, password, role) VALUES ($estate_id, '$first_name', '$last_name', '$name', '$email', '$phone', '$password', '$role_slug')");
+                $password = Invitations::unusablePassword(); // account is activated by the invitation link
+                $conn->query("INSERT INTO users (estate_id, first_name, last_name, name, email, phone, password, role, status) VALUES ($estate_id, '$first_name', '$last_name', '$name', '$email', '$phone', '$password', '$role_slug', 'invited')");
                 $user_id = $conn->insert_id;
                 
                 // Dispatch Welcome Email with Credentials to New Staff
-                EstateMailer::sendWelcomeCredentialsEmail($conn, $user_id, $default_pass);
+                invite_new_user($conn, $user_id, $email, $name, $role_slug);
 
                 $custom_id = generateCustomID($conn, 'estate_staff', 'EST');
                 $image = handleUpload($_FILES['image']);

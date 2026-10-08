@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../includes/auth_guard.php';
 require_once __DIR__ . '/../includes/auth_helper.php';
+require_once __DIR__ . '/../includes/login_gate.php'; // asks for the estate code when not identified
 
 // If already logged in as zone_admin, redirect
 if (isset($_SESSION['user_id'])) {
@@ -78,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Landing & Auth Styles -->
-    <link rel="stylesheet" href="../css/landing.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="../css/landing.css?v=<?php echo ASSET_VER; ?>">
 </head>
 <body class="landing-page">
     <div class="auth-page" style="background-image: url('../images/hero_estate.jpg');">

@@ -321,6 +321,7 @@ $recent_new_residents = $conn->query("
 <!-- ==========================================
      EXECUTIVE HEADER & COMMAND TOOLBAR (Desktop Only)
      ========================================== -->
+<?php include '../includes/dashboard_subscription.php'; /* subscription, usage, billing, modules, setup tasks (Central Admin only) */ ?>
 <div class="desktop-only">
 <!-- Image 3 Style Hero Header -->
 <div class="hero-header-enterprise">

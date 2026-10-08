@@ -19,6 +19,8 @@ class EstateMailer {
     public static function ensureDatabaseTables($conn) {
         if (self::$initialized) return;
         self::$initialized = true;
+        // SaaS: schema + defaults are provisioned by database/tenant_schema.sql, migrations and tenant_seed.json.
+        return;
 
         if (!$conn || !($conn instanceof mysqli)) return;
 
@@ -129,14 +131,14 @@ class EstateMailer {
         $estate_id = get_estate_id();
         $default_settings = [
             'smtp_enabled' => '1',
-            'smtp_host' => 'estate.nolimitbuzz.com.ng',
+            'smtp_host' => '',
             'smtp_port' => '465',
             'smtp_encryption' => 'ssl', // 'tls', 'ssl', or 'none'
-            'smtp_user' => 'estate@estate.nolimitbuzz.com.ng',
-            'smtp_pass' => '%LH},GPb;%6f{LS@',
+            'smtp_user' => '',
+            'smtp_pass' => '',
             'smtp_from_name' => 'No limit Buzz',
-            'smtp_from_email' => 'estate@estate.nolimitbuzz.com.ng',
-            'smtp_reply_to' => 'estate@estate.nolimitbuzz.com.ng',
+            'smtp_from_email' => '',
+            'smtp_reply_to' => '',
             'notify_on_invoice' => '1',
             'notify_on_receipt' => '1',
             'notify_on_visitor_pass' => '1',
@@ -207,7 +209,7 @@ class EstateMailer {
             $full_logo_url = $base_url . $logo_clean;
         }
 
-        return [
+        $info = [
             'estate_id' => $estate_id,
             'estate_name' => $settings['estate_name'] ?? ($estate_row['name'] ?? 'Estate Management'),
             'estate_location' => $settings['estate_location'] ?? ($estate_row['address'] ?? ''),
@@ -235,6 +237,45 @@ class EstateMailer {
             'notify_on_artisan_pass' => ($settings['notify_on_artisan_pass'] ?? '1') === '1',
             'base_url' => $base_url
         ];
+        return self::applyPlatformMailFallback($info);
+    }
+
+    /**
+     * Links emailed to people who are not signed in (invoices, visitor passes, reset links) must identify the estate.
+     * With subdomains the host does it; otherwise append ?estate=<code> to links pointing at this application.
+     */
+    private static function tagEstateLinks($html, array $info) {
+        if (trim(env_get('BASE_DOMAIN', '')) !== '' || !Tenancy::$estate) return $html;
+        $code = Tenancy::$estate['domain_prefix'] ?? '';
+        $base = preg_quote(rtrim($info['base_url'] ?? '', '/'), '#');
+        if ($code === '' || $base === '') return $html;
+        return preg_replace_callback('#href="(' . $base . '[^"\#]*)(\#[^"]*)?"#i', function ($m) use ($code) {
+            if (stripos($m[1], 'estate=') !== false) return $m[0];
+            $sep = strpos($m[1], '?') === false ? '?' : '&amp;';
+            return 'href="' . $m[1] . $sep . 'estate=' . urlencode($code) . ($m[2] ?? '') . '"';
+        }, $html);
+    }
+
+    /**
+     * Estates that have not configured their own SMTP send through the platform mail account (never PHP mail()).
+     * In APP_ENV=local with no SMTP at all, messages are written to storage/logs/mail.log instead.
+     */
+    private static function applyPlatformMailFallback(array $info) {
+        $info['local_log'] = false;
+        if ($info['smtp_enabled'] && !empty($info['smtp_host'])) return $info;
+        if (env_get('PLATFORM_SMTP_ENABLED', '0') === '1' && env_get('PLATFORM_SMTP_HOST', '') !== '') {
+            $info['smtp_enabled'] = true;
+            $info['smtp_host'] = env_get('PLATFORM_SMTP_HOST');
+            $info['smtp_port'] = intval(env_get('PLATFORM_SMTP_PORT', 465));
+            $info['smtp_encryption'] = strtolower(env_get('PLATFORM_SMTP_ENCRYPTION', 'ssl'));
+            $info['smtp_user'] = env_get('PLATFORM_SMTP_USER', '');
+            $info['smtp_pass'] = env_get('PLATFORM_SMTP_PASS', '');
+            $info['smtp_from_email'] = env_get('PLATFORM_MAIL_FROM', 'noreply@localhost');
+            $info['smtp_from_name'] = $info['estate_name'];
+        } elseif (env_get('APP_ENV', 'production') === 'local') {
+            $info['local_log'] = true;
+        }
+        return $info;
     }
 
     /**
@@ -304,6 +345,8 @@ class EstateMailer {
             return false;
         }
 
+        $htmlContent = self::tagEstateLinks($htmlContent, $estate_info);
+
         $mail = new PHPMailer(true);
         $mail->CharSet = 'UTF-8';
 
@@ -338,6 +381,13 @@ class EstateMailer {
                         'allow_self_signed' => true
                     ]
                 ];
+            } elseif (!empty($estate_info['local_log'])) {
+                // Local development without SMTP: keep a readable copy instead of sending
+                $dir = dirname(__DIR__) . '/storage/logs';
+                if (!is_dir($dir)) @mkdir($dir, 0775, true);
+                @file_put_contents($dir . '/mail.log', "==== " . date('c') . " TO: $toEmail ($toName) [estate #$estate_id]\nSUBJECT: $subject\n" . trim(preg_replace('/\s+/', ' ', html_entity_decode(strip_tags(preg_replace('/<a [^>]*href="([^"]+)"[^>]*>/i', '[$1] ', $htmlContent))))) . "\n\n", FILE_APPEND);
+                self::logEmail($conn, $estate_id, $toEmail, $toName, $subject, $template, $refId, 'sent', null);
+                return true;
             } else {
                 // Fallback to PHP native mail()
                 $mail->isMail();

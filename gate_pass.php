@@ -10,6 +10,14 @@ if (isset($_SESSION['user_id']) && ($_SESSION['role'] ?? '') === 'zone_admin') {
          </div>");
 }
 
+if (!Tenancy::hasTenant()) {
+    die("<div style='font-family:sans-serif;text-align:center;padding:4rem;'>
+            <h2>Estate Not Identified</h2>
+            <p>This pass belongs to a specific estate workspace. Please open this pass using your estate's web address or sign in to your estate portal.</p>
+            <a href='login' style='color:#2563eb;'>Go to Login</a> &bull; <a href='index' style='color:#2563eb;'>Return to Homepage</a>
+         </div>");
+}
+
 $estate_id = get_estate_id();
 
 // Retrieve by ID or Code

@@ -1,8 +1,6 @@
 <?php
 // includes/header.php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once __DIR__ . '/../config.php'; // boots hardened session + tenant
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../login?error=unauthenticated");
     exit;
@@ -24,28 +22,28 @@ if (!isset($_SESSION['user_id'])) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="../css/style.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="../css/estate_notifications.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="../css/estate_glassmorphism.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="../css/mobile_app.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="../css/hotline.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="../css/style.css?v=<?php echo ASSET_VER; ?>">
+    <link rel="stylesheet" href="../css/estate_notifications.css?v=<?php echo ASSET_VER; ?>">
+    <link rel="stylesheet" href="../css/estate_glassmorphism.css?v=<?php echo ASSET_VER; ?>">
+    <link rel="stylesheet" href="../css/mobile_app.css?v=<?php echo ASSET_VER; ?>">
+    <link rel="stylesheet" href="../css/hotline.css?v=<?php echo ASSET_VER; ?>">
     
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Global In-House Notification & Modal Alert Engine -->
-    <script src="../js/estate_notifications.js?v=<?php echo time(); ?>"></script>
+    <script src="../js/estate_notifications.js?v=<?php echo ASSET_VER; ?>"></script>
     <!-- Global Theme Switcher Script -->
     <script src="../js/theme.js"></script>
-    <script src="../js/searchable_select.js?v=<?php echo time(); ?>" defer></script>
-    <script src="../js/mobile_app.js?v=<?php echo time(); ?>" defer></script>
+    <script src="../js/searchable_select.js?v=<?php echo ASSET_VER; ?>" defer></script>
+    <script src="../js/mobile_app.js?v=<?php echo ASSET_VER; ?>" defer></script>
     <!-- Universal Anti-Duplicate & Single-Click Submission Engine -->
-    <script src="../js/anti_duplicate.js?v=<?php echo time(); ?>"></script>
+    <script src="../js/anti_duplicate.js?v=<?php echo ASSET_VER; ?>"></script>
     <!-- Real-time Emergency & Panic Alarm Engine -->
     <script>window.ESTATE_IS_STAFF_OR_ADMIN = true; window.ESTATE_EMERGENCY_URL = '../admin/emergency';</script>
-    <script src="../js/emergency_alarm.js?v=<?php echo time(); ?>"></script>
+    <script src="../js/emergency_alarm.js?v=<?php echo ASSET_VER; ?>"></script>
     <!-- Direct Emergency Hotline Modal Engine -->
-    <script src="../js/hotline_modal.js?v=<?php echo time(); ?>" defer></script>
+    <script src="../js/hotline_modal.js?v=<?php echo ASSET_VER; ?>" defer></script>
 
     <?php require_once __DIR__ . '/mobile_nav.php'; ?>
 
@@ -119,10 +117,21 @@ if (!isset($_SESSION['user_id'])) {
             <a href="../superadmin/index" class="btn btn-sm btn-light rounded-pill px-3 py-1 fw-bold text-dark shadow-sm" style="font-size: 0.78rem;">
                 <i class="fa-solid fa-layer-group me-1"></i> Switch Estate
             </a>
-            <a href="../superadmin/exit_impersonation" class="btn btn-sm btn-dark rounded-pill px-3 py-1 fw-bold shadow-sm" style="font-size: 0.78rem;">
-                <i class="fa-solid fa-right-from-bracket me-1"></i> Exit Impersonation
-            </a>
+            <form method="post" action="../superadmin/exit_impersonation" class="m-0">
+                <button class="btn btn-sm btn-dark rounded-pill px-3 py-1 fw-bold shadow-sm" style="font-size: 0.78rem;">
+                    <i class="fa-solid fa-right-from-bracket me-1"></i> Exit Impersonation
+                </button>
+            </form>
         </div>
+    </div>
+<?php endif; ?>
+<?php
+require_once __DIR__ . '/SubscriptionStatus.php';
+$__banner = SubscriptionStatus::banner();
+if ($__banner): ?>
+    <div style="padding:10px 24px;font-size:.88rem;font-weight:600;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;color:#fff;background:<?php echo ['danger' => '#b91c1c', 'warning' => '#b45309', 'info' => '#1d4ed8'][$__banner[0]]; ?>">
+        <span><?php echo htmlspecialchars($__banner[1]); ?></span>
+        <a href="../admin/<?php echo $__banner[2]; ?>" style="background:#fff;color:#0f172a;padding:5px 14px;border-radius:99px;text-decoration:none;font-size:.8rem"><?php echo htmlspecialchars($__banner[3]); ?></a>
     </div>
 <?php endif; ?>
     <div class="app-container">

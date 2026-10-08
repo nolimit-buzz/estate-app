@@ -4,7 +4,8 @@
 
 if (!function_exists('initPolicyAndOffenceTables')) {
     function initPolicyAndOffenceTables($conn) {
-        if (!$conn || !($conn instanceof mysqli)) return;
+        // SaaS: schema + defaults are provisioned by database/tenant_schema.sql, migrations and tenant_seed.json.
+        return;
 
         // 1. Policy Categories Table
         $conn->query("CREATE TABLE IF NOT EXISTS estate_policy_categories (

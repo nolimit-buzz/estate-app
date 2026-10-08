@@ -10,26 +10,47 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $input = file_get_contents('php://input');
-
-// Retrieve Paystack Secret Key from settings
-$estate_id = 1; // Default
-$s_res = $conn->query("SELECT setting_value FROM system_settings WHERE setting_key = 'paystack_secret_key' AND estate_id = $estate_id");
-$secret_key = ($s_res && $s_res->num_rows > 0) ? $s_res->fetch_assoc()['setting_value'] : '';
-
-// Validate Paystack Signature if Secret Key is configured
-if (!empty($secret_key) && isset($_SERVER['HTTP_X_PAYSTACK_SIGNATURE'])) {
-    $signature = $_SERVER['HTTP_X_PAYSTACK_SIGNATURE'];
-    if ($signature !== hash_hmac('sha512', $input, $secret_key)) {
-        http_response_code(400);
-        exit("Invalid Signature");
-    }
-}
-
 $event = json_decode($input, true);
 if (!$event || !isset($event['event'])) {
     http_response_code(400);
     exit;
 }
+
+// ---- 1. Identify WHICH estate this payment belongs to (there is no default estate).
+$tx0 = $event['data'] ?? [];
+$estate_id = 0;
+foreach (($tx0['metadata']['custom_fields'] ?? []) as $f) {
+    if (($f['variable_name'] ?? '') === 'estate_id') $estate_id = intval($f['value']);
+}
+if (!$estate_id) {
+    // Direct transfers to a zone virtual account carry no metadata: locate the owning estate by account / customer code
+    $dva0 = $tx0['receiver_account_number'] ?? ($tx0['authorization']['receiver_bank_account_number'] ?? ($tx0['dedicated_account']['account_number'] ?? ''));
+    $cust0 = $tx0['customer']['customer_code'] ?? '';
+    if ($dva0 !== '' || $cust0 !== '') {
+        $found = Tenancy::eachLiveEstate(function ($e, $c) use ($dva0, $cust0) {
+            $a = $c->real_escape_string($dva0); $b = $c->real_escape_string($cust0);
+            $r = $c->query("SELECT id FROM zones WHERE (paystack_account_number <> '' AND paystack_account_number = '$a') OR (paystack_customer_code <> '' AND paystack_customer_code = '$b') LIMIT 1");
+            return $r && $r->num_rows > 0;
+        });
+        if ($found) $estate_id = intval($found['id']);
+    }
+}
+if (!$estate_id || !Tenancy::useEstate($estate_id)) {
+    Tenancy::logError('webhook', 'Estate Paystack webhook could not be matched to an estate', null, 'warning');
+    http_response_code(200); // acknowledge so Paystack does not retry forever
+    exit(json_encode(['status' => 'unmatched']));
+}
+
+// ---- 2. Authenticate the call with THAT estate's own secret. Unsigned or badly signed requests are rejected.
+$s_res = $conn->query("SELECT setting_value FROM system_settings WHERE setting_key = 'paystack_secret_key' AND estate_id = $estate_id");
+$secret_key = ($s_res && $s_res->num_rows > 0) ? $s_res->fetch_assoc()['setting_value'] : '';
+$signature = $_SERVER['HTTP_X_PAYSTACK_SIGNATURE'] ?? '';
+if ($secret_key === '' || $signature === '' || !hash_equals(hash_hmac('sha512', $input, $secret_key), $signature)) {
+    Tenancy::logError('webhook', "Estate #$estate_id Paystack webhook rejected (missing/invalid signature)", $estate_id, 'warning');
+    http_response_code(401);
+    exit("Invalid Signature");
+}
+if (!isModuleEnabled('online_payments', $estate_id)) { http_response_code(200); exit(json_encode(['status' => 'module_disabled'])); }
 
 if ($event['event'] === 'charge.success') {
     $tx = $event['data'];

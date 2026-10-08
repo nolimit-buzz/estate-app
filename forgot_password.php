@@ -1,6 +1,7 @@
 <?php
 // forgot_password.php - Estate Portal Password Recovery
 require_once 'config.php';
+require_once 'includes/login_gate.php';
 require_once 'includes/Mailer.php';
 
 // Auto-ensure required tables exist
@@ -30,9 +31,14 @@ $success = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');
     
+    require_once __DIR__ . '/includes/RateLimit.php';
+    $rl_key = ($_SERVER['REMOTE_ADDR'] ?? '0') . '|' . strtolower($email);
     if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = "Please enter a valid email address.";
+    } elseif (RateLimit::lockedFor('reset_req', $rl_key) > 0) {
+        $error = "Too many reset requests. Please wait a few minutes and try again.";
     } else {
+        RateLimit::hit('reset_req', $rl_key, 5, 30, 60);
         $esc_email = $conn->real_escape_string($email);
         
         // 1. Rate Limiting Check: Prevent spamming within 60 seconds
@@ -63,13 +69,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $conn->query("UPDATE password_resets SET used = 1 WHERE email = '$esc_email' AND used = 0");
 
                     // 5. Insert new reset entry with 15-minute expiration
+                    // Codes/tokens are stored hashed; expiry comes from platform settings
+                    $otp_hash = hash('sha256', $otp . '|' . strtolower($email));
+                    $token_hash = hash('sha256', $token);
+                    $exp_min = max(5, PlatformSettings::int('password_reset_expiry_minutes', 30));
                     $ins = $conn->query("INSERT INTO password_resets (estate_id, email, code, token, expires_at, used, ip_address, created_at)
-                                         VALUES ($u_estate_id, '$esc_email', '$otp', '$token', DATE_ADD(NOW(), INTERVAL 15 MINUTE), 0, '$ip', NOW())");
+                                         VALUES ($u_estate_id, '$esc_email', '$otp_hash', '$token_hash', DATE_ADD(NOW(), INTERVAL $exp_min MINUTE), 0, '$ip', NOW())");
 
                     if ($ins) {
                         // 6. Build Direct Reset URL
                         $base_url = EstateMailer::getBaseUrl();
-                        $direct_link = $base_url . "verify_code.php?email=" . urlencode($email) . "&token=" . $token;
+                        $direct_link = $base_url . "verify_code.php?email=" . urlencode($email) . "&token=" . $token . "&estate=" . urlencode(Tenancy::$estate['domain_prefix'] ?? '');
 
                         // 7. Dispatch Email
                         $userName = $user['name'] ?? ($user['first_name'] ?? 'Resident / Member');
@@ -116,9 +126,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Landing & Auth Styles -->
-    <link rel="stylesheet" href="css/landing.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="css/estate_notifications.css?v=<?php echo time(); ?>">
-    <script src="js/estate_notifications.js?v=<?php echo time(); ?>"></script>
+    <link rel="stylesheet" href="css/landing.css?v=<?php echo ASSET_VER; ?>">
+    <link rel="stylesheet" href="css/estate_notifications.css?v=<?php echo ASSET_VER; ?>">
+    <script src="js/estate_notifications.js?v=<?php echo ASSET_VER; ?>"></script>
 </head>
 <body class="landing-page">
     <div class="auth-page" style="background-image: url('images/hero_estate.jpg');">

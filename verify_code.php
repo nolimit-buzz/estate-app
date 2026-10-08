@@ -1,6 +1,7 @@
 <?php
 // verify_code.php - Verify OTP for Password Reset
 require_once 'config.php';
+require_once 'includes/login_gate.php';
 require_once 'includes/Mailer.php';
 
 // Auto-ensure tables exist
@@ -32,14 +33,17 @@ $success = '';
 
 // Direct link verification (if user clicked direct link from email with token)
 if (!empty($token_param) && !empty($email) && $_SERVER['REQUEST_METHOD'] === 'GET') {
-    $esc_email = $conn->real_escape_string($email);
-    $esc_token = $conn->real_escape_string($token_param);
+    $token_hash = hash('sha256', $token_param);
 
-    $tok_chk = $conn->query("SELECT id, token, expires_at, used FROM password_resets 
-                             WHERE email = '$esc_email' AND token = '$esc_token' AND used = 0 
+    $stmt = $conn->prepare("SELECT id, token, expires_at, used FROM password_resets
+                             WHERE email = ? AND token = ? AND used = 0
                              AND expires_at > NOW() ORDER BY id DESC LIMIT 1");
+    $stmt->bind_param('ss', $email, $token_hash);
+    $stmt->execute();
+    $tok_chk = $stmt->get_result();
     if ($tok_chk && $tok_chk->num_rows > 0) {
-        $_SESSION['verified_reset_token'] = $esc_token;
+        $_SESSION['verified_reset_token'] = $token_hash; // session carries the hash
+        Audit::log('auth.reset_link_used', ['module' => 'auth', 'details' => "Password reset link used for $email"]);
         $_SESSION['verified_reset_email'] = $email;
         header("Location: reset_password.php");
         exit;
@@ -59,18 +63,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = "Please provide the email address associated with your account.";
     } elseif (empty($code) || strlen($code) < 6) {
         $error = "Please enter the complete 6-digit verification code.";
+    } elseif (RateLimit::lockedFor('reset_verify', ($_SERVER['REMOTE_ADDR'] ?? '0') . '|' . strtolower($email)) > 0) {
+        $error = "Too many incorrect attempts. Please wait a few minutes or request a new code.";
     } else {
-        $esc_email = $conn->real_escape_string($email);
-        $esc_code = $conn->real_escape_string($code);
+        $code_hash = hash('sha256', preg_replace('/\D/', '', $code) . '|' . strtolower($email));
 
         // Check if code matches an active reset request
-        $chk = $conn->query("SELECT id, token, expires_at, used FROM password_resets 
-                             WHERE email = '$esc_email' AND code = '$esc_code' AND used = 0 
+        $stmt = $conn->prepare("SELECT id, token, expires_at, used FROM password_resets
+                             WHERE email = ? AND code = ? AND used = 0
                              ORDER BY id DESC LIMIT 1");
+        $stmt->bind_param('ss', $email, $code_hash);
+        $stmt->execute();
+        $chk = $stmt->get_result();
+
+        if (!$chk || $chk->num_rows === 0) {
+            if (RateLimit::hit('reset_verify', ($_SERVER['REMOTE_ADDR'] ?? '0') . '|' . strtolower($email), 5, 15, 15)) {
+                Audit::alert('reset_code_bruteforce', "Repeated wrong password-reset codes for $email", 'medium', ['estate_id' => Tenancy::currentId(), 'user_ref' => $email]);
+            }
+        }
 
         if ($chk && $chk->num_rows > 0) {
             $reset_row = $chk->fetch_assoc();
-            
+
             // Check if expired
             if (strtotime($reset_row['expires_at']) < time()) {
                 $error = "This verification code has expired (15-minute time limit exceeded). Please request a new code.";
@@ -78,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Code is valid and active!
                 $_SESSION['verified_reset_token'] = $reset_row['token'];
                 $_SESSION['verified_reset_email'] = $email;
-                
+
                 logAudit($conn, "Reset OTP Verified", "Auth", "Password reset code verified for $email");
 
                 header("Location: reset_password.php");
@@ -106,9 +120,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Landing & Auth Styles -->
-    <link rel="stylesheet" href="css/landing.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="css/estate_notifications.css?v=<?php echo time(); ?>">
-    <script src="js/estate_notifications.js?v=<?php echo time(); ?>"></script>
+    <link rel="stylesheet" href="css/landing.css?v=<?php echo ASSET_VER; ?>">
+    <link rel="stylesheet" href="css/estate_notifications.css?v=<?php echo ASSET_VER; ?>">
+    <script src="js/estate_notifications.js?v=<?php echo ASSET_VER; ?>"></script>
 
     <style>
         .otp-inputs-wrapper {

@@ -21,3 +21,11 @@ $RECYCLE.BIN/
 # Uploads directory contents (preserve directory structure with .gitkeep)
 /uploads/*
 !/uploads/.gitkeep
+
+# SaaS runtime data & dumps (contain customer data / secrets)
+/storage/logs/*
+/storage/backups/*
+/storage/exports/*
+!/storage/.htaccess
+/estate*.sql
+*.sql.gz
