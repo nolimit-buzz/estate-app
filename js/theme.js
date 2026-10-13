@@ -243,3 +243,36 @@
         }
     });
 })();
+
+// Icon-rail sidebar: show the item name in a floating tooltip on hover/focus
+(function () {
+    if (window.__railTooltipInit) return;
+    window.__railTooltipInit = true;
+    var tip = null;
+    function labelFor(a) {
+        var tag = a.querySelector('.nav-name-tag');
+        if (tag && tag.textContent.trim()) return tag.textContent.trim();
+        var span = a.querySelector(':scope > span:not(.badge)');
+        return a.getAttribute('data-title') || a.getAttribute('data-rail-title') ||
+            (span && span.textContent.trim()) || a.getAttribute('title') || a.textContent.trim();
+    }
+    function show(a) {
+        if (window.innerWidth < 992) return;
+        var text = labelFor(a);
+        if (!text) return;
+        if (a.hasAttribute('title')) { a.setAttribute('data-rail-title', a.getAttribute('title')); a.removeAttribute('title'); }
+        if (!tip) { tip = document.createElement('div'); tip.className = 'rail-tooltip'; document.body.appendChild(tip); }
+        tip.textContent = text;
+        var r = a.getBoundingClientRect();
+        tip.style.left = (r.right + 12) + 'px';
+        tip.style.top = (r.top + r.height / 2) + 'px';
+        tip.classList.add('show');
+    }
+    function hide() { if (tip) tip.classList.remove('show'); }
+    var sel = '.sidebar .sidebar-nav a, .sidebar .sidebar-footer-link, .sidebar .sidebar-footer-btn, .sidebar .sidebar-brand-ring, .sidebar .sidebar-brand-ring-logo';
+    document.addEventListener('mouseover', function (e) { var a = e.target.closest && e.target.closest(sel); if (a) show(a); });
+    document.addEventListener('mouseout', function (e) { var a = e.target.closest && e.target.closest(sel); if (a) hide(); });
+    document.addEventListener('focusin', function (e) { var a = e.target.closest && e.target.closest(sel); if (a) show(a); });
+    document.addEventListener('focusout', hide);
+    document.addEventListener('scroll', hide, true);
+})();

@@ -6,9 +6,10 @@ function pl_company() { return PlatformSettings::get('site_company_name', 'Estat
 
 function public_head($title, $extra = '') {
     ?><!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
+    <meta name="color-scheme" content="light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo pl_e($title); ?></title>
     <meta name="description" content="<?php echo pl_e(PlatformSettings::get('site_tagline', '')); ?>">
@@ -40,7 +41,7 @@ function public_nav($mode = 'full') {
         </nav>
         <?php endif; ?>
         <div class="nav-cta">
-            <a class="btn btn-ghost btn-sm" href="login">Log in</a>
+            <a class="btn btn-ghost btn-sm nav-login" href="login">Log in <span class="nav-arrow" aria-hidden="true">&#8599;</span></a>
             <a class="btn btn-primary btn-sm" href="signup">Sign up</a>
             <?php if ($mode === 'full'): ?><button class="menu-btn" type="button" onclick="document.getElementById('navLinks').classList.toggle('open')" aria-label="Menu">Menu</button><?php endif; ?>
         </div>
@@ -72,4 +73,9 @@ function public_footer() {
 </body>
 </html>
 <?php
+}
+
+// Backwards-compatible alias used by contact.php, privacy.php and terms.php.
+if (!function_exists('public_header')) {
+    function public_header($mode = 'simple') { public_nav($mode === 'full' ? 'full' : 'simple'); }
 }

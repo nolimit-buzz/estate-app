@@ -3,6 +3,7 @@
 require_once __DIR__ . '/env.php';
 require_once __DIR__ . '/Crypto.php';
 require_once __DIR__ . '/Migrator.php';
+require_once __DIR__ . '/CpanelApi.php';
 
 class Tenancy {
     /** @var mysqli|null control-plane connection */
@@ -37,8 +38,11 @@ class Tenancy {
         return self::$admin;
     }
 
-    public static function tenantDbName($id) { return env_get('TENANT_DB_PREFIX', 'estate_t_') . intval($id); }
-    public static function tenantUser($id) { return 'et_' . intval($id); }
+    // cPanel mode: names carry the account prefix cPanel enforces (e.g. cpuser_t7 / cpuser_u7).
+    public static function tenantDbPrefix() { return CpanelApi::enabled() ? CpanelApi::prefix() . 't' : env_get('TENANT_DB_PREFIX', 'estate_t_'); }
+    public static function tenantUserPrefix() { return CpanelApi::enabled() ? CpanelApi::prefix() . 'u' : 'et_'; }
+    public static function tenantDbName($id) { return self::tenantDbPrefix() . intval($id); }
+    public static function tenantUser($id) { return self::tenantUserPrefix() . intval($id); }
 
     // ---------------------------------------------------------------- lookup
     public static function find($id) {
@@ -184,27 +188,43 @@ class Tenancy {
         $dbName = self::tenantDbName($estateId);
         $dbUser = self::tenantUser($estateId);
         $dbPass = self::randomPassword();
-        $adm = self::admin();
-
-        $adm->query("CREATE DATABASE `$dbName` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
         $usedDedicatedUser = true;
 
-        // In production, dedicated tenant users are mandatory for isolation.
-        // Fallback to shared app account is a security risk and is NOT permitted.
-        $hostPart = in_array(env_get('DB_HOST', 'localhost'), ['localhost', '127.0.0.1', '::1'], true) ? 'localhost' : '%';
-        $adm->query("CREATE USER IF NOT EXISTS '$dbUser'@'$hostPart' IDENTIFIED BY '" . $adm->real_escape_string($dbPass) . "'");
-        $adm->query("ALTER USER '$dbUser'@'$hostPart' IDENTIFIED BY '" . $adm->real_escape_string($dbPass) . "'");
-        $adm->query("GRANT ALL PRIVILEGES ON `$dbName`.* TO '$dbUser'@'$hostPart'");
-        $adm->query("FLUSH PRIVILEGES");
-        if ($adm->errno) {
-            // Clean up the database if user creation fails
-            $adm->query("DROP DATABASE IF EXISTS `$dbName`");
-            throw new RuntimeException('Failed to create dedicated database user for tenant isolation: ' . $adm->error);
-        }
-        self::connect($dbUser, $dbPass, $dbName)->close(); // sanity check
+        if (CpanelApi::enabled()) {
+            // Shared / reseller hosting: no MySQL admin exists, so cPanel creates the database and user for us.
+            try {
+                CpanelApi::createDatabase($dbName);
+                CpanelApi::createUser($dbUser, $dbPass);
+                CpanelApi::grantAll($dbUser, $dbName);
+            } catch (Throwable $x) {
+                try { CpanelApi::deleteDatabase($dbName); } catch (Throwable $y) {}
+                try { CpanelApi::deleteUser($dbUser); } catch (Throwable $y) {}
+                throw new RuntimeException('Failed to create tenant database through cPanel: ' . $x->getMessage());
+            }
+            self::connect($dbUser, $dbPass, $dbName)->close(); // sanity check
+            $tenant = self::connect($dbUser, $dbPass, $dbName); // the tenant's own user owns its schema
+        } else {
+            $adm = self::admin();
 
-        // Load clean schema
-        $tenant = self::connect(env_get('DB_ADMIN_USER', env_get('DB_USER', 'root')), env_get('DB_ADMIN_PASS', env_get('DB_PASS', '')), $dbName);
+            $adm->query("CREATE DATABASE `$dbName` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+
+            // In production, dedicated tenant users are mandatory for isolation.
+            // Fallback to shared app account is a security risk and is NOT permitted.
+            $hostPart = in_array(env_get('DB_HOST', 'localhost'), ['localhost', '127.0.0.1', '::1'], true) ? 'localhost' : '%';
+            $adm->query("CREATE USER IF NOT EXISTS '$dbUser'@'$hostPart' IDENTIFIED BY '" . $adm->real_escape_string($dbPass) . "'");
+            $adm->query("ALTER USER '$dbUser'@'$hostPart' IDENTIFIED BY '" . $adm->real_escape_string($dbPass) . "'");
+            $adm->query("GRANT ALL PRIVILEGES ON `$dbName`.* TO '$dbUser'@'$hostPart'");
+            $adm->query("FLUSH PRIVILEGES");
+            if ($adm->errno) {
+                // Clean up the database if user creation fails
+                $adm->query("DROP DATABASE IF EXISTS `$dbName`");
+                throw new RuntimeException('Failed to create dedicated database user for tenant isolation: ' . $adm->error);
+            }
+            self::connect($dbUser, $dbPass, $dbName)->close(); // sanity check
+
+            // Load clean schema
+            $tenant = self::connect(env_get('DB_ADMIN_USER', env_get('DB_USER', 'root')), env_get('DB_ADMIN_PASS', env_get('DB_PASS', '')), $dbName);
+        }
         $schema = file_get_contents(dirname(__DIR__) . '/database/tenant_schema.sql');
         if ($tenant->multi_query($schema)) {
             do { if ($r = $tenant->store_result()) $r->free(); } while ($tenant->more_results() && $tenant->next_result());
@@ -316,10 +336,17 @@ class Tenancy {
     public static function dropTenant($estateId) {
         $e = self::find($estateId);
         if (!$e || empty($e['db_name'])) return false;
-        $adm = self::admin();
         $db = preg_replace('/[^A-Za-z0-9_]/', '', $e['db_name']);
         $user = preg_replace('/[^A-Za-z0-9_]/', '', $e['db_user'] ?? '');
-        if (strpos($db, env_get('TENANT_DB_PREFIX', 'estate_t_')) !== 0) throw new RuntimeException('Refusing to drop non-tenant database');
+        if (strpos($db, self::tenantDbPrefix()) !== 0) throw new RuntimeException('Refusing to drop non-tenant database');
+        if (CpanelApi::enabled()) {
+            CpanelApi::deleteDatabase($db);
+            if ($user !== '' && strpos($user, self::tenantUserPrefix()) === 0) {
+                try { CpanelApi::deleteUser($user); } catch (Throwable $x) {}
+            }
+            return true;
+        }
+        $adm = self::admin();
         $adm->query("DROP DATABASE IF EXISTS `$db`");
         if ($user !== '' && $user !== env_get('DB_USER', 'root') && strpos($user, 'et_') === 0) {
             try { $adm->query("DROP USER IF EXISTS '$user'@'localhost'"); $adm->query("DROP USER IF EXISTS '$user'@'%'"); } catch (Throwable $x) {}

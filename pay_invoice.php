@@ -89,7 +89,7 @@ $initial_pay_amount = ($allow_installments && $next_installment_amount > 0 && $n
 $amount_in_kobo = round($initial_pay_amount * 100);
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">

@@ -746,7 +746,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (superRevCtx) {
         const ctx = superRevCtx.getContext('2d');
         const purpleAreaGrad = ctx.createLinearGradient(0, 0, 0, 300);
-        purpleAreaGrad.addColorStop(0, 'rgba(98, 89, 232, 0.32)');
+        purpleAreaGrad.addColorStop(0, 'rgba(98, 89, 232, 0.14)');
         purpleAreaGrad.addColorStop(1, 'rgba(98, 89, 232, 0.01)');
 
         new Chart(ctx, {
@@ -758,14 +758,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     data: <?= json_encode($revenue_data) ?>,
                     borderColor: '#6259e8',
                     backgroundColor: purpleAreaGrad,
-                    borderWidth: 3,
+                    borderWidth: 1.5,
                     fill: true,
-                    tension: 0.42,
-                    pointRadius: 4,
+                    tension: 0.35,
+                    pointRadius: 0,
                     pointBackgroundColor: '#6259e8',
                     pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2,
-                    pointHoverRadius: 7
+                    pointBorderWidth: 1,
+                    pointHoverRadius: 4
                 }]
             },
             options: {
@@ -789,16 +789,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 scales: {
                     x: {
                         grid: { display: false },
-                        ticks: { color: '#8c9bb0', font: { family: 'Plus Jakarta Sans', size: 11 } }
+                        ticks: { color: '#8c9bb0', font: { family: 'Plus Jakarta Sans', size: 10 }, maxTicksLimit: window.innerWidth < 768 ? 6 : 12, maxRotation: 0 }
                     },
                     y: {
                         beginAtZero: true,
                         grid: { color: 'rgba(232, 237, 245, 0.8)', drawBorder: false },
                         ticks: {
                             color: '#8c9bb0',
-                            font: { family: 'Plus Jakarta Sans', size: 11 },
+                            font: { family: 'Plus Jakarta Sans', size: 10 },
+                            maxTicksLimit: 5,
                             callback: function(val) {
-                                return '₦' + Number(val).toLocaleString();
+                                const n = Number(val);
+                                if (n >= 1e6) return '₦' + (n / 1e6).toFixed(n % 1e6 ? 1 : 0) + 'M';
+                                if (n >= 1e3) return '₦' + (n / 1e3).toFixed(n % 1e3 ? 1 : 0) + 'k';
+                                return '₦' + n;
                             }
                         }
                     }
@@ -832,16 +836,17 @@ document.addEventListener('DOMContentLoaded', function() {
                         chartColors.secondary
                     ],
                     borderColor: '#fff',
-                    borderWidth: 2
+                    borderWidth: 1
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                cutout: '68%',
                 plugins: {
                     legend: {
                         position: 'bottom',
-                        labels: { boxWidth: 10, font: { size: 10 } }
+                        labels: { boxWidth: 8, font: { size: 10 } }
                     }
                 }
             }
@@ -897,7 +902,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         chartColors.warning,
                         chartColors.danger
                     ],
-                    borderRadius: 6
+                    borderRadius: 4,
+                    maxBarThickness: 28
                 }]
             },
             options: {

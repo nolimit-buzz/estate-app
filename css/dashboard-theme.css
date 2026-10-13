@@ -1752,3 +1752,195 @@ body.dark-mode .custom-modal-backdrop .close-modal:hover {
 }
 
 
+
+/* ==========================================================================
+   ICON RAIL SIDEBAR (desktop) - circular icon buttons, name shown on hover
+   ========================================================================== */
+@media (min-width: 992px) {
+    :root { --ds-sidebar-width: 84px; --ds-sidebar-expanded: 84px; }
+
+    .sidebar,
+    .sidebar.sidebar-named {
+        width: 84px !important;
+        padding: 1.1rem 0 1rem !important;
+        align-items: center !important;
+        overflow-x: hidden;
+        overflow-y: auto;
+        scrollbar-width: none;
+    }
+    .sidebar::-webkit-scrollbar { display: none; }
+
+    .has-named-sidebar .main-content,
+    .main-content {
+        margin-left: 84px !important;
+        width: calc(100% - 84px) !important;
+        max-width: calc(100% - 84px) !important;
+        box-sizing: border-box !important;
+    }
+
+    .sidebar .sidebar-header,
+    .sidebar.sidebar-named .sidebar-header {
+        padding: 0 0 1rem !important;
+        justify-content: center !important;
+        width: 100%;
+    }
+    body .sidebar.sidebar .sidebar-brand-title,
+    body .sidebar.sidebar .sidebar-brand-sub,
+    body .sidebar.sidebar .nav-section-label,
+    body .sidebar.sidebar .nav-label,
+    body .sidebar.sidebar .nav-category,
+    body .sidebar.sidebar .sidebar-user-text,
+    body .sidebar.sidebar .sidebar-header > div:not(:first-child),
+    body .sidebar.sidebar.sidebar-named .sidebar-nav a .nav-name-tag,
+    body .sidebar.sidebar .sidebar-nav a .nav-name-tag,
+    body .sidebar.sidebar .sidebar-nav a > span:not(.badge) { display: none !important; }
+
+    .sidebar .sidebar-nav { width: 100%; }
+    .sidebar .sidebar-nav ul,
+    .sidebar .sidebar-menu {
+        display: flex !important;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px !important;
+        padding: 0 !important;
+        margin: 0;
+        list-style: none;
+    }
+    .sidebar .sidebar-nav li { width: auto !important; display: block; }
+
+    .sidebar .sidebar-nav a,
+    .sidebar.sidebar-named .sidebar-nav a {
+        position: relative;
+        width: 48px !important;
+        height: 44px !important;
+        padding: 0 !important;
+        border-radius: 12px !important;
+        justify-content: center !important;
+        gap: 0 !important;
+        background: transparent !important;
+        color: #7a8791 !important;
+        font-weight: 400 !important;
+        box-shadow: none !important;
+        transform: none !important;
+    }
+    .sidebar .sidebar-nav a i,
+    .sidebar.sidebar-named .sidebar-nav a i {
+        font-size: 1.1rem !important;
+        width: auto !important;
+        height: auto !important;
+        min-width: 0 !important;
+        color: inherit !important;
+    }
+    .sidebar .sidebar-nav a:hover,
+    .sidebar.sidebar-named .sidebar-nav a:hover {
+        background: transparent !important;
+        color: var(--ds-primary) !important;
+        transform: scale(1.18) !important;
+    }
+    .sidebar .sidebar-nav a.active,
+    .sidebar.sidebar-named .sidebar-nav a.active {
+        background: transparent !important;
+        color: var(--ds-primary) !important;
+        box-shadow: none !important;
+    }
+    .sidebar .sidebar-nav a.active::before {
+        content: '';
+        position: absolute;
+        left: -18px; top: 8px; bottom: 8px;
+        width: 4px;
+        border-radius: 0 4px 4px 0;
+        background: var(--ds-primary);
+    }
+    body .sidebar.sidebar .sidebar-nav a.active,
+    body .sidebar.sidebar .sidebar-nav a.active i,
+    body .sidebar.sidebar.sidebar-named .sidebar-nav a.active i,
+    body .sidebar.sidebar .sidebar-nav a:focus,
+    body .sidebar.sidebar .sidebar-nav a:focus i,
+    body .sidebar.sidebar .sidebar-nav a:active,
+    body .sidebar.sidebar .sidebar-nav a:active i { color: var(--ds-primary) !important; background: transparent !important; }
+    body .sidebar.sidebar .sidebar-nav a:focus { outline: none; box-shadow: none !important; }
+
+    .sidebar .sidebar-nav a .badge {
+        position: absolute !important;
+        top: 3px; right: 7px;
+        border: 2px solid #fff;
+        margin: 0 !important;
+        min-width: 16px;
+        padding: 2px 4px !important;
+        font-size: 9px !important;
+        font-weight: 500 !important;
+        line-height: 1.2;
+    }
+
+    /* Footer: stacked circular icon buttons */
+    .sidebar .sidebar-footer-actions,
+    .sidebar.sidebar-named .sidebar-footer-actions {
+        margin-top: auto;
+        padding: 1rem 0 0 !important;
+        border-top: 0 !important;
+        align-items: center !important;
+        gap: 12px !important;
+        width: 100%;
+    }
+    .sidebar .sidebar-user-block { padding: 0 !important; background: transparent !important; }
+    .sidebar .sidebar-footer-links { flex-direction: column; gap: 12px; padding: 0; }
+    .sidebar .sidebar-footer-link,
+    .sidebar .sidebar-footer-btn {
+        width: 48px; height: 44px;
+        border-radius: 12px;
+        background: transparent;
+        justify-content: center;
+        padding: 0 !important;
+        font-size: 0 !important;
+        gap: 0 !important;
+    }
+    .sidebar .sidebar-footer-link i,
+    .sidebar .sidebar-footer-btn i { font-size: 0.95rem !important; }
+
+    /* Hover name tooltip (positioned by js/theme.js) */
+    .rail-tooltip {
+        position: fixed;
+        z-index: 3000;
+        padding: 9px 16px;
+        background: linear-gradient(135deg, #6259e8 0%, #7c3aed 100%);
+        color: #fff;
+        font-size: 13.5px;
+        font-weight: 700;
+        letter-spacing: .01em;
+        border-radius: 999px;
+        box-shadow: 0 8px 24px rgba(98, 89, 232, .35), 0 2px 6px rgba(0, 0, 0, .12);
+        white-space: nowrap;
+        pointer-events: none;
+        opacity: 0;
+        transform: translate(-4px, -50%);
+        transition: opacity .12s ease, transform .12s ease;
+    }
+    .rail-tooltip::before {
+        content: '';
+        position: absolute;
+        left: -4px; top: 50%;
+        width: 10px; height: 10px;
+        background: #6259e8;
+        border-radius: 2px;
+        transform: translateY(-50%) rotate(45deg);
+        z-index: -1;
+    }
+    .rail-tooltip.show { opacity: 1; transform: translate(0, -50%); }
+}
+
+/* ==========================================================================
+   LIGHTER TYPOGRAPHY
+   ========================================================================== */
+h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 { font-weight: 600 !important; }
+strong, b, .fw-bold, .fw-bolder { font-weight: 600 !important; }
+.fw-semibold { font-weight: 500 !important; }
+.btn, .btn-primary, .btn-outline-secondary, .btn-light, .btn-enterprise,
+.btn-primary-action-pill, .badge, .form-label, .form-group label,
+.table thead th, .card-custom .table thead th, .table-modern thead th,
+.premium-table thead th, .dashboard-table thead th, .multi-table th,
+.ds-metric-title, .glass-kpi-label, .kpi-title, .mobile-kpi-label { font-weight: 500 !important; }
+.ds-metric-value, .glass-kpi-value, .summary-metric-num, .kpi-value,
+.mobile-kpi-val, .hero-title-group h1, .modal-header h2,
+.mobile-brand-title, .sidebar-brand-title { font-weight: 600 !important; }
+.table thead th { font-size: 0.72rem; letter-spacing: .04em; }
+.floating-panic-btn { font-weight: 600 !important; }

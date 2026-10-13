@@ -73,21 +73,32 @@ class BackupService {
         if (!preg_match('/estate_id=(\d+) db=(\S+)/', (string)$first, $m) || intval($m[1]) !== intval($estateId) || $m[2] !== $estate['db_name']) throw new RuntimeException('Refused: backup header does not match this estate.');
 
         self::backup($estateId, 'pre_restore', $byId);
-        $adm = Tenancy::admin();
         $db = $estate['db_name'];
-        $adm->query("DROP DATABASE `$db`");
-        $adm->query("CREATE DATABASE `$db` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+        $viaCpanel = CpanelApi::enabled();
+        if ($viaCpanel) {
+            // No MySQL admin on shared hosting: empty the tenant database using the tenant's own user instead.
+            $t = Tenancy::openTenant($estate);
+            $t->query("SET FOREIGN_KEY_CHECKS=0");
+            $r = $t->query("SELECT table_name, table_type FROM information_schema.tables WHERE table_schema = DATABASE()");
+            while ($row = $r->fetch_row()) $t->query(($row[1] === 'VIEW' ? 'DROP VIEW `' : 'DROP TABLE `') . str_replace('`', '', $row[0]) . '`');
+            $t->query("SET FOREIGN_KEY_CHECKS=1");
+            $t->close();
+        } else {
+            $adm = Tenancy::admin();
+            $adm->query("DROP DATABASE `$db`");
+            $adm->query("CREATE DATABASE `$db` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+        }
         $tmp = tempnam(sys_get_temp_dir(), 'rst');
         $in = gzopen($path, 'rb'); $out = fopen($tmp, 'wb');
         while (!gzeof($in)) fwrite($out, gzread($in, 262144));
         gzclose($in); fclose($out);
-        $opt = tempnam(sys_get_temp_dir(), 'myc');
-        file_put_contents($opt, "[client]\nuser=\"" . env_get('DB_ADMIN_USER', env_get('DB_USER', 'root')) . "\"\npassword=\"" . env_get('DB_ADMIN_PASS', env_get('DB_PASS', '')) . "\"\nhost=\"" . env_get('DB_HOST', 'localhost') . "\"\n");
+        $opt = $viaCpanel ? self::optionsFile($estate) : tempnam(sys_get_temp_dir(), 'myc');
+        if (!$viaCpanel) file_put_contents($opt, "[client]\nuser=\"" . env_get('DB_ADMIN_USER', env_get('DB_USER', 'root')) . "\"\npassword=\"" . env_get('DB_ADMIN_PASS', env_get('DB_PASS', '')) . "\"\nhost=\"" . env_get('DB_HOST', 'localhost') . "\"\n");
         $cmd = '"' . self::bin('mysql', 'mysql_path') . '" --defaults-extra-file="' . $opt . '" ' . escapeshellarg($db) . ' < "' . $tmp . '" 2>&1';
         $outp = shell_exec($cmd);
         @unlink($tmp); @unlink($opt);
         // privileges are tied to the DB name and survive DROP DATABASE; re-grant to be safe
-        try { if ($estate['db_user'] !== env_get('DB_USER', 'root')) $adm->query("GRANT ALL PRIVILEGES ON `$db`.* TO '{$estate['db_user']}'@'localhost'"); } catch (Throwable $e) {}
+        try { if (!$viaCpanel && $estate['db_user'] !== env_get('DB_USER', 'root')) $adm->query("GRANT ALL PRIVILEGES ON `$db`.* TO '{$estate['db_user']}'@'localhost'"); } catch (Throwable $e) {}
         Tenancy::mirror($estateId);
         Audit::log('backup.restored', ['estate_id' => $estateId, 'module' => 'backup', 'entity_type' => 'backup', 'entity_id' => $backupId, 'details' => 'Estate database restored from backup #' . $backupId . ($outp ? ' (' . substr(trim($outp), 0, 150) . ')' : '')]);
         return true;

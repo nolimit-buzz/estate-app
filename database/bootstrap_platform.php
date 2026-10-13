@@ -11,8 +11,19 @@ $args = $argv ?? [];
 $say = function ($m) { echo $m . "\n"; };
 
 $platformDb = env_get('PLATFORM_DB', 'estate_platform');
-$adm = Tenancy::admin();
-$adm->query("CREATE DATABASE IF NOT EXISTS `$platformDb` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+if (CpanelApi::enabled()) {
+    // Shared hosting: the platform database is created by hand in cPanel -> MySQL Databases.
+    try { Tenancy::platform(); }
+    catch (Throwable $e) {
+        $say("Cannot open platform database `$platformDb` as `" . env_get('DB_USER', '') . "`: " . $e->getMessage());
+        $say("Create it in cPanel -> MySQL Databases, add the user with ALL PRIVILEGES, then set PLATFORM_DB / DB_USER / DB_PASS in .env");
+        exit(1);
+    }
+    $adm = null;
+} else {
+    $adm = Tenancy::admin();
+    $adm->query("CREATE DATABASE IF NOT EXISTS `$platformDb` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+}
 $say("platform database `$platformDb` ready");
 
 $p = Tenancy::platform();

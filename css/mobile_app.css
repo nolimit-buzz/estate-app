@@ -1542,3 +1542,221 @@ body.dark-mode .policy-offence-summary .text-slate-700 {
     color: #e2e8f0 !important;
 }
 
+
+/* ==========================================================================
+   SUPERADMIN PORTAL - mobile shell adjustments (admin/zone parity)
+   ========================================================================== */
+@media (max-width: 991px) {
+    /* Bottom nav already carries the theme toggle; avoid the floating button overlapping it */
+    body.superadmin-portal .floating-theme-switch {
+        display: none !important;
+    }
+    /* Keep impersonation banner inside the viewport */
+    body.superadmin-portal .main-content > .d-flex.flex-wrap {
+        margin-left: 1rem !important;
+        margin-right: 1rem !important;
+        margin-top: 0.75rem;
+    }
+    body.superadmin-portal .table-responsive {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* ==========================================================================
+   SUPERADMIN DASHBOARD - calm, uncluttered phone layout
+   ========================================================================== */
+@media (max-width: 767px) {
+    body.superadmin-portal .content-wrapper {
+        padding: 0.75rem 0.9rem calc(var(--mob-nav-height) + 24px) !important;
+    }
+
+    /* --- Hero metric cards: value first, no sparkline / caption / link --- */
+    body.superadmin-portal .ds-metrics-grid {
+        gap: 12px;
+        margin-bottom: 1rem !important;
+    }
+    body.superadmin-portal .ds-metric-card {
+        padding: 16px 18px;
+    }
+    body.superadmin-portal .ds-metric-card-head {
+        margin-bottom: 10px;
+    }
+    body.superadmin-portal .ds-metric-card-head .ds-see-details-btn,
+    body.superadmin-portal .ds-metric-chart-row,
+    body.superadmin-portal .ds-metric-info-circle {
+        display: none !important;
+    }
+    body.superadmin-portal .ds-metric-body {
+        flex-wrap: wrap;
+        margin-bottom: 0;
+        gap: 8px 10px;
+    }
+    body.superadmin-portal .ds-metric-value {
+        font-size: 24px;
+        overflow-wrap: anywhere;
+    }
+
+    /* --- 8-tile KPI ribbon: 2 per row, icon above text, no sub-captions --- */
+    body.superadmin-portal .content-wrapper > .row.g-3 {
+        --bs-gutter-x: 0.65rem;
+        --bs-gutter-y: 0.65rem;
+        margin-bottom: 1rem !important;
+    }
+    body.superadmin-portal .content-wrapper > .row.g-3 > [class*="col-"] > a {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 8px !important;
+        padding: 12px !important;
+        min-width: 0;
+    }
+    body.superadmin-portal .content-wrapper > .row.g-3 > [class*="col-"] > a > div:first-child {
+        width: 34px !important;
+        height: 34px !important;
+        min-width: 34px !important;
+    }
+    body.superadmin-portal .content-wrapper > .row.g-3 > [class*="col-"] > a > div:first-child i {
+        font-size: 0.95rem !important;
+    }
+    body.superadmin-portal .content-wrapper > .row.g-3 > [class*="col-"] > a > div:last-child {
+        width: 100%;
+    }
+    body.superadmin-portal .content-wrapper > .row.g-3 > [class*="col-"] > a > div:last-child > div:last-child {
+        display: none;
+    }
+    body.superadmin-portal .content-wrapper > .row.g-3 > [class*="col-"] > a .small {
+        font-size: 0.74rem !important;
+    }
+
+    /* --- Panels / cards --- */
+    body.superadmin-portal .ds-overview-grid {
+        gap: 14px;
+        margin-bottom: 1rem !important;
+    }
+    body.superadmin-portal .ds-card-panel,
+    body.superadmin-portal .ds-property-table-card {
+        padding: 16px !important;
+    }
+    body.superadmin-portal .ds-panel-header {
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+    body.superadmin-portal .ds-panel-header .ds-panel-subtitle {
+        display: none;
+    }
+    body.superadmin-portal .ds-panel-controls {
+        flex-wrap: wrap;
+        gap: 8px;
+        width: 100%;
+    }
+    body.superadmin-portal .ds-panel-controls > * {
+        flex: 1 1 auto;
+        justify-content: center;
+        text-align: center;
+    }
+    body.superadmin-portal .ds-chart-container {
+        height: 230px !important;
+    }
+    body.superadmin-portal .content-wrapper .row.g-4 {
+        --bs-gutter-y: 0.9rem;
+        margin-bottom: 1rem !important;
+    }
+    body.superadmin-portal .content-wrapper .row.g-4 canvas {
+        max-height: 200px;
+    }
+    body.superadmin-portal .content-wrapper .row.g-4 > [class*="col-"] > .ds-card-panel > div[style*="height: 220px"] {
+        height: 200px !important;
+    }
+
+    /* --- Support queue items --- */
+    body.superadmin-portal .ds-message-item {
+        flex-wrap: wrap;
+        gap: 8px 12px;
+    }
+    body.superadmin-portal .ds-message-name {
+        max-width: 100% !important;
+    }
+    body.superadmin-portal .ds-message-meta {
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        margin-left: auto;
+    }
+
+    /* --- Estates fleet rows: info on top, actions underneath --- */
+    body.superadmin-portal .ds-property-row {
+        grid-template-columns: 1fr !important;
+        gap: 10px;
+        padding: 12px 0;
+    }
+    body.superadmin-portal .ds-property-thumb {
+        width: 44px;
+        height: 44px;
+    }
+    body.superadmin-portal .ds-property-details span {
+        display: block;
+        line-height: 1.5;
+    }
+    body.superadmin-portal .ds-property-row > .text-end {
+        justify-content: flex-start !important;
+    }
+
+    /* --- Dashboard tables: tighter cells, nothing squeezed --- */
+    body.superadmin-portal .table-responsive table th,
+    body.superadmin-portal .table-responsive table td {
+        padding: 10px 12px !important;
+        white-space: nowrap;
+    }
+    body.superadmin-portal .table-responsive table td.small.fw-semibold {
+        white-space: normal;
+        min-width: 160px;
+    }
+}
+
+@media (max-width: 380px) {
+    body.superadmin-portal .content-wrapper > .row.g-3 > [class*="col-"] {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}
+
+/* Superadmin dashboard: stop cards/charts overflowing the viewport (tablet + phone) */
+@media (max-width: 1180px) {
+    body.superadmin-portal .ds-overview-grid {
+        grid-template-columns: minmax(0, 1fr) !important;
+    }
+}
+@media (max-width: 991px) {
+    body.superadmin-portal .main-content {
+        min-width: 0;
+        max-width: 100vw;
+        overflow-x: hidden;
+    }
+    body.superadmin-portal .ds-card-panel,
+    body.superadmin-portal .ds-property-table-card,
+    body.superadmin-portal .ds-messages-list,
+    body.superadmin-portal .ds-message-info,
+    body.superadmin-portal .ds-panel-title-group {
+        min-width: 0;
+        max-width: 100%;
+    }
+    body.superadmin-portal .ds-chart-container {
+        overflow: hidden;
+        width: 100%;
+    }
+    body.superadmin-portal canvas {
+        max-width: 100% !important;
+    }
+    body.superadmin-portal .ds-panel-header {
+        flex-wrap: wrap;
+    }
+    body.superadmin-portal .ds-panel-title-group {
+        flex: 1 1 100%;
+    }
+    body.superadmin-portal .ds-message-name {
+        max-width: 100% !important;
+    }
+    body.superadmin-portal .ds-message-item > .ds-message-info {
+        flex: 1 1 0;
+    }
+}

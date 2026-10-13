@@ -23,9 +23,12 @@ $page_title = $page_title ?? 'Platform Command Center';
     <!-- Font Awesome 6.4.0 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Mobile app shell (same as admin/zone portals) -->
+    <link rel="stylesheet" href="../css/mobile_app.css?v=<?php echo defined('ASSET_VER') ? ASSET_VER : time(); ?>">
+
     <!-- Dribbble Design System Theme -->
     <link rel="stylesheet" href="../css/dashboard-theme.css?v=<?php echo defined('ASSET_VER') ? ASSET_VER : time(); ?>">
 </head>
-<body>
+<body class="superadmin-portal">
 
 <div class="app-container has-named-sidebar">

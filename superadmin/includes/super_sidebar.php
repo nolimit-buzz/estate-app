@@ -114,3 +114,8 @@ $sa_nav = [
         </div>
     </div>
 </aside>
+<?php
+// Admin/zone-style mobile app shell (shown below 992px via css/mobile_app.css)
+require_once __DIR__ . '/super_mobile_nav.php';
+renderSuperMobileShell($sa_nav, $sa_open, $sa_active);
+?>
