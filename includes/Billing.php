@@ -56,16 +56,7 @@ class Billing {
         $price = $cycle === 'annual' ? floatval($plan['annual_price']) : floatval($plan['monthly_price']);
         $label = $plan['name'] . ' plan - ' . ($cycle === 'annual' ? '12 months' : '1 month');
         $lines = [['description' => $label, 'line_type' => 'plan', 'module_key' => null, 'quantity' => 1, 'unit_price' => $price, 'amount' => $price]];
-        $optional = [];
-        foreach (Plans::modules($planId) as $m) if ($m['inclusion'] === 'optional') $optional[$m['module_key']] = floatval($m['price']);
-        $names = [];
-        $r = Tenancy::platform()->query("SELECT module_key, name FROM modules");
-        while ($row = $r->fetch_assoc()) $names[$row['module_key']] = $row['name'];
-        foreach (array_unique($addonKeys) as $k) {
-            if (!isset($optional[$k])) continue; // only optional modules of the chosen plan can be added
-            $amt = $optional[$k] * ($cycle === 'annual' ? 12 : 1);
-            $lines[] = ['description' => 'Add-on: ' . ($names[$k] ?? $k), 'line_type' => 'module', 'module_key' => $k, 'quantity' => 1, 'unit_price' => $amt, 'amount' => $amt];
-        }
+        // Fixed plan price only: modules/features are selected per plan, never priced individually.
         $sub = array_sum(array_column($lines, 'amount'));
         return ['plan' => $plan, 'cycle' => $cycle, 'lines' => $lines, 'subtotal' => $sub];
     }

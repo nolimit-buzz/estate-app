@@ -16,6 +16,7 @@ function public_head($title, $extra = '') {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/saas.css?v=<?php echo @filemtime(__DIR__ . '/../css/saas.css'); ?>">
+    <link rel="stylesheet" href="css/dashboard-theme-public.css?v=<?php echo @filemtime(__DIR__ . '/../css/dashboard-theme-public.css'); ?>">
     <?php echo $extra; ?>
 </head>
 <body>

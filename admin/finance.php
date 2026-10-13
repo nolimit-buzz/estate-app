@@ -3,8 +3,6 @@
 require_once '../config.php';
 require_once '../includes/auth_guard.php';
 require_once '../includes/Mailer.php';
-include '../includes/header.php';
-include '../includes/sidebar.php';
 
 requirePermission('finance.view_invoices');
 
@@ -332,6 +330,9 @@ if ($pm_res) {
         $payment_methods_list[] = $pm;
     }
 }
+
+include '../includes/header.php';
+include '../includes/sidebar.php';
 ?>
 
 <!-- Enterprise Hero Header (Image 3 Style) -->

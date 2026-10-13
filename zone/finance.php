@@ -475,12 +475,12 @@ include 'sidebar.php';
     </div>
     <div class="hero-actions-group">
         <button type="button" onclick="exportFinanceCSV()" class="btn-export-ghost" title="Export Ledger to CSV">
-            <i class="fa-solid fa-file-csv text-purple" style="color: #7e22ce;"></i> Export Ledger
+            <i class="fa-solid fa-file-csv text-purple" style="color: #6b4eff;"></i> Export Ledger
         </button>
         <button type="button" onclick="openPaymentMethodsModal()" class="btn-export-ghost" title="Payment Channels">
             <i class="fa-solid fa-credit-card text-success"></i> Channels
         </button>
-        <button type="button" onclick="document.getElementById('invoiceModal').style.display='flex'" class="btn-primary-action-pill" style="background: linear-gradient(135deg, #7e22ce 0%, #6b21a8 100%); box-shadow: 0 4px 14px -2px rgba(126, 34, 206, 0.4);">
+        <button type="button" onclick="document.getElementById('invoiceModal').style.display='flex'" class="btn-primary-action-pill" style="background: linear-gradient(135deg, #6b4eff 0%, #5a3fe6 100%); box-shadow: 0 4px 14px -2px rgba(107, 78, 255, 0.4);">
             <i class="fa-solid fa-plus"></i> Invoicing Dispatch
         </button>
     </div>
@@ -504,16 +504,16 @@ include 'sidebar.php';
 <!-- ==========================================
      PAYSTACK DEDICATED VIRTUAL ACCOUNT BANNER
      ========================================== -->
-<div class="mature-card p-3 mb-4" style="background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%); border: 1px solid #bae6fd; border-left: 5px solid #0284c7; border-radius: 0.85rem; box-shadow: 0 4px 12px -2px rgba(2, 132, 199, 0.08);">
+<div class="mature-card p-3 mb-4" style="background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%); border: 1px solid #bae6fd; border-left: 5px solid #6b4eff; border-radius: 0.85rem; box-shadow: 0 4px 12px -2px rgba(107, 78, 255, 0.08);">
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
         <div class="d-flex align-items-center gap-3">
-            <div style="width: 48px; height: 48px; border-radius: 12px; background: #0284c7; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.35rem; box-shadow: 0 4px 10px rgba(2, 132, 199, 0.3);">
+            <div style="width: 48px; height: 48px; border-radius: 12px; background: #6b4eff; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.35rem; box-shadow: 0 4px 10px rgba(107, 78, 255, 0.3);">
                 <i class="fa-solid fa-building-columns"></i>
             </div>
             <div>
                 <div class="d-flex align-items-center gap-2">
-                    <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 800; color: #0369a1; letter-spacing: 0.06em;">Zonal Paystack Virtual Account (Direct Remittance)</span>
-                    <span class="badge" style="background: #e0f2fe; color: #0369a1; font-weight: 700; font-size: 0.72rem;"><?= htmlspecialchars($zone_meta['paystack_bank_name'] ?? 'Wema Bank') ?></span>
+                    <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 800; color: #5a3fe6; letter-spacing: 0.06em;">Zonal Paystack Virtual Account (Direct Remittance)</span>
+                    <span class="badge" style="background: #e0f2fe; color: #5a3fe6; font-weight: 700; font-size: 0.72rem;"><?= htmlspecialchars($zone_meta['paystack_bank_name'] ?? 'Wema Bank') ?></span>
                 </div>
                 <div class="d-flex align-items-center gap-2 mt-1 flex-wrap">
                     <span style="font-family: monospace; font-size: 1.45rem; font-weight: 800; color: #0f172a; letter-spacing: 0.06em;" id="zoneDvaNumber"><?= htmlspecialchars($zone_meta['paystack_account_number']) ?></span>
@@ -570,7 +570,7 @@ include 'sidebar.php';
                     <span class="kpi-title">Month's Realization (<?= date('M Y') ?>)</span>
                     <div class="kpi-value">₦<?= number_format($month_collection, 2) ?></div>
                 </div>
-                <div class="kpi-icon-wrap" style="color: #7e22ce; background: rgba(126, 34, 206, 0.1);">
+                <div class="kpi-icon-wrap" style="color: #6b4eff; background: rgba(107, 78, 255, 0.1);">
                     <i class="fa-solid fa-vault"></i>
                 </div>
             </div>
@@ -579,7 +579,7 @@ include 'sidebar.php';
                 <span class="mature-badge mature-badge-sky"><?= date('F') ?></span>
             </div>
             <div class="kpi-progress-bar">
-                <div class="kpi-progress-fill" style="width: 75%; background: #7e22ce;"></div>
+                <div class="kpi-progress-fill" style="width: 75%; background: #6b4eff;"></div>
             </div>
         </div>
     </div>
@@ -755,7 +755,7 @@ include 'sidebar.php';
                             ?>
                             <tr class="invoice-row" data-status="<?= htmlspecialchars($status_val) ?>" data-search="<?= htmlspecialchars($search_meta) ?>">
                                 <td>
-                                    <span class="id-chip" style="background: rgba(126, 34, 206, 0.08); color: #7e22ce; border-color: rgba(126, 34, 206, 0.2);"><?= htmlspecialchars($inv_display_no) ?></span>
+                                    <span class="id-chip" style="background: rgba(107, 78, 255, 0.08); color: #6b4eff; border-color: rgba(107, 78, 255, 0.2);"><?= htmlspecialchars($inv_display_no) ?></span>
                                 </td>
                                 <td>
                                     <div style="font-weight: 600; color: var(--text-color); font-size: 0.92rem;"><?= htmlspecialchars($row['resident_name'] ?: 'Resident') ?></div>
@@ -922,7 +922,7 @@ include 'sidebar.php';
     <div class="modal-content mature-card" style="max-width: 520px; border-radius: 0.85rem; border: 1px solid var(--border-color); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
         <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.25rem;">
             <div style="display: flex; align-items: center; gap: 0.65rem;">
-                <div style="width: 36px; height: 36px; border-radius: 0.45rem; background: rgba(126, 34, 206, 0.1); color: #7e22ce; display: flex; align-items: center; justify-content: center; font-size: 1rem;">
+                <div style="width: 36px; height: 36px; border-radius: 0.45rem; background: rgba(107, 78, 255, 0.1); color: #6b4eff; display: flex; align-items: center; justify-content: center; font-size: 1rem;">
                     <i class="fa-solid fa-file-invoice-dollar"></i>
                 </div>
                 <div>
@@ -1011,7 +1011,7 @@ include 'sidebar.php';
 
             <div style="display: flex; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
                 <button type="button" onclick="document.getElementById('invoiceModal').style.display='none'" class="btn btn-outline-secondary" style="font-weight: 600; padding: 0.6rem 1.25rem;">Cancel</button>
-                <button type="submit" class="btn btn-primary" style="font-weight: 600; padding: 0.6rem 1.5rem; background: #6b21a8; border-color: #6b21a8;">Generate & Send Invoice(s)</button>
+                <button type="submit" class="btn btn-primary" style="font-weight: 600; padding: 0.6rem 1.5rem; background: #5a3fe6; border-color: #5a3fe6;">Generate & Send Invoice(s)</button>
             </div>
         </form>
     </div>
@@ -1043,7 +1043,7 @@ include 'sidebar.php';
             <div style="background: rgba(148, 163, 184, 0.05); border: 1px solid var(--border-color); border-radius: 0.75rem; padding: 1rem; margin-bottom: 1.25rem;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.45rem;">
                     <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted);">Invoice Number</span>
-                    <span id="rec_invoice_number_badge" style="font-family: monospace; font-weight: 700; background: rgba(126, 34, 206, 0.1); color: #7e22ce; padding: 3px 8px; border-radius: 4px; font-size: 0.88rem; border: 1px solid rgba(126, 34, 206, 0.25);">INV-000000</span>
+                    <span id="rec_invoice_number_badge" style="font-family: monospace; font-weight: 700; background: rgba(107, 78, 255, 0.1); color: #6b4eff; padding: 3px 8px; border-radius: 4px; font-size: 0.88rem; border: 1px solid rgba(107, 78, 255, 0.25);">INV-000000</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.45rem;">
                     <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted);">Resident</span>
@@ -1075,12 +1075,12 @@ include 'sidebar.php';
                     <label style="display:block; font-weight: 600; color: var(--text-color); font-size: 0.82rem; margin-bottom: 0;">
                         <i class="fa-solid fa-receipt text-primary me-1"></i> Auto-Generated Receipt ID
                     </label>
-                    <button type="button" onclick="refreshReceiptNumber()" title="Generate fresh receipt number" style="background: none; border: none; color: #2563eb; font-size: 0.78rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                    <button type="button" onclick="refreshReceiptNumber()" title="Generate fresh receipt number" style="background: none; border: none; color: #6b4eff; font-size: 0.78rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px;">
                         <i class="fa-solid fa-arrows-rotate" id="refreshReceiptIcon"></i> Regenerate
                     </button>
                 </div>
                 <div style="position: relative;">
-                    <input type="text" name="receipt_number" id="rec_receipt_number" readonly class="form-control" style="border-radius:0.5rem; background: rgba(59, 130, 246, 0.08); font-family: monospace; font-weight: 700; color: #1e40af; font-size: 1rem; border-color: rgba(59, 130, 246, 0.3);">
+                    <input type="text" name="receipt_number" id="rec_receipt_number" readonly class="form-control" style="border-radius:0.5rem; background: rgba(59, 130, 246, 0.08); font-family: monospace; font-weight: 700; color: #4a31cc; font-size: 1rem; border-color: rgba(59, 130, 246, 0.3);">
                 </div>
                 <small style="color: var(--text-muted); font-size: 0.74rem; display: block; margin-top: 0.25rem;">
                     Stored independently from the Invoice ID and automatically printed on the customer receipt.
@@ -1135,7 +1135,7 @@ include 'sidebar.php';
     <div class="modal-content mature-card" style="max-width: 520px; border-radius: 0.85rem; border: 1px solid var(--border-color); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); max-height: 90vh; overflow-y: auto;">
         <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.25rem;">
             <div style="display: flex; align-items: center; gap: 0.65rem;">
-                <div style="width: 36px; height: 36px; border-radius: 0.45rem; background: rgba(59, 130, 246, 0.1); color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 1rem;">
+                <div style="width: 36px; height: 36px; border-radius: 0.45rem; background: rgba(59, 130, 246, 0.1); color: #6b4eff; display: flex; align-items: center; justify-content: center; font-size: 1rem;">
                     <i class="fa-solid fa-credit-card"></i>
                 </div>
                 <div>

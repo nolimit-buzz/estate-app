@@ -4,9 +4,6 @@ require_once '../config.php';
 require_once '../includes/auth_guard.php';
 requireAdminAccess();
 
-include '../includes/header.php';
-include '../includes/sidebar.php';
-
 // Handle Maintenance Update
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_maintenance'])) {
     $id = intval($_POST['request_id']);
@@ -65,6 +62,9 @@ $fixes_log = $conn->query("SELECT m.*, u.name as resident_name, f.number as flat
                           LEFT JOIN artisans art ON m.artisan_id = art.id
                           WHERE m.estate_id = $estate_id AND m.status IN ('resolved', 'closed')
                           ORDER BY m.created_at DESC");
+
+include '../includes/header.php';
+include '../includes/sidebar.php';
 ?>
 
 <style>

@@ -1,0 +1,204 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* ==========================================================================
+   DASHBOARD THEME - PUBLIC / AUTH PAGES
+   Loaded after landing.css (login, estate home, password flows) and saas.css
+   (marketing, sign-up, contact, terms, privacy, superadmin login).
+   Same design language as dashboard-theme.css: mint canvas, white floating
+   tiles, hairline outlines, purple accent, Inter.
+   ========================================================================== */
+
+:root {
+    --ds-bg: #eef6f5;
+    --ds-card: #ffffff;
+    --ds-text: #111827;
+    --ds-muted: #8a94a6;
+    --ds-hair: #e6ebf0;
+    --ds-rail-btn: #e3ecea;
+    --ds-primary: #6b4eff;
+    --ds-primary-dark: #5a3fe6;
+    --ds-primary-soft: #efecff;
+    --ds-radius: 16px;
+    --ds-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 12px 40px rgba(16, 24, 40, 0.06);
+
+    /* landing.css tokens */
+    --brand-primary: #6b4eff;
+    --brand-primary-hover: #5a3fe6;
+    --brand-dark: #eef6f5;
+    --brand-dark-surface: #ffffff;
+    --brand-glass: rgba(255, 255, 255, 0.8);
+    --brand-border: #e6ebf0;
+    --brand-text-muted: #8a94a6;
+
+    /* saas.css tokens */
+    --bg: #eef6f5; --bg-soft: #f4f9f8; --card: #ffffff; --ink: #111827; --ink-2: #374151;
+    --muted: #8a94a6; --line: #e6ebf0;
+    --brand: #6b4eff; --brand-soft: #efecff;
+    --radius: 16px;
+    --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 12px 40px rgba(16, 24, 40, 0.06);
+    --font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+/* beat saas.css dark-mode token blocks (higher specificity) so the public site stays on-brand */
+:root:not([data-theme="light"]), :root[data-theme="dark"] {
+    --brand: #6b4eff; --brand-soft: #2a2550; --font: 'Inter', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --bg: #0f1716; --bg-soft: #131d1b; --card: #18211f; --ink: #eef3f2; --ink-2: #c3d0cc; --muted: #8fa09c; --line: #26322f;
+    }
+}
+
+body.landing-page, body.landing-page h1, body.landing-page h2, body.landing-page h3, body.landing-page h4,
+body.landing-page h5, body.landing-page h6, body.landing-page p, body.landing-page a, body.landing-page span,
+body.landing-page div, body.landing-page label, button, input, select, textarea, .auth-title {
+    font-family: 'Inter', system-ui, sans-serif !important;
+}
+body.landing-page {
+    background-color: var(--ds-bg) !important;
+    background-image:
+        radial-gradient(900px 420px at 88% -8%, rgba(107, 78, 255, 0.09), transparent 60%),
+        radial-gradient(700px 420px at 0% 100%, rgba(34, 197, 94, 0.08), transparent 60%) !important;
+    background-attachment: fixed !important;
+    color: var(--ds-text) !important;
+}
+
+/* ---------------- landing nav / hero ---------------- */
+.landing-nav { background: rgba(238, 246, 245, 0.8) !important; border-bottom: 0 !important; }
+.nav-brand, .nav-links a:hover { color: var(--ds-text) !important; }
+.nav-links a { color: var(--ds-muted) !important; }
+.nav-cta, .btn-hero-primary, .mobile-btn-primary {
+    background: var(--ds-primary) !important;
+    border-radius: 999px !important;
+    box-shadow: 0 8px 18px rgba(107, 78, 255, 0.3) !important;
+    color: #fff !important;
+}
+.btn-hero-primary:hover, .mobile-btn-primary:hover { background: var(--ds-primary-dark) !important; }
+.btn-hero-secondary, .mobile-btn-glass {
+    background: var(--ds-card) !important;
+    border: 1px solid var(--ds-hair) !important;
+    color: var(--ds-text) !important;
+    border-radius: 999px !important;
+}
+.hero-title, .mobile-hero-title {
+    background: none !important;
+    -webkit-text-fill-color: var(--ds-text) !important;
+    color: var(--ds-text) !important;
+}
+.hero-badge, .section-badge, .mobile-hero-badge { background: var(--ds-primary-soft) !important; color: var(--ds-primary) !important; border: 0 !important; }
+.hero-subtitle, .section-subtitle, .portal-desc, .feature-text, .rules-content, .usp-desc, .mobile-hero-subtitle,
+.stat-label, .footer-col ul a, .footer-contact-item, .stat-chip-text span, .launcher-header, .launcher-sub { color: var(--ds-muted) !important; }
+.stat-number, .section-title, .portal-title, .feature-title, .rules-col h4, .usp-title, .footer-brand h3, .footer-col h5,
+.stat-chip-text strong, .launcher-name { color: var(--ds-text) !important; }
+.estate-stats-strip { border-color: var(--ds-hair) !important; }
+
+/* ---------------- tiles ---------------- */
+.portal-card, .feature-box, .rules-card, .usp-card, .comparison-wrapper, .mobile-hero-showcase,
+.mobile-stat-chip, .launcher-item, .usp-metric-badge {
+    background: var(--ds-card) !important;
+    border: 0 !important;
+    border-radius: var(--ds-radius) !important;
+    box-shadow: var(--ds-shadow) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    color: var(--ds-text) !important;
+}
+.portal-card:hover, .feature-box:hover, .launcher-item:hover { background: var(--ds-card) !important; transform: translateY(-2px); }
+.features-section, .comparison-section, .selling-points-section { background: transparent !important; border-color: var(--ds-hair) !important; }
+.portal-features li, .usp-perk-item, .usp-metric-badge { color: var(--ds-muted) !important; }
+.comparison-table th, .comparison-table td { border-color: var(--ds-hair) !important; color: var(--ds-text) !important; }
+.landing-footer { background: var(--ds-card) !important; border-top: 0 !important; }
+.footer-bottom { border-color: var(--ds-hair) !important; }
+
+/* ---------------- auth pages ---------------- */
+.auth-page { background-image: none !important; background: transparent !important; }
+.auth-overlay { display: none !important; }
+.auth-card {
+    background: var(--ds-card) !important;
+    border: 0 !important;
+    border-radius: 24px !important;
+    box-shadow: var(--ds-shadow) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+.auth-title { color: var(--ds-text) !important; font-weight: 600 !important; letter-spacing: -0.02em; }
+.auth-subtitle, .auth-switcher, .auth-back-link { color: var(--ds-muted) !important; }
+.auth-back-link:hover { color: var(--ds-primary) !important; }
+.auth-switcher { border-color: var(--ds-hair) !important; }
+.auth-switcher a { color: var(--ds-primary) !important; }
+.role-pills { background: var(--ds-bg) !important; border: 0 !important; border-radius: 999px !important; }
+.role-pill { color: var(--ds-muted) !important; border-radius: 999px !important; }
+.role-pill:hover { background: transparent !important; color: var(--ds-text) !important; }
+.role-pill.active, .role-pill.active.pill-admin, .role-pill.active.pill-zone,
+.role-pill.active.pill-resident, .role-pill.active.pill-staff {
+    background: var(--ds-primary) !important;
+    color: #fff !important;
+    border-color: transparent !important;
+    box-shadow: 0 6px 14px rgba(107, 78, 255, 0.3) !important;
+}
+.auth-input-group label { color: var(--ds-text) !important; font-weight: 500; }
+.auth-input-wrapper i { color: var(--ds-muted) !important; }
+.auth-input {
+    background: var(--ds-card) !important;
+    border: 1px solid var(--ds-hair) !important;
+    border-radius: 12px !important;
+    color: var(--ds-text) !important;
+}
+.auth-input:focus { border-color: var(--ds-primary) !important; box-shadow: 0 0 0 3px rgba(107, 78, 255, 0.14) !important; background: var(--ds-card) !important; }
+.auth-btn, .auth-btn-admin, .auth-btn-resident, .auth-btn-staff, .auth-btn-zone {
+    background: var(--ds-primary) !important;
+    color: #fff !important;
+    border-radius: 999px !important;
+    box-shadow: 0 8px 18px rgba(107, 78, 255, 0.3) !important;
+}
+.auth-btn:hover { background: var(--ds-primary-dark) !important; transform: none !important; }
+.auth-badge { border-radius: 999px !important; }
+.auth-badge.badge-resident, .auth-badge.badge-staff, .auth-badge.badge-admin, .auth-badge.badge-zone {
+    background: var(--ds-primary-soft) !important; color: var(--ds-primary) !important; border: 0 !important;
+}
+.auth-usp-banner, .auth-usp-item { color: var(--ds-muted) !important; border-color: var(--ds-hair) !important; }
+.auth-error { border-radius: 12px !important; }
+
+/* ---------------- saas.css pages (marketing, sign-up, contact, legal, superadmin login) ---------------- */
+body { font-family: var(--font); }
+.nav { background: color-mix(in srgb, var(--bg) 82%, transparent) !important; border-bottom: 0 !important; }
+.brand-mark { background: var(--ds-primary); border-radius: 12px; }
+.btn { border-radius: 999px !important; }
+.btn-primary { background: var(--ds-primary); box-shadow: 0 8px 18px rgba(107, 78, 255, 0.3); }
+.btn-ghost { background: var(--card); border-color: var(--line); }
+.hero { background: radial-gradient(1000px 420px at 85% -10%, rgba(107, 78, 255, 0.12), transparent 60%) !important; }
+.card, .mock, .form-card, .plan, .module { border: 0 !important; border-radius: var(--ds-radius) !important; box-shadow: var(--ds-shadow); }
+.plan.featured { border: 2px solid var(--ds-primary) !important; }
+.tab, .toggle { border-radius: 999px; }
+.tab.active, .toggle button.active, .plan .badge { background: var(--ds-primary); border-color: var(--ds-primary); }
+section.alt, footer, .auth-shell { background: var(--bg-soft); }
+.field input, .field select, .field textarea { border-radius: 12px !important; }
+.field input:focus, .field select:focus, .field textarea:focus { outline-color: var(--ds-primary); }
+.eyebrow { color: var(--ds-primary); }
+.alert { border-radius: 12px; }
+
+/* ---------------- payment / misc standalone pages ---------------- */
+@media (max-width: 768px) {
+    .auth-card { padding: 2rem 1.4rem !important; }
+}
+
+/* ---------------- standalone light pages: pay_invoice, artisan_register ---------------- */
+body { font-family: 'Inter', system-ui, sans-serif; }
+.payment-card { background: var(--ds-card) !important; border: 0 !important; border-radius: 24px !important; box-shadow: var(--ds-shadow) !important; backdrop-filter: none !important; }
+.payment-card::before { background: var(--ds-primary) !important; }
+.btn-pay, .submit-btn {
+    background: var(--ds-primary) !important;
+    border-radius: 999px !important;
+    box-shadow: 0 8px 18px rgba(107, 78, 255, 0.3) !important;
+}
+.btn-pay:hover, .submit-btn:hover { background: var(--ds-primary-dark) !important; transform: none !important; }
+.app-navbar { background: var(--ds-bg) !important; border-bottom: 0 !important; box-shadow: none !important; }
+.portal-card-header { background: var(--ds-primary) !important; }
+.artisan-selling-card { border: 0 !important; border-radius: var(--ds-radius) !important; box-shadow: var(--ds-shadow) !important; }
+.trust-seal-card { background: var(--ds-primary) !important; border-radius: var(--ds-radius) !important; }
+.step-pill { border-radius: 999px !important; }
+.form-control, .form-select { border-radius: 12px !important; border-color: var(--ds-hair) !important; }
+.form-control:focus, .form-select:focus { border-color: var(--ds-primary) !important; box-shadow: 0 0 0 3px rgba(107, 78, 255, 0.14) !important; }
+body:has(.payment-card), body:has(.app-navbar) {
+    background: var(--ds-bg) !important;
+    background-image: radial-gradient(900px 420px at 88% -8%, rgba(107, 78, 255, 0.09), transparent 60%) !important;
+}

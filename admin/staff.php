@@ -12,17 +12,19 @@ $message_type = "success";
 $active_tab = $_GET['tab'] ?? 'directory';
 
 // Helper to handle uploads
-function handleUpload($file) {
-    global $conn;
-    if (isset($file['error']) && $file['error'] == 0) {
-        $target_dir = "../uploads/";
-        if (!is_dir($target_dir)) mkdir($target_dir, 0777, true);
-        $target_file = $target_dir . time() . "_" . basename($file["name"]);
-        if (move_uploaded_file($file["tmp_name"], $target_file)) {
-            return $conn->real_escape_string($target_file);
+if (!function_exists('handleUpload')) {
+    function handleUpload($file) {
+        global $conn;
+        if (isset($file['error']) && $file['error'] == 0) {
+            $target_dir = "../uploads/";
+            if (!is_dir($target_dir)) mkdir($target_dir, 0777, true);
+            $target_file = $target_dir . time() . "_" . basename($file["name"]);
+            if (move_uploaded_file($file["tmp_name"], $target_file)) {
+                return $conn->real_escape_string($target_file);
+            }
         }
+        return null;
     }
-    return null;
 }
 
 if (!function_exists('generateCustomID')) {
@@ -35,6 +37,13 @@ if (!function_exists('generateCustomID')) {
 }
 
 // Handle Form Submissions
+// Permission ids outside this estate's plan (cannot be assigned to any role)
+$locked_perm_ids_post = [];
+$lp_res = $conn->query("SELECT id, slug FROM permissions");
+while ($lp_res && $lp = $lp_res->fetch_assoc()) {
+    if (!isFeatureEnabled($lp['slug'])) $locked_perm_ids_post[intval($lp['id'])] = true;
+}
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // 1. ADD / UPDATE STAFF MEMBER
     if (isset($_POST['save_staff'])) {
@@ -159,6 +168,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 if (isset($_POST['permissions']) && is_array($_POST['permissions'])) {
                     foreach ($_POST['permissions'] as $p_id) {
                         $p_id = intval($p_id);
+                        if (isset($locked_perm_ids_post[$p_id])) continue; // not in plan
                         $conn->query("INSERT INTO role_permissions (role_id, permission_id) VALUES ($new_role_id, $p_id)");
                     }
                 }
@@ -185,6 +195,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if (isset($_POST['permissions']) && is_array($_POST['permissions'])) {
                 foreach ($_POST['permissions'] as $p_id) {
                     $p_id = intval($p_id);
+                    if (isset($locked_perm_ids_post[$p_id])) continue; // not in plan
                     $conn->query("INSERT INTO role_permissions (role_id, permission_id) VALUES ($role_id, $p_id)");
                 }
             }
@@ -245,7 +256,10 @@ while ($r = $roles_res->fetch_assoc()) {
 // Fetch Grouped Permissions
 $perms_res = $conn->query("SELECT * FROM permissions ORDER BY module ASC, name ASC");
 $all_perms = [];
+$locked_perm_ids = []; // permissions outside the estate's plan: shown faint, cannot be assigned
 while ($p = $perms_res->fetch_assoc()) {
+    $p['locked'] = !isFeatureEnabled($p['slug']);
+    if ($p['locked']) $locked_perm_ids[intval($p['id'])] = true;
     $all_perms[$p['module']][] = $p;
 }
 
@@ -475,7 +489,7 @@ include '../includes/sidebar.php';
                                 <td>
                                     <div class="d-flex align-items-center gap-2">
                                         <?php if($row['image_path']): ?>
-                                            <img src="<?php echo htmlspecialchars($row['image_path']); ?>" style="width: 36px; height: 36px; object-fit: cover; border-radius: 50%; border: 1px solid var(--border-color);" alt="">
+                                            <img src="<?php echo htmlspecialchars($row['image_path']); ?>" width="36" height="36" style="width: 36px; height: 36px; max-width: 36px; max-height: 36px; object-fit: cover; border-radius: 50%; border: 1px solid var(--border-color); flex-shrink: 0;" alt="">
                                         <?php else: ?>
                                             <div class="avatar-chip">
                                                 <?php echo $initials ?: '<i class="fa-solid fa-user"></i>'; ?>
@@ -617,14 +631,14 @@ include '../includes/sidebar.php';
                                         </div>
                                         <div class="d-flex flex-column gap-2">
                                             <?php foreach ($module_perms as $p): ?>
-                                                <label class="d-flex align-items-start gap-2 small cursor-pointer mb-0">
-                                                    <input type="checkbox" name="permissions[]" value="<?php echo $p['id']; ?>" 
-                                                        <?php echo in_array($p['id'], $assigned_perms) ? 'checked' : ''; ?> 
-                                                        <?php echo ($r['slug'] == 'admin') ? 'checked disabled' : ''; ?> 
+                                                <label class="d-flex align-items-start gap-2 small cursor-pointer mb-0" <?php if ($p['locked']): ?>style="opacity:.4;cursor:not-allowed;" title="Not in your plan - upgrade to unlock"<?php endif; ?>>
+                                                    <input type="checkbox" name="permissions[]" value="<?php echo $p['id']; ?>"
+                                                        <?php echo (!$p['locked'] && in_array($p['id'], $assigned_perms)) ? 'checked' : ''; ?>
+                                                        <?php echo $p['locked'] ? 'disabled' : (($r['slug'] == 'admin') ? 'checked disabled' : ''); ?>
                                                         class="form-check-input mt-1 perm-box" style="accent-color: var(--primary-color);">
                                                     <div>
                                                         <div class="fw-semibold" style="color: var(--text-color); font-size: 0.82rem;"><?php echo htmlspecialchars($p['name']); ?></div>
-                                                        <div style="font-size: 0.72rem; color: var(--text-muted);"><?php echo htmlspecialchars($p['description']); ?></div>
+                                                        <div style="font-size: 0.72rem; color: var(--text-muted);"><?php echo htmlspecialchars($p['description']); ?><?php if ($p['locked']): ?> <strong><i class="fa-solid fa-lock"></i> Not in your plan</strong><?php endif; ?></div>
                                                     </div>
                                                 </label>
                                             <?php endforeach; ?>
@@ -742,9 +756,9 @@ include '../includes/sidebar.php';
                         <div class="p-2 rounded bg-light border">
                             <span class="fw-bold small text-uppercase text-secondary d-block mb-1"><?php echo htmlspecialchars($module_name); ?></span>
                             <?php foreach ($module_perms as $p): ?>
-                                <label class="d-flex align-items-center gap-2 small cursor-pointer mb-1">
-                                    <input type="checkbox" name="permissions[]" value="<?php echo $p['id']; ?>" class="form-check-input">
-                                    <span><?php echo htmlspecialchars($p['name']); ?></span>
+                                <label class="d-flex align-items-center gap-2 small cursor-pointer mb-1" <?php if ($p['locked']): ?>style="opacity:.4;cursor:not-allowed;" title="Not in your plan"<?php endif; ?>>
+                                    <input type="checkbox" name="permissions[]" value="<?php echo $p['id']; ?>" class="form-check-input" <?php echo $p['locked'] ? 'disabled' : ''; ?>>
+                                    <span><?php echo htmlspecialchars($p['name']); ?><?php if ($p['locked']): ?> <i class="fa-solid fa-lock"></i><?php endif; ?></span>
                                 </label>
                             <?php endforeach; ?>
                         </div>
@@ -763,7 +777,11 @@ include '../includes/sidebar.php';
 <script>
 function openStaffModal() {
     const modal = document.getElementById('staff-modal');
-    modal.style.display = 'flex';
+    if (!modal) return;
+    modal.classList.add('show');
+    modal.classList.remove('hide');
+    modal.style.setProperty('display', 'flex', 'important');
+    modal.style.setProperty('pointer-events', 'auto', 'important');
     document.getElementById('est_staff_id').value = '';
     document.getElementById('est_first_name').value = '';
     document.getElementById('est_last_name').value = '';
@@ -778,15 +796,30 @@ function openStaffModal() {
 }
 
 function closeStaffModal() {
-    document.getElementById('staff-modal').style.display = 'none';
+    const modal = document.getElementById('staff-modal');
+    if (!modal) return;
+    modal.classList.remove('show');
+    modal.classList.add('hide');
+    modal.style.setProperty('display', 'none', 'important');
+    modal.style.setProperty('pointer-events', 'none', 'important');
 }
 
 function openNewRoleModal() {
-    document.getElementById('role-modal').style.display = 'flex';
+    const modal = document.getElementById('role-modal');
+    if (!modal) return;
+    modal.classList.add('show');
+    modal.classList.remove('hide');
+    modal.style.setProperty('display', 'flex', 'important');
+    modal.style.setProperty('pointer-events', 'auto', 'important');
 }
 
 function closeNewRoleModal() {
-    document.getElementById('role-modal').style.display = 'none';
+    const modal = document.getElementById('role-modal');
+    if (!modal) return;
+    modal.classList.remove('show');
+    modal.classList.add('hide');
+    modal.style.setProperty('display', 'none', 'important');
+    modal.style.setProperty('pointer-events', 'none', 'important');
 }
 
 function previewImage(input, previewId) {

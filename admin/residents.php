@@ -5,21 +5,20 @@ require_once '../includes/auth_guard.php';
 require_once '../includes/Mailer.php';
 requireAdminAccess();
 
-include '../includes/header.php';
-include '../includes/sidebar.php';
-
 // Helper to handle uploads
-function handleUpload($file) {
-    global $conn;
-    if ($file['error'] == 0) {
-        $target_dir = "../uploads/";
-        if (!is_dir($target_dir)) mkdir($target_dir, 0777, true);
-        $target_file = $target_dir . time() . "_" . basename($file["name"]);
-        if (move_uploaded_file($file["tmp_name"], $target_file)) {
-            return $conn->real_escape_string($target_file);
+if (!function_exists('handleUpload')) {
+    function handleUpload($file) {
+        global $conn;
+        if ($file['error'] == 0) {
+            $target_dir = "../uploads/";
+            if (!is_dir($target_dir)) mkdir($target_dir, 0777, true);
+            $target_file = $target_dir . time() . "_" . basename($file["name"]);
+            if (move_uploaded_file($file["tmp_name"], $target_file)) {
+                return $conn->real_escape_string($target_file);
+            }
         }
+        return null;
     }
-    return null;
 }
 
 // Generate Custom ID helper (Collision-Proof)
@@ -476,13 +475,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 // Fetch Data
 $estate_id = get_estate_id();
+$search_q = isset($_GET['q']) ? trim($conn->real_escape_string($_GET['q'])) : '';
+$where_search = "";
+if (!empty($search_q)) {
+    $where_search = " AND (u.name LIKE '%$search_q%' OR u.email LIKE '%$search_q%' OR u.phone LIKE '%$search_q%' OR r.custom_id LIKE '%$search_q%' OR f.number LIKE '%$search_q%' OR b.name LIKE '%$search_q%') ";
+}
+
 $residents = $conn->query("SELECT r.*, u.first_name, u.last_name, u.name, u.email, u.phone, f.number as flat_number, f.floor, b.id as building_id, b.name as building_name, s.id as street_id, s.name as street_name 
                            FROM residents r 
                            LEFT JOIN users u ON r.user_id = u.id 
                           JOIN flats f ON r.flat_id = f.id 
                           JOIN buildings b ON f.building_id = b.id 
                           JOIN streets s ON b.street_id = s.id
-                          WHERE r.estate_id = $estate_id AND (r.status IS NULL OR r.status NOT IN ('archived', 'inactive'))
+                          WHERE r.estate_id = $estate_id AND (r.status IS NULL OR r.status NOT IN ('archived', 'inactive')) $where_search
                           ORDER BY s.name, b.name, f.number");
 
 $pets = $conn->query("SELECT p.*, f.number as flat_number, f.floor, b.name as building_name, s.name as street_name 
@@ -562,6 +567,9 @@ $vehicles_count = intval($res_kpi['total_vehicles'] ?? 0);
 $pets_count = intval($res_kpi['total_pets'] ?? 0);
 $dom_staff_count = intval($res_kpi['total_staff'] ?? 0);
 $ancillaries_count = $vehicles_count + $pets_count + $dom_staff_count;
+
+include '../includes/header.php';
+include '../includes/sidebar.php';
 ?>
 
 <!-- Enterprise Hero Header (Image 3 Style) -->
@@ -1249,7 +1257,7 @@ $ancillaries_count = $vehicles_count + $pets_count + $dom_staff_count;
 </div>
 
 <!-- Modal to Reject Contact Change Request -->
-<div id="reject-contact-modal" class="custom-modal-backdrop">
+<div id="reject-contact-modal" class="custom-modal-backdrop" style="display: none;">
     <div class="modal-content" style="max-width: 450px;">
         <div class="modal-header">
             <h3 style="margin:0; font-size: 1.1rem; color: #dc2626;"><i class="fa-solid fa-triangle-exclamation me-1"></i> Decline Contact Update</h3>
@@ -1274,7 +1282,7 @@ $ancillaries_count = $vehicles_count + $pets_count + $dom_staff_count;
 
 <!-- Modal: resident-modal -->
 <!-- Resident Registration Modal -->
-<div id="resident-modal" class="custom-modal-backdrop">
+<div id="resident-modal" class="custom-modal-backdrop" style="display: none;">
             <div class="modal-content" style="max-width: 750px;">
                 <div class="modal-header">
                     <h2 id="resident-modal-title">Register Resident</h2>
@@ -1388,7 +1396,7 @@ $ancillaries_count = $vehicles_count + $pets_count + $dom_staff_count;
 <!-- Modal: vehicle-modal -->
         <!-- Add Vehicle Form -->
         <!-- Vehicle Modal -->
-        <div id="vehicle-modal" class="custom-modal-backdrop">
+        <div id="vehicle-modal" class="custom-modal-backdrop" style="display: none;">
             <div class="modal-content">
                 <div class="modal-header">
                     <h2 id="vehicle-modal-title">Add Vehicle</h2>
@@ -1459,7 +1467,7 @@ $ancillaries_count = $vehicles_count + $pets_count + $dom_staff_count;
 
 
 <!-- Modal: pet-modal -->
-        <div id="pet-modal" class="custom-modal-backdrop">
+        <div id="pet-modal" class="custom-modal-backdrop" style="display: none;">
             <div class="modal-content">
                 <div class="modal-header">
                     <h2 id="pet-modal-title">Add Pet</h2>
@@ -1510,7 +1518,7 @@ $ancillaries_count = $vehicles_count + $pets_count + $dom_staff_count;
 
 
 <!-- Modal: staff-modal -->
-        <div id="staff-modal" class="custom-modal-backdrop">
+        <div id="staff-modal" class="custom-modal-backdrop" style="display: none;">
             <div class="modal-content">
                 <div class="modal-header">
                     <h2 id="staff-modal-title">Add Domestic Staff</h2>
@@ -1630,7 +1638,9 @@ function previewImage(input, previewId) {
 function openModal(modalId) {
     const element = document.getElementById(modalId);
     if (!element) return;
-    element.style.display = 'flex';
+    element.classList.add('show');
+    element.style.setProperty('display', 'flex', 'important');
+    document.body.classList.add('modal-open');
     
     const today = new Date().toISOString().split('T')[0];
     
@@ -1662,7 +1672,11 @@ function openModal(modalId) {
 function closeModal(modalId) {
     const element = document.getElementById(modalId);
     if (element) {
-        element.style.display = 'none';
+        element.classList.remove('show');
+        element.style.setProperty('display', 'none', 'important');
+        if (!document.querySelector('.custom-modal-backdrop.show')) {
+            document.body.classList.remove('modal-open');
+        }
     }
 }
 

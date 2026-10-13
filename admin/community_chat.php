@@ -35,8 +35,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// If AJAX fetch messages
-if (isset($_GET['fetch_messages'])) {
+function fetch_forum_messages_data($conn, $estate_id, $current_user_id, $is_admin = true) {
+    $estate_id = intval($estate_id);
+    $current_user_id = intval($current_user_id);
     $sql = "SELECT c.id, c.user_id, c.message, c.created_at,
                    u.name as sender_name, u.role as user_role,
                    COALESCE(z_user.name, MAX(z_res.name)) as zone_name,
@@ -60,8 +61,9 @@ if (isset($_GET['fetch_messages'])) {
     $messages = [];
     if ($messages_res) {
         while ($m = $messages_res->fetch_assoc()) {
-            $m['is_me'] = ($m['user_id'] == $user_id);
-            $m['can_delete'] = true; // Central admin can moderate any message
+            $is_me = ($m['user_id'] == $current_user_id);
+            $m['is_me'] = $is_me;
+            $m['can_delete'] = $is_admin ? true : $is_me;
             $timestamp = strtotime($m['created_at']);
             if (date('Y-m-d', $timestamp) == date('Y-m-d')) {
                 $m['time'] = date('h:i A', $timestamp);
@@ -92,10 +94,18 @@ if (isset($_GET['fetch_messages'])) {
             $messages[] = $m;
         }
     }
+    return $messages;
+}
+
+// If AJAX fetch messages
+if (isset($_GET['fetch_messages'])) {
     header('Content-Type: application/json');
-    echo json_encode($messages);
+    echo json_encode(fetch_forum_messages_data($conn, $estate_id, $user_id, true));
     exit;
 }
+
+// Server-render initial messages for 0ms delay and zero hanging spinner
+$initial_messages = fetch_forum_messages_data($conn, $estate_id, $user_id, true);
 
 // KPI Statistics
 $count_res = $conn->query("SELECT COUNT(*) as total FROM community_chat WHERE estate_id = $estate_id");
@@ -206,11 +216,34 @@ include '../includes/sidebar.php';
 
     <!-- Scrollable Messages Body -->
     <div class="resident-chat-container" id="chatContainer">
-        <!-- Messages loaded dynamically -->
-        <div class="d-flex align-items-center justify-content-center py-5 text-secondary">
-            <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
-            <span>Connecting to estate community stream...</span>
-        </div>
+        <?php if (empty($initial_messages)): ?>
+            <div class="text-center py-5 my-auto text-secondary">
+                <div class="w-12 h-12 rounded-circle bg-light d-inline-flex align-items-center justify-content-center text-muted mb-3" style="width:54px; height:54px; font-size:1.5rem;">
+                    <i class="fa-solid fa-comments"></i>
+                </div>
+                <h6 class="font-bold text-slate-700 mb-1">No Messages Yet</h6>
+                <p class="text-secondary small mb-0">Start the conversation with estate residents, zonal leaders, and staff!</p>
+            </div>
+        <?php else: ?>
+            <?php foreach ($initial_messages as $msg): ?>
+                <div class="resident-message-bubble <?= $msg['is_me'] ? 'resident-message-me' : 'resident-message-other' ?> position-relative">
+                    <div class="chat-bubble-actions">
+                        <button type="button" class="btn btn-sm btn-link text-danger p-0 px-1" onclick="deleteMessage(<?= $msg['id'] ?>)" title="Delete / Moderate Message">
+                            <i class="fa-solid fa-trash-can" style="font-size: 0.75rem;"></i>
+                        </button>
+                    </div>
+                    <div class="sender-pill <?= $msg['is_me'] ? 'sender-pill-me' : 'sender-pill-other' ?>">
+                        <span><i class="fa-solid fa-circle-user"></i> <?= htmlspecialchars($msg['sender_name']) ?></span>
+                        <span class="<?= $msg['role_class'] ?>"><i class="<?= $msg['role_icon'] ?> me-1"></i><?= htmlspecialchars($msg['role_label']) ?></span>
+                    </div>
+                    <div class="message-content" style="white-space: pre-wrap; padding-right: 1.25rem;"><?= htmlspecialchars($msg['message']) ?></div>
+                    <div class="chat-time-stamp <?= $msg['is_me'] ? 'chat-time-me' : 'chat-time-other' ?>">
+                        <span><?= htmlspecialchars($msg['time']) ?></span>
+                        <?= $msg['is_me'] ? '<i class="fa-solid fa-check-double text-sky-200 ms-1" style="font-size:0.65rem;"></i>' : '' ?>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
     </div>
 
     <!-- Modern Chat Input Footer Bar -->
@@ -437,7 +470,20 @@ body.dark-mode .p-3.border-top {
     const chatForm = document.getElementById('chatForm');
     const messageInput = document.getElementById('messageInput');
     const sendBtn = document.getElementById('sendBtn');
-    let lastMessageCount = 0;
+    let lastMessageCount = <?= count($initial_messages) ?>;
+
+    // Auto scroll to bottom of existing messages on initial render
+    if (chatContainer) {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    const getChatApiUrl = () => {
+        let base = window.location.pathname.replace(/\/$/, '');
+        if (!base.endsWith('community_chat') && !base.endsWith('community_chat.php')) {
+            base = 'community_chat.php';
+        }
+        return base;
+    };
 
     function escapeHtml(text) {
         const div = document.createElement('div');
@@ -447,7 +493,9 @@ body.dark-mode .p-3.border-top {
 
     async function fetchMessages(forceScroll = false) {
         try {
-            const res = await fetch('community_chat?fetch_messages=1');
+            const apiUrl = getChatApiUrl() + '?fetch_messages=1';
+            const res = await fetch(apiUrl);
+            if (!res.ok) return;
             const data = await res.json();
             
             const isAtBottom = chatContainer.scrollHeight - chatContainer.clientHeight <= chatContainer.scrollTop + 120;
@@ -523,7 +571,7 @@ body.dark-mode .p-3.border-top {
         formData.append('ajax', '1');
 
         try {
-            await fetch('community_chat', {
+            await fetch(getChatApiUrl(), {
                 method: 'POST',
                 body: formData
             });
@@ -547,7 +595,7 @@ body.dark-mode .p-3.border-top {
         formData.append('ajax', '1');
 
         try {
-            await fetch('community_chat', {
+            await fetch(getChatApiUrl(), {
                 method: 'POST',
                 body: formData
             });

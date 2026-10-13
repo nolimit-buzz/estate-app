@@ -27,6 +27,7 @@ if (!isset($_SESSION['user_id'])) {
     <link rel="stylesheet" href="../css/estate_glassmorphism.css?v=<?php echo ASSET_VER; ?>">
     <link rel="stylesheet" href="../css/mobile_app.css?v=<?php echo ASSET_VER; ?>">
     <link rel="stylesheet" href="../css/hotline.css?v=<?php echo ASSET_VER; ?>">
+    <link rel="stylesheet" href="../css/dashboard-theme.css?v=<?php echo ASSET_VER; ?>">
     
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -134,4 +135,4 @@ if ($__banner): ?>
         <a href="../admin/<?php echo $__banner[2]; ?>" style="background:#fff;color:#0f172a;padding:5px 14px;border-radius:99px;text-decoration:none;font-size:.8rem"><?php echo htmlspecialchars($__banner[3]); ?></a>
     </div>
 <?php endif; ?>
-    <div class="app-container">
+    <div class="app-container has-named-sidebar">

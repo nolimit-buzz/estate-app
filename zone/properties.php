@@ -270,8 +270,8 @@ include 'sidebar.php';
 <div id="streets" class="tab-content" style="display: <?php echo $active_tab == 'streets' ? 'block' : 'none'; ?>;">
     <div class="futuristic-table-card">
         <div class="futuristic-table-card-header">
-            <h3 class="m-0 fw-bold fs-6 text-slate-900"><i class="fa-solid fa-road text-purple me-2" style="color: #9333ea;"></i> Zone Streets</h3>
-            <button class="btn btn-sm text-white" style="background: #6b21a8;" onclick="openModal('street-modal')"><i class="fa-solid fa-plus me-1"></i> Register Street</button>
+            <h3 class="m-0 fw-bold fs-6 text-slate-900"><i class="fa-solid fa-road text-purple me-2" style="color: #6b4eff;"></i> Zone Streets</h3>
+            <button class="btn btn-sm text-white" style="background: #5a3fe6;" onclick="openModal('street-modal')"><i class="fa-solid fa-plus me-1"></i> Register Street</button>
         </div>
         <div class="table-responsive">
             <table class="table dashboard-table align-middle">
@@ -315,7 +315,7 @@ include 'sidebar.php';
     <div class="futuristic-table-card">
         <div class="futuristic-table-card-header">
             <h3 class="m-0 fw-bold fs-6 text-slate-900"><i class="fa-solid fa-building text-primary me-2"></i> Zone Buildings & Properties</h3>
-            <button class="btn btn-sm text-white" style="background: #6b21a8;" onclick="openModal('building-modal')"><i class="fa-solid fa-plus me-1"></i> Register Property</button>
+            <button class="btn btn-sm text-white" style="background: #5a3fe6;" onclick="openModal('building-modal')"><i class="fa-solid fa-plus me-1"></i> Register Property</button>
         </div>
         <div class="table-responsive">
             <table class="table dashboard-table align-middle">
@@ -364,7 +364,7 @@ include 'sidebar.php';
     <div class="futuristic-table-card">
         <div class="futuristic-table-card-header">
             <h3 class="m-0 fw-bold fs-6 text-slate-900"><i class="fa-solid fa-door-open text-success me-2"></i> Zone Flats</h3>
-            <button class="btn btn-sm text-white" style="background: #6b21a8;" onclick="openModal('flat-modal')"><i class="fa-solid fa-plus me-1"></i> Add Flat</button>
+            <button class="btn btn-sm text-white" style="background: #5a3fe6;" onclick="openModal('flat-modal')"><i class="fa-solid fa-plus me-1"></i> Add Flat</button>
         </div>
         <div class="table-responsive">
             <table class="table dashboard-table align-middle">
@@ -441,7 +441,7 @@ include 'sidebar.php';
             </div>
             <div class="d-flex justify-content-end gap-2">
                 <button type="button" class="btn btn-light" onclick="closeModal('street-modal')">Cancel</button>
-                <button type="submit" name="add_street" class="btn btn-primary" style="background: #6b21a8; border-color: #6b21a8;">Save Street</button>
+                <button type="submit" name="add_street" class="btn btn-primary" style="background: #5a3fe6; border-color: #5a3fe6;">Save Street</button>
             </div>
         </form>
     </div>
@@ -500,7 +500,7 @@ include 'sidebar.php';
             </div>
             <div class="d-flex justify-content-end gap-2">
                 <button type="button" class="btn btn-light" onclick="closeModal('building-modal')">Cancel</button>
-                <button type="submit" name="add_building" class="btn btn-primary" style="background: #6b21a8; border-color: #6b21a8;">Save Property</button>
+                <button type="submit" name="add_building" class="btn btn-primary" style="background: #5a3fe6; border-color: #5a3fe6;">Save Property</button>
             </div>
         </form>
     </div>
@@ -557,7 +557,7 @@ include 'sidebar.php';
             </div>
             <div class="d-flex justify-content-end gap-2">
                 <button type="button" class="btn btn-light" onclick="closeModal('flat-modal')">Cancel</button>
-                <button type="submit" name="add_flat" class="btn btn-primary" style="background: #6b21a8; border-color: #6b21a8;">Save Flat</button>
+                <button type="submit" name="add_flat" class="btn btn-primary" style="background: #5a3fe6; border-color: #5a3fe6;">Save Flat</button>
             </div>
         </form>
     </div>
@@ -578,11 +578,34 @@ function openTab(evt, tabName) {
 }
 
 function openModal(id) {
-    document.getElementById(id).style.display = 'flex';
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.add('show');
+    el.classList.remove('hide');
+    el.style.setProperty('display', 'flex', 'important');
+    el.style.setProperty('pointer-events', 'auto', 'important');
+    el.style.setProperty('visibility', 'visible', 'important');
+    el.style.setProperty('opacity', '1', 'important');
 }
 function closeModal(id) {
-    document.getElementById(id).style.display = 'none';
+    const el = document.getElementById(id);
+    if (el) {
+        el.classList.remove('show');
+        el.classList.add('hide');
+        el.style.setProperty('display', 'none', 'important');
+        el.style.setProperty('pointer-events', 'none', 'important');
+    }
 }
+
+// Click outside backdrop to close
+window.addEventListener('click', function(e) {
+    if (e.target && e.target.classList && e.target.classList.contains('custom-modal-backdrop')) {
+        e.target.classList.remove('show');
+        e.target.classList.add('hide');
+        e.target.style.setProperty('display', 'none', 'important');
+        e.target.style.setProperty('pointer-events', 'none', 'important');
+    }
+});
 
 function editStreet(data) {
     openModal('street-modal');

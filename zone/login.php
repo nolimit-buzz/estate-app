@@ -80,6 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     <!-- Landing & Auth Styles -->
     <link rel="stylesheet" href="../css/landing.css?v=<?php echo ASSET_VER; ?>">
+    <link rel="stylesheet" href="../css/dashboard-theme-public.css?v=<?php echo defined('ASSET_VER') ? ASSET_VER : time(); ?>">
 </head>
 <body class="landing-page">
     <div class="auth-page" style="background-image: url('../images/hero_estate.jpg');">

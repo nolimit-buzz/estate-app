@@ -316,7 +316,9 @@ class Lifecycle {
         $p = Tenancy::platform(); $n = 0;
         $r = $p->query("SELECT * FROM estates WHERE db_name IS NOT NULL AND status NOT IN ('deleted','archived','pending') AND (resident_count_at IS NULL OR resident_count_at < NOW() - INTERVAL 1 HOUR)");
         while ($e = $r->fetch_assoc()) { Billing::residentCount($e); $n++; }
-        return "$n estate(s) counted";
+        require_once __DIR__ . '/TenantStats.php';
+        $s = TenantStats::refreshStale(TenantStats::DEFAULT_MAX_AGE, 50);
+        return "$n estate(s) counted, $s tenant snapshot(s) refreshed";
     }
 
     public static function retentionDaysLeft(array $estate) {

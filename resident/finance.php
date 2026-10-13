@@ -162,14 +162,14 @@ include 'sidebar.php';
 
         <?php if (!empty($res_zone['paystack_account_number'])): ?>
         <div class="col-12 col-md-4">
-            <div class="resident-kpi-card h-100" style="border-left: 4px solid #0284c7; background: linear-gradient(135deg, rgba(2, 132, 199, 0.04) 0%, rgba(56, 189, 248, 0.08) 100%);">
+            <div class="resident-kpi-card h-100" style="border-left: 4px solid #6b4eff; background: linear-gradient(135deg, rgba(107, 78, 255, 0.04) 0%, rgba(56, 189, 248, 0.08) 100%);">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="kpi-title" style="color: #0369a1;"><i class="fa-solid fa-building-columns me-1"></i> Zone Virtual Account</span>
+                    <span class="kpi-title" style="color: #5a3fe6;"><i class="fa-solid fa-building-columns me-1"></i> Zone Virtual Account</span>
                     <span class="mature-badge mature-badge-sky"><?= htmlspecialchars($res_zone['zone_name'] ?? 'Zone') ?></span>
                 </div>
                 <div class="d-flex align-items-center justify-content-between mt-1 mb-2">
                     <div>
-                        <div style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 1.55rem; font-weight: 800; color: #0284c7; letter-spacing: 0.06em;">
+                        <div style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 1.55rem; font-weight: 800; color: #6b4eff; letter-spacing: 0.06em;">
                             <?= htmlspecialchars($res_zone['paystack_account_number']) ?>
                         </div>
                         <div class="small text-secondary fw-medium">
@@ -403,7 +403,7 @@ include 'sidebar.php';
             <!-- Amount Card -->
             <div class="p-3 rounded-3 text-center mb-4 border" style="background: rgba(59, 130, 246, 0.05); border-color: rgba(59, 130, 246, 0.2) !important;">
                 <div class="small text-uppercase fw-semibold text-secondary" style="letter-spacing: 0.05em;">Total Amount Due</div>
-                <div id="modalAmount" class="fw-bold text-primary mt-1" style="font-size: 2.25rem; font-family: 'Outfit', sans-serif;">₦0.00</div>
+                <div id="modalAmount" class="fw-bold text-primary mt-1" style="font-size: 2.25rem; font-family: 'Inter', sans-serif;">₦0.00</div>
             </div>
 
             <!-- Tab Switcher -->

@@ -257,6 +257,7 @@ $amount_in_kobo = round($initial_pay_amount * 100);
             margin-bottom: 1.5rem;
         }
     </style>
+    <link rel="stylesheet" href="css/dashboard-theme-public.css?v=<?php echo time(); ?>">
 </head>
 <body>
     <div class="payment-card">

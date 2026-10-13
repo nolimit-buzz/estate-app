@@ -110,6 +110,36 @@ if (!empty($mobile_activities)) {
     $mobile_activities = array_slice($mobile_activities, 0, 4);
 }
 
+// Paid payment stats (count + last payment date)
+$pay_meta = $conn->query("SELECT COUNT(id) as cnt, MAX(COALESCE(paid_at, created_at)) as last_paid FROM payments WHERE user_id = $user_id AND estate_id = $estate_id AND status = 'paid'")->fetch_assoc();
+$paid_count = intval($pay_meta['cnt'] ?? 0);
+$last_payment_date = $pay_meta['last_paid'] ?? null;
+
+// Last 6 months billed vs paid series (for the dashboard chart)
+$series = [];
+for ($i = 5; $i >= 0; $i--) {
+    $series[date('Y-m', strtotime("first day of -$i month"))] = ['label' => date('M', strtotime("first day of -$i month")), 'billed' => 0, 'paid' => 0];
+}
+$bill_q = $conn->query("SELECT DATE_FORMAT(COALESCE(issue_date, created_at), '%Y-%m') ym, SUM(amount) total FROM invoices WHERE user_id = $user_id AND estate_id = $estate_id AND COALESCE(issue_date, created_at) >= DATE_SUB(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 5 MONTH) GROUP BY ym");
+if ($bill_q) while ($b = $bill_q->fetch_assoc()) if (isset($series[$b['ym']])) $series[$b['ym']]['billed'] = floatval($b['total']);
+$paid_q = $conn->query("SELECT DATE_FORMAT(COALESCE(paid_at, created_at), '%Y-%m') ym, SUM(amount) total FROM payments WHERE user_id = $user_id AND estate_id = $estate_id AND status = 'paid' AND COALESCE(paid_at, created_at) >= DATE_SUB(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 5 MONTH) GROUP BY ym");
+if ($paid_q) while ($p = $paid_q->fetch_assoc()) if (isset($series[$p['ym']])) $series[$p['ym']]['paid'] = floatval($p['total']);
+$chart_labels = array_column($series, 'label');
+$chart_billed = array_column($series, 'billed');
+$chart_paid = array_column($series, 'paid');
+$chart_paid_mobile = array_values($chart_paid);
+$max_monthly = max(1, max($chart_paid_mobile));
+
+// Latest community chat messages
+$recent_messages = [];
+$msg_q = $conn->query("SELECT c.id, c.user_id, c.message, c.created_at, u.name FROM community_chat c LEFT JOIN users u ON c.user_id = u.id WHERE c.estate_id = $estate_id ORDER BY c.id DESC LIMIT 4");
+if ($msg_q) while ($m = $msg_q->fetch_assoc()) $recent_messages[] = $m;
+
+// Latest invoices
+$recent_invoices = [];
+$inv_q = $conn->query("SELECT id, invoice_number, title, amount, balance, status, issue_date, due_date, created_at FROM invoices WHERE user_id = $user_id AND estate_id = $estate_id ORDER BY id DESC LIMIT 5");
+if ($inv_q) while ($iv = $inv_q->fetch_assoc()) $recent_invoices[] = $iv;
+
 include 'header.php';
 include 'sidebar.php';
 ?>
@@ -214,9 +244,8 @@ include 'sidebar.php';
         </div>
         <div class="mobile-bar-chart-body">
             <?php 
-            $months_short = ['Feb','Mar','Apr','May','Jun','Jul'];
-            for ($m_idx = 2; $m_idx <= 7; $m_idx++):
-                $val = $monthly_payments[$m_idx] ?? 0;
+            foreach ($chart_labels as $m_idx => $m_label):
+                $val = $chart_paid_mobile[$m_idx] ?? 0;
                 $pct = ($val / $max_monthly) * 100;
                 if ($pct < 12 && $val > 0) $pct = 12;
                 if ($val == 0) $pct = 10;
@@ -225,9 +254,9 @@ include 'sidebar.php';
                     <div class="mobile-bar-track">
                         <div class="mobile-bar-fill" style="height: <?= max(8, min(100, $pct)) ?>%;"></div>
                     </div>
-                    <span class="mobile-bar-month"><?= $months_short[$m_idx - 2] ?></span>
+                    <span class="mobile-bar-month"><?= htmlspecialchars($m_label) ?></span>
                 </div>
-            <?php endfor; ?>
+            <?php endforeach; ?>
         </div>
     </div>
 
@@ -253,8 +282,8 @@ include 'sidebar.php';
                 $link = 'finance';
                 if ($act['type'] === 'visitor') {
                     $icon = 'fa-solid fa-id-badge';
-                    $icon_bg = 'rgba(37, 99, 235, 0.12)';
-                    $icon_c = '#2563eb';
+                    $icon_bg = 'rgba(107, 78, 255, 0.12)';
+                    $icon_c = '#6b4eff';
                     $link = 'visitors';
                 } elseif ($act['type'] === 'maintenance') {
                     $icon = 'fa-solid fa-screwdriver-wrench';
@@ -390,295 +419,361 @@ include 'sidebar.php';
     <?php endif; ?>
 
     <!-- ==========================================
-         FUTURISTIC KPI CARDS (4 PILLARS)
+         ROW 1: 3 METRIC CARDS (live resident data)
          ========================================== -->
-    <div class="row g-3">
-        <!-- Pillar 1: Outstanding Balance -->
-        <div class="col-12 col-sm-6 col-xl-3">
-            <div class="resident-kpi-card kpi-accent-danger h-100">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <span class="kpi-title">Outstanding Balance</span>
-                    <div class="kpi-icon-wrap" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border-color: rgba(239, 68, 68, 0.25);">
-                        <i class="fa-solid fa-file-invoice-dollar"></i>
-                    </div>
+    <div class="ds-metrics-grid">
+        <!-- Card 1: My Residence -->
+        <div class="ds-metric-card">
+            <div class="ds-metric-card-head">
+                <h3 class="ds-metric-title">My residence <i class="fa-regular fa-circle-question" title="Assigned residence and tenancy"></i></h3>
+                <a href="property" class="ds-see-details-btn">See Details</a>
+            </div>
+            <div class="ds-metric-body">
+                <div class="ds-metric-info-circle">i</div>
+                <div class="ds-metric-value"><?= !empty($resident_info['flat_number']) ? 'Flat ' . htmlspecialchars($resident_info['flat_number']) : 'Not assigned' ?></div>
+                <span class="ds-metric-trend-pill up">
+                    <i class="fa-solid fa-circle-check"></i> <?= htmlspecialchars(ucfirst($tenancy['status'] ?? (!empty($resident_info['flat_id']) ? 'Active' : 'Pending'))) ?>
+                </span>
+            </div>
+            <div class="ds-metric-chart-row">
+                <div class="ds-metric-sparkline">
+                    <svg viewBox="0 0 300 70" preserveAspectRatio="none">
+                        <defs>
+                            <linearGradient id="resPurpleWaveGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#6366f1" stop-opacity="0.25" />
+                                <stop offset="100%" stop-color="#6366f1" stop-opacity="0.0" />
+                            </linearGradient>
+                        </defs>
+                        <path d="M 0 50 Q 40 50, 70 20 T 140 25 T 210 50 T 260 55 L 300 55 L 300 70 L 0 70 Z" fill="url(#resPurpleWaveGrad)" />
+                        <path d="M 0 50 Q 40 50, 70 20 T 140 25 T 210 50 T 260 55 L 300 55" fill="none" stroke="#6366f1" stroke-width="2.5" stroke-linecap="round" />
+                    </svg>
                 </div>
-                <div class="kpi-value text-danger" style="font-size: 1.85rem; font-weight: 800; letter-spacing: -0.02em;">
-                    ₦<?= number_format($finance_stats['outstanding_balance'], 2) ?>
-                </div>
-                <div class="kpi-meta justify-content-between mt-2 pt-2 border-top border-light-subtle">
-                    <span>Pending: <strong><?= $unpaid_invoices_cnt ?> Invoices</strong></span>
-                    <a href="finance" class="text-decoration-none text-danger small fw-semibold">Pay Now &rarr;</a>
+                <div class="ds-metric-caption">
+                    <?= htmlspecialchars(trim(($resident_info['building_name'] ?? '') . (!empty($resident_info['street_name']) ? ', ' . $resident_info['street_name'] : ''), ', ') ?: 'No property linked yet') ?><br>
+                    <strong><?= intval($co_residents_count) ?></strong> member(s) &bull; <strong><?= intval($vehicles_count) ?></strong> vehicle(s)
                 </div>
             </div>
         </div>
 
-        <!-- Pillar 2: Total Settled -->
-        <div class="col-12 col-sm-6 col-xl-3">
-            <div class="resident-kpi-card kpi-accent-success h-100">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <span class="kpi-title">Total Payments Settled</span>
-                    <div class="kpi-icon-wrap" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border-color: rgba(16, 185, 129, 0.25);">
-                        <i class="fa-solid fa-circle-check"></i>
-                    </div>
+        <!-- Card 2: Total Paid -->
+        <div class="ds-metric-card">
+            <div class="ds-metric-card-head">
+                <h3 class="ds-metric-title">Total paid <i class="fa-regular fa-circle-question" title="Settled payments and receipts"></i></h3>
+                <a href="receipts" class="ds-see-details-btn">See Details</a>
+            </div>
+            <div class="ds-metric-body">
+                <div class="ds-metric-info-circle">i</div>
+                <div class="ds-metric-value">₦<?= number_format($total_paid_payments) ?></div>
+                <span class="ds-metric-trend-pill up">
+                    <i class="fa-solid fa-receipt"></i> <?= intval($paid_count) ?> payment<?= $paid_count == 1 ? '' : 's' ?>
+                </span>
+            </div>
+            <div class="ds-metric-chart-row">
+                <div class="ds-metric-sparkline">
+                    <svg viewBox="0 0 300 70" preserveAspectRatio="none">
+                        <defs>
+                            <linearGradient id="resGreenWaveGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#10b981" stop-opacity="0.25" />
+                                <stop offset="100%" stop-color="#10b981" stop-opacity="0.0" />
+                            </linearGradient>
+                        </defs>
+                        <path d="M 0 52 Q 35 22, 60 25 T 120 48 T 170 18 T 225 52 T 265 40 L 300 55 L 300 70 L 0 70 Z" fill="url(#resGreenWaveGrad)" />
+                        <path d="M 0 52 Q 35 22, 60 25 T 120 48 T 170 18 T 225 52 T 265 40 L 300 55" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" />
+                    </svg>
                 </div>
-                <div class="kpi-value text-success" style="font-size: 1.85rem; font-weight: 800; letter-spacing: -0.02em;">
-                    ₦<?= number_format($total_paid_payments, 2) ?>
-                </div>
-                <div class="kpi-meta justify-content-between mt-2 pt-2 border-top border-light-subtle">
-                    <span>Verified Receipts</span>
-                    <a href="receipts" class="text-decoration-none text-success small fw-semibold">View Proof &rarr;</a>
+                <div class="ds-metric-caption">
+                    Verified cleared payments<br>
+                    <?php if ($last_payment_date): ?>last on <strong><?= date('M j, Y', strtotime($last_payment_date)) ?></strong><?php else: ?><strong>No payments yet</strong><?php endif; ?>
                 </div>
             </div>
         </div>
 
-        <!-- Pillar 3: Next Schedule -->
-        <div class="col-12 col-sm-6 col-xl-3">
-            <div class="resident-kpi-card kpi-accent-primary h-100">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <span class="kpi-title">Next Payment Schedule</span>
-                    <div class="kpi-icon-wrap" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border-color: rgba(59, 130, 246, 0.25);">
-                        <i class="fa-regular fa-calendar-check"></i>
-                    </div>
-                </div>
-                <div class="kpi-value text-primary" style="font-size: 1.45rem; font-weight: 700; margin: 0.4rem 0;">
-                    <?= $finance_stats['next_due_date'] ? date('M j, Y', strtotime($finance_stats['next_due_date'])) : 'All Clear' ?>
-                </div>
-                <div class="kpi-meta justify-content-between mt-2 pt-2 border-top border-light-subtle">
-                    <span>Auto Estate Assessment</span>
-                    <span class="mature-badge mature-badge-sky"><i class="fa-solid fa-clock me-1"></i>Scheduled</span>
-                </div>
+        <!-- Card 3: Outstanding Balance -->
+        <div class="ds-metric-card">
+            <div class="ds-metric-card-head">
+                <h3 class="ds-metric-title">Outstanding balance <i class="fa-regular fa-circle-question" title="Unpaid estate dues and invoices"></i></h3>
+                <a href="finance" class="ds-see-details-btn">See Details</a>
             </div>
-        </div>
-
-        <!-- Pillar 4: Visitor Flow Radar -->
-        <div class="col-12 col-sm-6 col-xl-3">
-            <div class="resident-kpi-card kpi-accent-purple h-100">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <span class="kpi-title">Visitor Passes Radar</span>
-                    <div class="kpi-icon-wrap" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6; border-color: rgba(139, 92, 246, 0.25);">
-                        <i class="fa-solid fa-id-badge"></i>
-                    </div>
+            <div class="ds-metric-body">
+                <div class="ds-metric-info-circle">i</div>
+                <div class="ds-metric-value">₦<?= number_format($outstanding_balance) ?></div>
+                <span class="ds-metric-trend-pill <?= $outstanding_balance > 0 ? 'down' : 'up' ?>">
+                    <i class="fa-solid <?= $outstanding_balance > 0 ? 'fa-hourglass-half' : 'fa-circle-check' ?>"></i>
+                    <?= $outstanding_balance > 0 ? intval($unpaid_invoices_cnt) . ' unpaid' : 'Cleared' ?>
+                </span>
+            </div>
+            <div class="ds-metric-chart-row">
+                <div class="ds-metric-sparkline">
+                    <svg viewBox="0 0 300 70" preserveAspectRatio="none">
+                        <defs>
+                            <linearGradient id="resOrangeWaveGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#f97316" stop-opacity="0.25" />
+                                <stop offset="100%" stop-color="#f97316" stop-opacity="0.0" />
+                            </linearGradient>
+                        </defs>
+                        <path d="M 0 55 Q 50 55, 95 38 T 175 20 T 240 45 L 300 52 L 300 70 L 0 70 Z" fill="url(#resOrangeWaveGrad)" />
+                        <path d="M 0 55 Q 50 55, 95 38 T 175 20 T 240 45 L 300 52" fill="none" stroke="#f97316" stroke-width="2.5" stroke-linecap="round" />
+                    </svg>
                 </div>
-                <div class="kpi-value" style="color: #7c3aed; font-size: 1.85rem; font-weight: 800; letter-spacing: -0.02em;">
-                    <?= number_format($visitor_stats['visitors_this_month'] ?? 0) ?> <span style="font-size: 0.95rem; font-weight: 500; color: #64748b;">This Month</span>
-                </div>
-                <div class="kpi-meta justify-content-between mt-2 pt-2 border-top border-light-subtle">
-                    <span>Total: <strong><?= number_format($visitor_stats['total_visitors'] ?? 0) ?> Passes</strong></span>
-                    <a href="visitors" class="text-decoration-none small fw-semibold" style="color: #7c3aed;">Manage &rarr;</a>
+                <div class="ds-metric-caption">
+                    Pending estate dues<br>
+                    <?php if ($outstanding_balance > 0 && $next_due_date): ?>next due <strong><?= date('M j, Y', strtotime($next_due_date)) ?></strong><?php else: ?><strong>All clear</strong><?php endif; ?>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- ==========================================
-         MAIN CONTENT & ANALYTICS SECTION (2 COLUMNS)
+         ROW 2: DUAL PANELS (Payment chart + Community messages)
          ========================================== -->
-    <div class="row g-4">
-        <!-- Left Column: Visual Payment Velocity & Household -->
-        <div class="col-12 col-lg-8 d-flex flex-column gap-4">
-            <!-- Payment Velocity Chart -->
-            <div class="resident-glass-panel">
-                <div class="resident-card-header">
-                    <div class="resident-card-title">
-                        <i class="fa-solid fa-chart-column text-primary"></i> <?= $current_year ?> Payment Collection Velocity
-                    </div>
-                    <span class="mature-badge mature-badge-slate"><i class="fa-regular fa-calendar me-1"></i> Monthly Realized</span>
+    <div class="ds-overview-grid">
+        <div class="ds-card-panel">
+            <div class="ds-panel-header">
+                <div class="ds-panel-title-group">
+                    <h4>Payment overview</h4>
+                    <p class="ds-panel-subtitle">Billed vs paid &bull; last 6 months</p>
                 </div>
-                <div class="resident-card-body">
-                    <div class="resident-chart-container">
-                        <?php 
-                        $months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-                        for($i=1; $i<=12; $i++): 
-                            $val = $monthly_payments[$i];
-                            $height_pct = ($val / $max_monthly) * 100;
-                            if ($height_pct < 6 && $val > 0) $height_pct = 6;
-                        ?>
-                            <div class="resident-bar-group">
-                                <div class="resident-bar" style="height: <?= max(4, $height_pct) ?>%;" data-val="₦<?= number_format($val) ?>"></div>
-                                <div class="resident-bar-label"><?= $months[$i-1] ?></div>
-                            </div>
-                        <?php endfor; ?>
+                <div class="ds-panel-controls">
+                    <div class="ds-chart-legend">
+                        <span class="ds-chart-legend-item"><span class="ds-legend-dot purple"></span> Billed</span>
+                        <span class="ds-chart-legend-item"><span class="ds-legend-dot green"></span> Paid</span>
                     </div>
                 </div>
             </div>
-
-            <!-- Household Overview -->
-            <div class="resident-glass-panel">
-                <div class="resident-card-header">
-                    <div class="resident-card-title">
-                        <i class="fa-solid fa-house-user text-primary"></i> Household & Unit Occupancy Overview
-                    </div>
-                    <a href="property" class="btn btn-sm btn-outline-primary rounded-pill px-3" style="font-size: 0.8rem;">
-                        View Property File <i class="fa-solid fa-arrow-right ms-1"></i>
-                    </a>
-                </div>
-                <div class="resident-card-body">
-                    <div class="row g-3">
-                        <div class="col-12 col-sm-6">
-                            <div class="p-3 rounded-3 d-flex align-items-center gap-3 border" style="background: rgba(59, 130, 246, 0.05); border-color: rgba(59, 130, 246, 0.2) !important;">
-                                <div class="kpi-icon-wrap" style="background: rgba(59, 130, 246, 0.15); color: #2563eb; width: 50px; height: 50px; font-size: 1.35rem;">
-                                    <i class="fa-solid fa-users"></i>
-                                </div>
-                                <div>
-                                    <div class="fw-bold fs-4 m-0 text-slate-900"><?= $co_residents_count ?></div>
-                                    <div class="small text-secondary fw-semibold">Active Unit Occupants</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-12 col-sm-6">
-                            <div class="p-3 rounded-3 d-flex align-items-center gap-3 border" style="background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.2) !important;">
-                                <div class="kpi-icon-wrap" style="background: rgba(16, 185, 129, 0.15); color: #059669; width: 50px; height: 50px; font-size: 1.35rem;">
-                                    <i class="fa-solid fa-car"></i>
-                                </div>
-                                <div>
-                                    <div class="fw-bold fs-4 m-0 text-slate-900"><?= $vehicles_count ?></div>
-                                    <div class="small text-secondary fw-semibold">Registered Vehicles</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="ds-chart-container">
+                <canvas id="residentRevenueSplineChart"></canvas>
             </div>
         </div>
 
-        <!-- Right Column: Announcements & Quick Actions -->
-        <div class="col-12 col-lg-4 d-flex flex-column gap            <!-- Estate Announcements & Zonal Notices Feed -->
-            <div class="resident-glass-panel">
-                <div class="resident-card-header d-flex justify-content-between align-items-center">
-                    <div class="resident-card-title">
-                        <i class="fa-solid fa-bullhorn text-warning"></i> Estate Notices &amp; Broadcasts
-                    </div>
-                    <a href="notices" class="mature-badge mature-badge-amber text-decoration-none" style="cursor: pointer;">
-                        View All <i class="fa-solid fa-arrow-right ms-1 small"></i>
+        <div class="ds-card-panel">
+            <div class="ds-panel-header">
+                <div class="ds-panel-title-group">
+                    <h4>Community</h4>
+                    <p class="ds-panel-subtitle">Latest estate conversations</p>
+                </div>
+            </div>
+
+            <div class="ds-messages-list">
+                <?php if (!empty($recent_messages)): ?>
+                    <?php
+                    $avatar_classes = ['navy', 'purple', 'orange', 'green'];
+                    foreach ($recent_messages as $mi => $msg):
+                        $m_name = trim($msg['name'] ?? '') ?: 'Resident';
+                        $parts = preg_split('/\s+/', $m_name);
+                        $m_init = strtoupper(substr($parts[0], 0, 1) . (isset($parts[1]) ? substr($parts[1], 0, 1) : ''));
+                        $secs = max(0, time() - strtotime($msg['created_at']));
+                        if ($secs < 60) $ago = 'just now';
+                        elseif ($secs < 3600) $ago = floor($secs / 60) . ' min ago';
+                        elseif ($secs < 86400) $ago = floor($secs / 3600) . ' hr' . (floor($secs / 3600) > 1 ? 's' : '') . ' ago';
+                        else $ago = floor($secs / 86400) . ' day' . (floor($secs / 86400) > 1 ? 's' : '') . ' ago';
+                    ?>
+                    <a href="community_chat" class="ds-message-item">
+                        <div class="ds-message-avatar <?= $avatar_classes[$mi % 4] ?>"><?= htmlspecialchars($m_init) ?></div>
+                        <div class="ds-message-info">
+                            <div class="ds-message-name"><?= htmlspecialchars($m_name) ?><?= intval($msg['user_id']) === $user_id ? ' (You)' : '' ?></div>
+                            <div class="ds-message-preview"><?= htmlspecialchars(mb_strimwidth($msg['message'], 0, 60, '…')) ?></div>
+                        </div>
+                        <div class="ds-message-meta">
+                            <span class="ds-message-time"><?= $ago ?></span>
+                        </div>
                     </a>
-                </div>
-                <div class="resident-card-body p-3">
-                    <?php if ($announcements && $announcements->num_rows > 0): ?>
-                        <div class="d-flex flex-column gap-3">
-                            <?php while ($ann = $announcements->fetch_assoc()): ?>
-                                <div class="p-3 rounded-4 border bg-white-subtle notice-card-item position-relative" style="border-color: rgba(226, 232, 240, 0.85) !important; cursor: pointer; transition: all 0.2s ease; overflow: hidden; box-sizing: border-box;" onclick='openNoticeModal(<?php echo json_encode($ann); ?>)'>
-                                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-1 mb-1.5">
-                                        <div class="d-flex align-items-center gap-1 flex-wrap">
-                                            <?php if (!empty($ann['zone_id'])): ?>
-                                                <span class="mature-badge" style="background: rgba(168, 85, 247, 0.12); color: #7e22ce; font-size: 0.68rem; padding: 0.15rem 0.45rem;">
-                                                    <i class="fa-solid fa-layer-group me-1"></i><?= htmlspecialchars($ann['zone_name'] ?? 'Zonal Notice') ?>
-                                                </span>
-                                            <?php else: ?>
-                                                <span class="mature-badge mature-badge-amber" style="font-size: 0.68rem; padding: 0.15rem 0.45rem;">
-                                                    <i class="fa-solid fa-globe me-1"></i>Estate Broadcast
-                                                </span>
-                                            <?php endif; ?>
-
-                                            <?php if ($ann['priority'] == 'urgent'): ?>
-                                                <span class="mature-badge mature-badge-crimson" style="font-size: 0.68rem; padding: 0.15rem 0.45rem;">
-                                                    <i class="fa-solid fa-triangle-exclamation me-1"></i>URGENT
-                                                </span>
-                                            <?php endif; ?>
-
-                                            <?php if (!empty($ann['pin_to_top'])): ?>
-                                                <i class="fa-solid fa-thumbtack text-primary ms-1" style="font-size: 0.72rem;" title="Pinned Notice"></i>
-                                            <?php endif; ?>
-                                        </div>
-                                        <span class="small text-secondary flex-shrink-0" style="font-size: 0.72rem;">
-                                            <i class="fa-regular fa-clock me-1"></i> <?= date('M j, Y', strtotime($ann['created_at'])) ?>
-                                        </span>
-                                    </div>
-                                    <h6 class="fw-bold mb-1 text-slate-900 text-truncate" style="font-size: 0.92rem;"><?= htmlspecialchars($ann['title']) ?></h6>
-                                    <p class="small text-secondary m-0 text-truncate" style="line-height: 1.4;"><?= htmlspecialchars($ann['content']) ?></p>
-                                </div>
-                            <?php endwhile; ?>
-                        </div>
-                    <?php else: ?>
-                        <div class="text-center py-4 text-secondary small">
-                            <i class="fa-regular fa-bell-slash fs-4 d-block mb-2 text-muted"></i>
-                            No recent estate notices or broadcast alerts.
-                        </div>
-                    <?php endif; ?>
-                </div>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <div class="text-center text-muted small py-5">
+                        <i class="fa-regular fa-comments fs-2 d-block mb-2"></i>
+                        No community messages yet.<br>Start the conversation!
+                    </div>
+                <?php endif; ?>
             </div>
 
-            <!-- Futuristic Quick Actions Dock -->
-            <div class="resident-glass-panel">
-                <div class="resident-card-header">
-                    <div class="resident-card-title">
-                        <i class="fa-solid fa-bolt text-danger"></i> Quick Operations Dock
-                    </div>
-                </div>
-                <div class="resident-card-body">
-                    <div class="resident-quick-dock">
-                        <a href="notices" class="resident-dock-item dock-item-purple">
-                            <span class="d-flex align-items-center gap-2">
-                                <i class="fa-solid fa-bullhorn"></i> View All Notices &amp; Broadcasts
-                            </span>
-                            <i class="fa-solid fa-chevron-right small"></i>
-                        </a>
-                        <a href="visitors?action=new" class="resident-dock-item dock-item-primary">
-                            <span class="d-flex align-items-center gap-2">
-                                <i class="fa-solid fa-user-plus"></i> Pre-register Visitor Access
-                            </span>
-                            <i class="fa-solid fa-chevron-right small"></i>
-                        </a>
-                        <a href="report_issue" class="resident-dock-item dock-item-amber">
-                            <span class="d-flex align-items-center gap-2">
-                                <i class="fa-solid fa-screwdriver-wrench"></i> Log Maintenance Ticket
-                            </span>
-                            <i class="fa-solid fa-chevron-right small"></i>
-                        </a>
-                        <a href="community_chat" class="resident-dock-item dock-item-primary">
-                            <span class="d-flex align-items-center gap-2">
-                                <i class="fa-solid fa-comments"></i> Resident Community Forum
-                            </span>
-                            <i class="fa-solid fa-chevron-right small"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Resident Platform Value & Privileges Hub -->
-            <div class="resident-glass-panel">
-                <div class="resident-card-header">
-                    <div class="resident-card-title">
-                        <i class="fa-solid fa-gem text-primary"></i> Resident Lifestyle Privileges
-                    </div>
-                    <span class="mature-badge mature-badge-sky"><i class="fa-solid fa-shield-check me-1"></i>Verified Home</span>
-                </div>
-                <div class="resident-card-body p-3">
-                    <div class="d-flex flex-column gap-2.5">
-                        <div class="d-flex align-items-center gap-2.5 p-2 rounded-3" style="background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.15);">
-                            <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(59, 130, 246, 0.15); color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0;">
-                                <i class="fa-solid fa-qrcode"></i>
-                            </div>
-                            <div style="flex: 1; min-width: 0;">
-                                <div class="fw-bold text-slate-900" style="font-size: 0.82rem;">Express QR Gate Passes</div>
-                                <div class="text-secondary" style="font-size: 0.72rem;">Guests clear gatehouse in &lt; 5 seconds with instant arrival alerts.</div>
-                            </div>
-                        </div>
-
-                        <div class="d-flex align-items-center gap-2.5 p-2 rounded-3" style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.15);">
-                            <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(16, 185, 129, 0.15); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0;">
-                                <i class="fa-solid fa-wrench"></i>
-                            </div>
-                            <div style="flex: 1; min-width: 0;">
-                                <div class="fw-bold text-slate-900" style="font-size: 0.82rem;">Accredited Artisan Network</div>
-                                <div class="text-secondary" style="font-size: 0.72rem;">Admin-vetted tradesmen with transparent pricing &amp; priority gate badges.</div>
-                            </div>
-                        </div>
-
-                        <div class="d-flex align-items-center gap-2.5 p-2 rounded-3" style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.15);">
-                            <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(245, 158, 11, 0.15); color: #d97706; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0;">
-                                <i class="fa-solid fa-phone-volume"></i>
-                            </div>
-                            <div style="flex: 1; min-width: 0;">
-                                <div class="fw-bold text-slate-900" style="font-size: 0.82rem;">24/7 Gatehouse Security Hotlines</div>
-                                <div class="text-secondary" style="font-size: 0.72rem;">Direct phone line to armed gatehouse officers without siren panic alarms.</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <a href="community_chat" class="ds-view-all-messages-btn">
+                Open community chat <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.72rem;"></i>
+            </a>
         </div>
     </div>
+
+    <!-- ==========================================
+         ROW 3: RECENT INVOICES (live)
+         ========================================== -->
+    <div class="ds-property-table-card">
+        <div class="ds-panel-header mb-3">
+            <div class="ds-panel-title-group">
+                <h4>Recent invoices</h4>
+                <p class="ds-panel-subtitle">Your latest estate dues &amp; levies</p>
+            </div>
+            <a href="finance" class="ds-pill-dropdown">
+                <i class="fa-solid fa-arrow-right"></i> All bills
+            </a>
+        </div>
+
+        <?php if (!empty($recent_invoices)): ?>
+            <?php foreach ($recent_invoices as $inv):
+                $inv_status = strtolower($inv['status']);
+                $inv_badge = $inv_status === 'paid' ? 'mature-badge-emerald' : (($inv_status === 'overdue') ? 'mature-badge-crimson' : 'mature-badge-amber');
+                $inv_grad = $inv_status === 'paid' ? 'linear-gradient(135deg,#10b981,#34d399)' : 'linear-gradient(135deg,#f59e0b,#fbbf24)';
+            ?>
+            <div class="ds-property-row">
+                <div class="ds-property-info-cell">
+                    <div class="ds-property-thumb" style="background: <?= $inv_grad ?>; display: grid; place-items: center; color: #fff;">
+                        <i class="fa-solid fa-file-invoice"></i>
+                    </div>
+                    <div class="ds-property-details">
+                        <h5><?= htmlspecialchars($inv['title'] ?: 'Estate charge') ?></h5>
+                        <span><?= htmlspecialchars($inv['invoice_number'] ?: ('INV-' . $inv['id'])) ?></span>
+                    </div>
+                </div>
+                <div class="ds-property-col-cell">
+                    <small>Issued</small>
+                    <span><?= date('j M Y', strtotime($inv['issue_date'] ?: $inv['created_at'])) ?></span>
+                </div>
+                <div class="ds-property-col-cell">
+                    <small>Due</small>
+                    <span><?= $inv['due_date'] ? date('j M Y', strtotime($inv['due_date'])) : '—' ?></span>
+                </div>
+                <div class="ds-property-col-cell">
+                    <small>Amount</small>
+                    <span>₦<?= number_format($inv['amount'], 2) ?></span>
+                </div>
+                <div class="ds-property-col-cell">
+                    <small>Balance</small>
+                    <span>₦<?= number_format($inv['balance'], 2) ?></span>
+                </div>
+                <div class="ds-property-col-cell">
+                    <span class="mature-badge <?= $inv_badge ?>"><?= htmlspecialchars(ucfirst(str_replace('_', ' ', $inv_status))) ?></span>
+                </div>
+                <div>
+                    <a href="finance" class="ds-edit-pill-btn">
+                        <i class="fa-solid <?= $inv_status === 'paid' ? 'fa-eye' : 'fa-credit-card' ?>"></i> <?= $inv_status === 'paid' ? 'View' : 'Pay' ?>
+                    </a>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        <?php else: ?>
+            <div class="text-center py-5 text-muted">
+                <i class="fa-regular fa-file-lines fs-2 d-block mb-2"></i>
+                No invoices have been issued to you yet.
+            </div>
+        <?php endif; ?>
+    </div>
 </div>
+
+<!-- Chart.js Engine for Dual Area Spline Chart -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('residentRevenueSplineChart');
+    if (!ctx) return;
+
+    const chartCtx = ctx.getContext('2d');
+
+    // Expense Purple Gradient
+    const purpleGrad = chartCtx.createLinearGradient(0, 0, 0, 240);
+    purpleGrad.addColorStop(0, 'rgba(99, 102, 241, 0.28)');
+    purpleGrad.addColorStop(1, 'rgba(99, 102, 241, 0.0)');
+
+    // Income Green Gradient
+    const greenGrad = chartCtx.createLinearGradient(0, 0, 0, 240);
+    greenGrad.addColorStop(0, 'rgba(16, 185, 129, 0.22)');
+    greenGrad.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: <?= json_encode($chart_labels) ?>,
+            datasets: [
+                {
+                    label: 'Billed',
+                    data: <?= json_encode($chart_billed) ?>,
+                    borderColor: '#6366f1',
+                    borderWidth: 2.5,
+                    backgroundColor: purpleGrad,
+                    fill: true,
+                    tension: 0.45,
+                    pointRadius: 0,
+                    pointHoverRadius: 6,
+                    pointHoverBackgroundColor: '#6366f1',
+                    pointHoverBorderColor: '#ffffff',
+                    pointHoverBorderWidth: 2
+                },
+                {
+                    label: 'Paid',
+                    data: <?= json_encode($chart_paid) ?>,
+                    borderColor: '#10b981',
+                    borderWidth: 2,
+                    borderDash: [5, 4],
+                    backgroundColor: greenGrad,
+                    fill: true,
+                    tension: 0.45,
+                    pointRadius: 0,
+                    pointHoverRadius: 5,
+                    pointHoverBackgroundColor: '#10b981',
+                    pointHoverBorderColor: '#ffffff',
+                    pointHoverBorderWidth: 2
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.88)',
+                    titleColor: '#ffffff',
+                    bodyColor: '#e2e8f0',
+                    padding: 10,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ₦' + Number(context.parsed.y).toLocaleString();
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false,
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#94a3b8',
+                        font: {
+                            family: 'Outfit, sans-serif',
+                            size: 11
+                        }
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        maxTicksLimit: 5,
+                        color: '#94a3b8',
+                        font: {
+                            family: 'Outfit, sans-serif',
+                            size: 11
+                        },
+                        callback: function(value) {
+                            if (value === 0) return '';
+                            return '₦' + (value >= 1000 ? (value / 1000) + 'K' : value);
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(226, 232, 240, 0.65)',
+                        drawBorder: false
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
 
 <!-- Notice Details Modal -->
 <div id="resNoticeModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.75); z-index: 1050; align-items: center; justify-content: center; backdrop-filter: blur(8px);">
@@ -718,7 +813,7 @@ function openNoticeModal(ann) {
 
     const scopeEl = document.getElementById('resModalScopeBadge');
     if (ann.zone_id && ann.zone_name) {
-        scopeEl.innerHTML = `<span class="mature-badge" style="background: rgba(168, 85, 247, 0.15); color: #7e22ce;"><i class="fa-solid fa-layer-group me-1"></i>Notice from ${ann.zone_name}</span>`;
+        scopeEl.innerHTML = `<span class="mature-badge" style="background: rgba(107, 78, 255, 0.15); color: #6b4eff;"><i class="fa-solid fa-layer-group me-1"></i>Notice from ${ann.zone_name}</span>`;
     } else {
         scopeEl.innerHTML = `<span class="mature-badge mature-badge-amber"><i class="fa-solid fa-globe me-1"></i>Estate Broadcast</span>`;
     }

@@ -76,6 +76,7 @@ $primary_rgb = hex2rgb($primary);
     <link rel="stylesheet" href="../css/estate_glassmorphism.css?v=<?php echo ASSET_VER; ?>">
     <link rel="stylesheet" href="../css/mobile_app.css?v=<?php echo ASSET_VER; ?>">
     <link rel="stylesheet" href="../css/hotline.css?v=<?php echo ASSET_VER; ?>">
+    <link rel="stylesheet" href="../css/dashboard-theme.css?v=<?php echo ASSET_VER; ?>">
     
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">

@@ -1,6 +1,9 @@
-    </div> <!-- /super-content-body -->
-</main> <!-- /super-main -->
-</div> <!-- /super-layout -->
+<?php
+// superadmin/includes/super_footer.php
+?>
+    </div> <!-- /content-wrapper -->
+</main> <!-- /main-content -->
+</div> <!-- /app-container -->
 
 <!-- Toast Notification Container -->
 <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11000">
@@ -17,14 +20,17 @@
 <?php sa_confirm_modal(); ?>
 <!-- Bootstrap 5 Bundle -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../js/theme.js"></script>
 
 <script>
 function toggleSuperSidebar() {
-    const sb = document.getElementById('super-sidebar');
-    const bd = document.getElementById('sidebarBackdrop');
-    if (sb) sb.classList.toggle('show');
-    if (bd) bd.classList.toggle('show');
+    const sb = document.querySelector('.sidebar');
+    if (sb) sb.classList.toggle('active');
 }
+document.addEventListener('DOMContentLoaded', function() {
+    const toggler = document.querySelector('.toggle-sidebar');
+    if (toggler) toggler.addEventListener('click', toggleSuperSidebar);
+});
 
 const toastEl = document.getElementById('saasToast');
 let saasToastInstance = null;

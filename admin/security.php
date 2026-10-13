@@ -13,9 +13,6 @@ require_once '../includes/vehicle_helper.php';
 requirePermission('visitors.view_log');
 requireModule('visitor_passes');
 
-include '../includes/header.php';
-include '../includes/sidebar.php';
-
 $estate_id = get_estate_id();
 $user_id = $_SESSION['user_id'];
 
@@ -335,6 +332,9 @@ $vehicle_logs_admin = $conn->query("
     WHERE vgl.estate_id = $estate_id
     ORDER BY vgl.logged_at DESC LIMIT 30
 ");
+
+include '../includes/header.php';
+include '../includes/sidebar.php';
 ?>
 
 <!-- Enterprise Hero Header (Image 3 Style) -->

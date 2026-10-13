@@ -27,6 +27,7 @@ if (!isset($_SESSION['user_id'])) {
     <link rel="stylesheet" href="../css/estate_glassmorphism.css?v=<?php echo ASSET_VER; ?>">
     <link rel="stylesheet" href="../css/mobile_app.css?v=<?php echo ASSET_VER; ?>">
     <link rel="stylesheet" href="../css/hotline.css?v=<?php echo ASSET_VER; ?>">
+    <link rel="stylesheet" href="../css/dashboard-theme.css?v=<?php echo ASSET_VER; ?>">
     
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -48,7 +49,7 @@ if (!isset($_SESSION['user_id'])) {
     <?php require_once __DIR__ . '/../includes/mobile_nav.php'; ?>
 
     <?php
-    $theme_color = '#7e22ce'; // Purple theme for Zone Admin
+    $theme_color = '#6b4eff'; // Purple theme for Zone Admin
     if (!function_exists('adjustBrightness')) {
         function adjustBrightness($hex, $steps) {
             $steps = max(-255, min(255, $steps));

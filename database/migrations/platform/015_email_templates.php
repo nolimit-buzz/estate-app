@@ -60,12 +60,12 @@ HTML,
 
     foreach ($templates as $tmpl) {
         $key = $tmpl['template_key'];
-        $res = $db->query("SELECT id FROM email_templates WHERE template_key = '$key' LIMIT 1");
+        $res = $db->query("SELECT template_key FROM email_templates WHERE template_key = '$key' LIMIT 1");
         if (!$res || $res->num_rows === 0) {
             $name = $db->real_escape_string($tmpl['name']);
             $subject = $db->real_escape_string($tmpl['subject']);
             $body = $db->real_escape_string($tmpl['body']);
-            $db->query("INSERT INTO email_templates (template_key, name, subject, html_body, is_active, version) VALUES ('$key', '$name', '$subject', '$body', 1, 1)");
+            $db->query("INSERT INTO email_templates (template_key, name, subject, body_html, is_active, version) VALUES ('$key', '$name', '$subject', '$body', 1, 1)");
         }
     }
 

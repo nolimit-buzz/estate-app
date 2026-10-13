@@ -578,9 +578,10 @@ body.dark-mode .surface-flat {
 @media (min-width: 1024px) {
     .content-wrapper {
         padding: var(--space-6) var(--space-8) var(--space-10) var(--space-8) !important;
-        max-width: 1600px;
-        margin: 0 auto;
-        box-sizing: border-box;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
     }
 
     .dashboard-grid-hero {

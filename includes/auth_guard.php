@@ -196,8 +196,11 @@ if (!function_exists('hasPermission')) {
         if (!isset($_SESSION['user_id'])) return false;
         
         $role = $_SESSION['role'] ?? 'resident';
-        if ($role === 'superadmin' || $role === 'admin') return true;
-        
+        if ($role === 'superadmin') return true;
+        // A feature outside the estate's plan can never be exercised, whatever the role grants.
+        if (function_exists('isFeatureEnabled') && !isFeatureEnabled($permission_slug)) return false;
+        if ($role === 'admin') return true;
+
         $estate_id = get_estate_id();
         $permission_slug = $conn->real_escape_string($permission_slug);
         

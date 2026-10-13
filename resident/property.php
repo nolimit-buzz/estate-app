@@ -159,7 +159,7 @@ include 'sidebar.php';
         ?>
             <div class="mobile-activity-item">
                 <div class="mobile-activity-left">
-                    <div class="mobile-activity-icon" style="background: rgba(59, 130, 246, 0.12); color: #2563eb;">
+                    <div class="mobile-activity-icon" style="background: rgba(59, 130, 246, 0.12); color: #6b4eff;">
                         <i class="fa-solid fa-user"></i>
                     </div>
                     <div class="mobile-activity-text">

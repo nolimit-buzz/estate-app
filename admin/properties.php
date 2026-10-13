@@ -4,21 +4,22 @@ require_once '../config.php';
 require_once '../includes/auth_guard.php';
 requireAdminAccess();
 
-include '../includes/header.php';
-include '../includes/sidebar.php';
+
 
 // Helper to handle uploads
-function handleUpload($file) {
-    global $conn;
-    if ($file['error'] == 0) {
-        $target_dir = "../uploads/";
-        if (!is_dir($target_dir)) mkdir($target_dir, 0777, true);
-        $target_file = $target_dir . time() . "_" . basename($file["name"]);
-        if (move_uploaded_file($file["tmp_name"], $target_file)) {
-            return $conn->real_escape_string($target_file);
+if (!function_exists('handleUpload')) {
+    function handleUpload($file) {
+        global $conn;
+        if ($file['error'] == 0) {
+            $target_dir = "../uploads/";
+            if (!is_dir($target_dir)) mkdir($target_dir, 0777, true);
+            $target_file = $target_dir . time() . "_" . basename($file["name"]);
+            if (move_uploaded_file($file["tmp_name"], $target_file)) {
+                return $conn->real_escape_string($target_file);
+            }
         }
+        return null;
     }
-    return null;
 }
 
 if (!function_exists('generateCustomID')) {
@@ -236,9 +237,35 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 // Fetch Data
 $estate_id = get_estate_id();
-$streets = $conn->query("SELECT s.*, z.name as zone_name, z.code as zone_code FROM streets s LEFT JOIN zones z ON s.zone_id = z.id WHERE s.status != 'archived' AND s.estate_id = $estate_id ORDER BY s.name");
-$buildings = $conn->query("SELECT b.*, s.name as street_name FROM buildings b JOIN streets s ON b.street_id = s.id WHERE b.status != 'archived' AND b.estate_id = $estate_id ORDER BY b.name");
-$flats = $conn->query("SELECT f.*, b.name as building_name, b.street_id, s.name as street_name FROM flats f JOIN buildings b ON f.building_id = b.id JOIN streets s ON b.street_id = s.id WHERE f.status != 'archived' AND f.estate_id = $estate_id ORDER BY s.name, b.name, f.number");
+$prop_search = isset($_GET['q']) ? trim($conn->real_escape_string($_GET['q'])) : '';
+$street_search_filter = $prop_search ? " AND s.name LIKE '%$prop_search%' " : "";
+$building_search_filter = $prop_search ? " AND (b.name LIKE '%$prop_search%' OR s.name LIKE '%$prop_search%') " : "";
+$flat_search_filter = $prop_search ? " AND (f.number LIKE '%$prop_search%' OR b.name LIKE '%$prop_search%' OR s.name LIKE '%$prop_search%' OR f.type LIKE '%$prop_search%') " : "";
+
+// Count total flats and paginate
+$flat_page = max(1, intval($_GET['flat_page'] ?? 1));
+$flat_per_page = 35;
+$flat_offset = ($flat_page - 1) * $flat_per_page;
+
+$total_flats_res = $conn->query("SELECT COUNT(*) as cnt FROM flats f JOIN buildings b ON f.building_id = b.id JOIN streets s ON b.street_id = s.id WHERE f.status != 'archived' AND f.estate_id = $estate_id $flat_search_filter");
+$total_flats_count = $total_flats_res ? intval($total_flats_res->fetch_assoc()['cnt'] ?? 0) : 0;
+$total_flat_pages = max(1, ceil($total_flats_count / $flat_per_page));
+
+// Count total buildings and paginate
+$building_page = max(1, intval($_GET['building_page'] ?? 1));
+$building_per_page = 25;
+$building_offset = ($building_page - 1) * $building_per_page;
+
+$total_buildings_res = $conn->query("SELECT COUNT(*) as cnt FROM buildings b JOIN streets s ON b.street_id = s.id WHERE b.status != 'archived' AND b.estate_id = $estate_id $building_search_filter");
+$total_buildings_count = $total_buildings_res ? intval($total_buildings_res->fetch_assoc()['cnt'] ?? 0) : 0;
+$total_building_pages = max(1, ceil($total_buildings_count / $building_per_page));
+
+$streets = $conn->query("SELECT s.*, z.name as zone_name, z.code as zone_code FROM streets s LEFT JOIN zones z ON s.zone_id = z.id WHERE s.status != 'archived' AND s.estate_id = $estate_id $street_search_filter ORDER BY s.name");
+$buildings = $conn->query("SELECT b.*, s.name as street_name FROM buildings b JOIN streets s ON b.street_id = s.id WHERE b.status != 'archived' AND b.estate_id = $estate_id $building_search_filter ORDER BY b.name LIMIT $building_per_page OFFSET $building_offset");
+$flats = $conn->query("SELECT f.*, b.name as building_name, b.street_id, s.name as street_name FROM flats f JOIN buildings b ON f.building_id = b.id JOIN streets s ON b.street_id = s.id WHERE f.status != 'archived' AND f.estate_id = $estate_id $flat_search_filter ORDER BY s.name, b.name, f.number LIMIT $flat_per_page OFFSET $flat_offset");
+
+$street_count = $streets ? $streets->num_rows : 0;
+$building_count = $total_buildings_count;
 
 $all_streets = $conn->query("SELECT * FROM streets WHERE status != 'archived' AND estate_id = $estate_id ORDER BY name");
 $building_types = $conn->query("SELECT * FROM building_types ORDER BY name");
@@ -246,30 +273,39 @@ $building_floor_types = $conn->query("SELECT * FROM building_floor_types ORDER B
 $building_statuses = $conn->query("SELECT * FROM building_statuses ORDER BY name");
 $flat_types = $conn->query("SELECT * FROM flat_types ORDER BY name");
 $flat_statuses = $conn->query("SELECT * FROM flat_statuses ORDER BY name");
+
+include '../includes/header.php';
+include '../includes/sidebar.php';
 ?>
 
-<div class="hero-header-enterprise">
-    <div class="hero-title-group">
+<!-- Header Toolbar -->
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+    <div>
         <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
-            <h1>Property Portfolio &amp; Assets</h1>
-            <span class="mature-badge mature-badge-primary">
-                <i class="fa-solid fa-building me-1"></i> Physical Infrastructure
+            <h1 class="h3 fw-bold mb-0 text-dark">Properties &amp; Units</h1>
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1 small fw-semibold">
+                Portfolio Directory
             </span>
         </div>
-        <div class="hero-meta-strip">
-            <span><i class="fa-solid fa-road me-1"></i> Streets</span>
-            <span>•</span>
-            <span><i class="fa-solid fa-city me-1"></i> Buildings &amp; Compounds</span>
-            <span>•</span>
-            <span><i class="fa-solid fa-door-open me-1"></i> Flats &amp; Units</span>
+        <div class="text-muted small">
+            Streets, buildings &amp; compounds, residential and commercial units
         </div>
     </div>
-    <div class="hero-actions-group">
-        <a href="zones" class="btn-export-ghost">
-            <i class="fa-solid fa-layer-group text-primary"></i> Zones &amp; Sectors
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <button type="button" class="btn btn-primary btn-sm px-3 fw-semibold shadow-sm d-inline-flex align-items-center gap-2" onclick="openModal('street-modal')">
+            <i class="fa-solid fa-road"></i> Add Street
+        </button>
+        <button type="button" class="btn btn-primary btn-sm px-3 fw-semibold shadow-sm d-inline-flex align-items-center gap-2" onclick="openModal('building-modal')">
+            <i class="fa-solid fa-building"></i> Add Property
+        </button>
+        <button type="button" class="btn btn-primary btn-sm px-3 fw-semibold shadow-sm d-inline-flex align-items-center gap-2" onclick="openModal('flat-modal')">
+            <i class="fa-solid fa-door-open"></i> Add Flat
+        </button>
+        <a href="zones" class="btn btn-outline-secondary btn-sm px-3 fw-semibold d-inline-flex align-items-center gap-1">
+            <i class="fa-solid fa-layer-group text-primary"></i> Zones
         </a>
-        <a href="owners" class="btn-export-ghost">
-            <i class="fa-solid fa-id-card-clip text-success"></i> Property Owners
+        <a href="owners" class="btn btn-outline-secondary btn-sm px-3 fw-semibold d-inline-flex align-items-center gap-1">
+            <i class="fa-solid fa-id-card-clip text-success"></i> Owners
         </a>
     </div>
 </div>
@@ -280,81 +316,43 @@ $flat_statuses = $conn->query("SELECT * FROM flat_statuses ORDER BY name");
     </div>
 <?php endif; ?>
 
-<!-- Futuristic Tabs -->
+<!-- Tabs Navigation & Search Bar -->
 <?php $active_tab = $_GET['tab'] ?? 'streets'; ?>
-<div class="futuristic-tabs">
-    <button class="futuristic-tab-btn tab-btn <?php echo $active_tab == 'streets' ? 'active' : ''; ?>" onclick="openTab(event, 'streets')">
-        <i class="fa-solid fa-road"></i> Streets
-    </button>
-    <button class="futuristic-tab-btn tab-btn <?php echo $active_tab == 'buildings' ? 'active' : ''; ?>" onclick="openTab(event, 'buildings')">
-        <i class="fa-solid fa-building"></i> Buildings & Properties
-    </button>
-    <button class="futuristic-tab-btn tab-btn <?php echo $active_tab == 'flats' ? 'active' : ''; ?>" onclick="openTab(event, 'flats')">
-        <i class="fa-solid fa-door-open"></i> Flats
-    </button>
+<div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <div class="nav nav-pills gap-1 p-1 bg-white border rounded-3 shadow-sm">
+        <button class="nav-link py-1.5 px-3 fw-semibold rounded-2 <?php echo $active_tab == 'streets' ? 'active' : ''; ?>" onclick="openTab(event, 'streets')">
+            <i class="fa-solid fa-road me-1.5"></i> Streets <span class="badge <?php echo $active_tab == 'streets' ? 'bg-white text-primary' : 'bg-secondary-subtle text-secondary'; ?> ms-1 rounded-pill"><?php echo $street_count; ?></span>
+        </button>
+        <button class="nav-link py-1.5 px-3 fw-semibold rounded-2 <?php echo $active_tab == 'buildings' ? 'active' : ''; ?>" onclick="openTab(event, 'buildings')">
+            <i class="fa-solid fa-building me-1.5"></i> Buildings &amp; Properties <span class="badge <?php echo $active_tab == 'buildings' ? 'bg-white text-primary' : 'bg-secondary-subtle text-secondary'; ?> ms-1 rounded-pill"><?php echo $building_count; ?></span>
+        </button>
+        <button class="nav-link py-1.5 px-3 fw-semibold rounded-2 <?php echo $active_tab == 'flats' ? 'active' : ''; ?>" onclick="openTab(event, 'flats')">
+            <i class="fa-solid fa-door-open me-1.5"></i> Flats &amp; Units <span class="badge <?php echo $active_tab == 'flats' ? 'bg-white text-primary' : 'bg-secondary-subtle text-secondary'; ?> ms-1 rounded-pill"><?php echo $total_flats_count; ?></span>
+        </button>
+    </div>
+    <form method="get" class="d-flex gap-2" style="max-width: 340px;">
+        <input type="hidden" name="tab" id="active_tab_input" value="<?php echo htmlspecialchars($active_tab); ?>">
+        <div class="input-group input-group-sm">
+            <input type="text" name="q" value="<?php echo htmlspecialchars($prop_search); ?>" class="form-control" placeholder="Search portfolio...">
+            <button class="btn btn-outline-secondary" type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+            <?php if ($prop_search): ?>
+                <a href="?tab=<?php echo urlencode($active_tab); ?>" class="btn btn-outline-danger"><i class="fa-solid fa-times"></i></a>
+            <?php endif; ?>
+        </div>
+    </form>
 </div>
 
-<!-- Streets Tab -->
+<!-- ==========================================
+     TAB 1: STREETS
+     ========================================== -->
 <div id="streets" class="tab-content" style="display: <?php echo $active_tab == 'streets' ? 'block' : 'none'; ?>;">
-    <div class="futuristic-table-card">
-        <div class="futuristic-table-card-header">
-            <h3 class="m-0 fw-bold fs-6 text-slate-900"><i class="fa-solid fa-road text-secondary me-2"></i> Registered Streets</h3>
-            <button class="btn btn-sm text-white" style="background: #0f172a;" onclick="openModal('street-modal')"><i class="fa-solid fa-plus me-1"></i> Add Street</button>
+    <div class="card-custom">
+        <div class="p-3 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <h3 class="m-0 fw-bold fs-6 text-dark"><i class="fa-solid fa-road text-primary me-2"></i> Registered Streets (<?php echo $street_count; ?>)</h3>
+            <button class="btn btn-sm btn-primary fw-semibold" onclick="openModal('street-modal')"><i class="fa-solid fa-plus me-1"></i> Add Street</button>
         </div>
-        
-        <!-- Street Modal -->
-        <div id="street-modal" class="custom-modal-backdrop">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2 id="street-modal-title">Add Street</h2>
-                    <button class="close-modal" onclick="closeModal('street-modal')"><i class="fa-solid fa-times"></i></button>
-                </div>
-                <form method="POST" enctype="multipart/form-data">
-                    <input type="hidden" name="street_id" id="street_id">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Street Name</label>
-                            <input type="text" name="name" id="street_name" required class="form-control">
-                        </div>
-                        <div class="form-group">
-                            <label>Assigned Zone <span class="text-danger">*</span></label>
-                            <select name="zone_id" id="street_zone_id" class="form-control" required>
-                                <option value="">-- Select Zone --</option>
-                                <?php 
-                                $all_z = $conn->query("SELECT id, name, code FROM zones WHERE estate_id = $estate_id AND status = 'active' ORDER BY name ASC");
-                                if ($all_z) {
-                                    while($zr = $all_z->fetch_assoc()) {
-                                        echo '<option value="' . $zr['id'] . '">' . htmlspecialchars($zr['name'] . ' (' . $zr['code'] . ')') . '</option>';
-                                    }
-                                }
-                                ?>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Registration Date</label>
-                            <input type="date" name="registration_date" id="street_reg_date" value="<?php echo date('Y-m-d'); ?>" class="form-control">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Description</label>
-                        <textarea name="description" id="street_desc" class="form-control" rows="3"></textarea>
-                    </div>
-                    <div class="form-group">
-                         <label>Street Image</label>
-                         <input type="file" name="image" accept="image/*" onchange="previewImage(this, 'street_preview')" class="form-control">
-                        <img id="street_preview" src="" style="display: none; width: 100%; height: auto; max-height: 200px; object-fit: contain; margin-top: 1rem; border-radius: 0.75rem;">
-                    </div>
-                    <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
-                        <button type="button" class="btn" style="background: #f1f5f9;" onclick="closeModal('street-modal')">Cancel</button>
-                        <button type="submit" name="add_street" class="btn btn-primary" id="street_btn">Save Street</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-
         <div class="table-responsive">
-            <table class="table dashboard-table align-middle">
+            <table class="table align-middle mb-0">
                 <thead>
                     <tr>
                         <th>Custom ID</th>
@@ -366,150 +364,58 @@ $flat_statuses = $conn->query("SELECT * FROM flat_statuses ORDER BY name");
                     </tr>
                 </thead>
                 <tbody>
-                    <?php while($row = $streets->fetch_assoc()): ?>
-                    <tr>
-                        <td><span class="id-chip"><?php echo htmlspecialchars($row['custom_id']); ?></span></td>
-                        <td>
-                            <?php if($row['image_path']): ?>
-                                <img src="<?php echo htmlspecialchars($row['image_path']); ?>" style="width: 38px; height: 38px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0;">
-                            <?php else: ?>
-                                <div style="width: 38px; height: 38px; background: #f1f5f9; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #94a3b8;"><i class="fa-solid fa-road"></i></div>
-                            <?php endif; ?>
-                        </td>
-                        <td><span class="fw-semibold text-slate-900"><?php echo htmlspecialchars($row['name']); ?></span></td>
-                        <td>
-                            <?php if(!empty($row['zone_name'])): ?>
-                                <span class="badge" style="background: rgba(168, 85, 247, 0.12); color: #7e22ce; border: 1px solid rgba(168, 85, 247, 0.2);">
-                                    <i class="fa-solid fa-layer-group me-1"></i> <?php echo htmlspecialchars($row['zone_name']); ?>
-                                </span>
-                            <?php else: ?>
-                                <span class="badge bg-light text-muted border">Unassigned</span>
-                            <?php endif; ?>
-                        </td>
-                        <td><small class="text-secondary"><?php echo htmlspecialchars($row['description'] ?: 'No description'); ?></small></td>
-                        <td class="text-end">
-                            <a href="property_details?type=street&id=<?php echo $row['id']; ?>" class="btn btn-sm btn-outline-secondary py-1 px-2 me-1" title="View History"><i class="fa-solid fa-clock-rotate-left"></i></a>
-                            <button onclick='editStreet(<?php echo json_encode($row); ?>)' class="btn btn-sm btn-outline-primary py-1 px-2 me-1" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
-                            <form method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to archive this street?');">
-                                <input type="hidden" name="archive_id" value="<?php echo $row['id']; ?>">
-                                <button type="submit" name="archive_street" class="btn btn-sm btn-outline-danger py-1 px-2" title="Archive"><i class="fa-solid fa-trash"></i></button>
-                            </form>
-                        </td>
-                    </tr>
-                    <?php endwhile; ?>
+                    <?php if ($streets && $streets->num_rows > 0): ?>
+                        <?php while($row = $streets->fetch_assoc()): ?>
+                        <tr>
+                            <td><span class="badge bg-light text-dark border font-monospace"><?php echo htmlspecialchars($row['custom_id']); ?></span></td>
+                            <td>
+                                <?php if($row['image_path']): ?>
+                                    <img src="<?php echo htmlspecialchars($row['image_path']); ?>" style="width: 38px; height: 38px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0;">
+                                <?php else: ?>
+                                    <div style="width: 38px; height: 38px; background: #f1f5f9; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #94a3b8;"><i class="fa-solid fa-road"></i></div>
+                                <?php endif; ?>
+                            </td>
+                            <td><span class="fw-semibold text-dark"><?php echo htmlspecialchars($row['name']); ?></span></td>
+                            <td>
+                                <?php if(!empty($row['zone_name'])): ?>
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                                        <i class="fa-solid fa-layer-group me-1"></i> <?php echo htmlspecialchars($row['zone_name']); ?>
+                                    </span>
+                                <?php else: ?>
+                                    <span class="badge bg-light text-muted border">Unassigned</span>
+                                <?php endif; ?>
+                            </td>
+                            <td><small class="text-muted"><?php echo htmlspecialchars($row['description'] ?: '—'); ?></small></td>
+                            <td class="text-end">
+                                <a href="property_details?type=street&id=<?php echo $row['id']; ?>" class="btn btn-sm btn-outline-secondary py-1 px-2 me-1" title="View History"><i class="fa-solid fa-clock-rotate-left"></i></a>
+                                <button type="button" onclick='editStreet(<?php echo json_encode($row); ?>)' class="btn btn-sm btn-outline-primary py-1 px-2 me-1" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+                                <form method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to archive this street?');">
+                                    <input type="hidden" name="archive_id" value="<?php echo $row['id']; ?>">
+                                    <button type="submit" name="archive_street" class="btn btn-sm btn-outline-danger py-1 px-2" title="Archive"><i class="fa-solid fa-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        <?php endwhile; ?>
+                    <?php else: ?>
+                        <tr><td colspan="6" class="text-center py-4 text-muted">No streets found. Click "Add Street" to create one.</td></tr>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
     </div>
 </div>
 
-<!-- Buildings Tab -->
+<!-- ==========================================
+     TAB 2: BUILDINGS & PROPERTIES
+     ========================================== -->
 <div id="buildings" class="tab-content" style="display: <?php echo $active_tab == 'buildings' ? 'block' : 'none'; ?>;">
-    <div class="futuristic-table-card">
-        <div class="futuristic-table-card-header">
-            <h3 class="m-0 fw-bold fs-6 text-slate-900"><i class="fa-solid fa-building text-secondary me-2"></i> Properties & Buildings</h3>
-            <button class="btn btn-sm text-white" style="background: #0f172a;" onclick="openModal('building-modal')"><i class="fa-solid fa-plus me-1"></i> Add Property</button>
+    <div class="card-custom">
+        <div class="p-3 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <h3 class="m-0 fw-bold fs-6 text-dark"><i class="fa-solid fa-building text-primary me-2"></i> Properties &amp; Compounds (<?php echo $building_count; ?>)</h3>
+            <button class="btn btn-sm btn-primary fw-semibold" onclick="openModal('building-modal')"><i class="fa-solid fa-plus me-1"></i> Add Property</button>
         </div>
-
-        <!-- Building Modal -->
-        <div id="building-modal" class="custom-modal-backdrop">
-            <div class="modal-content" style="max-width: 700px;">
-                <div class="modal-header">
-                    <h2 id="building-modal-title">Add Property</h2>
-                    <button class="close-modal" onclick="closeModal('building-modal')"><i class="fa-solid fa-times"></i></button>
-                </div>
-                <form method="POST" enctype="multipart/form-data">
-                    <input type="hidden" name="building_id" id="building_id">
-                    
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Select Street</label>
-                            <select name="street_id" id="building_street_id" required class="form-control">
-                                <?php 
-                                $all_streets->data_seek(0);
-                                while($s = $all_streets->fetch_assoc()): ?>
-                                    <option value="<?php echo $s['id']; ?>"><?php echo htmlspecialchars($s['name']); ?></option>
-                                <?php endwhile; ?>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Property Number</label>
-                            <input type="text" name="property_number" id="building_property_number" required class="form-control" placeholder="e.g. 10A">
-                        </div>
-                        <div class="form-group">
-                            <label>Building Name (Optional)</label>
-                            <input type="text" name="name" id="building_name" class="form-control" placeholder="Display Name">
-                        </div>
-                        <div class="form-group">
-                            <label>Property Category</label>
-                            <select name="category" id="building_category" class="form-control" onchange="toggleCommercialFields(this.value)">
-                                <option value="Residential">Residential</option>
-                                <option value="Commercial">Commercial</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Building Type</label>
-                            <select name="type" id="building_type" class="form-control">
-                                <?php 
-                                $building_types->data_seek(0);
-                                while($bt = $building_types->fetch_assoc()): ?>
-                                    <option value="<?php echo htmlspecialchars($bt['name']); ?>"><?php echo htmlspecialchars($bt['name']); ?></option>
-                                <?php endwhile; ?>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Status</label>
-                            <select name="status" id="building_status" class="form-control">
-                                <?php 
-                                $building_statuses->data_seek(0);
-                                while($bs = $building_statuses->fetch_assoc()): ?>
-                                    <option value="<?php echo htmlspecialchars($bs['name']); ?>"><?php echo htmlspecialchars($bs['name']); ?></option>
-                                <?php endwhile; ?>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Dynamic Commercial Fields -->
-                    <div id="commercial_fields_container" style="display: none; border-top: 1px solid #e2e8f0; margin-top: 1.5rem; padding-top: 1.5rem;">
-                        <h4 style="margin-bottom: 1rem; font-size: 0.9rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Commercial Property Details</h4>
-                        <div id="dynamic_fields" class="form-grid">
-                            <!-- Populated via JS -->
-                        </div>
-                    </div>
-
-                    <div class="form-grid" style="margin-top: 1.5rem;">
-                        <div class="form-group">
-                            <label>Floors Description</label>
-                            <select name="total_floors" id="building_floors" class="form-control">
-                                <?php 
-                                $building_floor_types->data_seek(0);
-                                while($bft = $building_floor_types->fetch_assoc()): ?>
-                                    <option value="<?php echo htmlspecialchars($bft['name']); ?>"><?php echo htmlspecialchars($bft['name']); ?></option>
-                                <?php endwhile; ?>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Registration Date</label>
-                            <input type="date" name="registration_date" id="building_reg_date" value="<?php echo date('Y-m-d'); ?>" class="form-control">
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                         <label>Property Image</label>
-                         <input type="file" name="image" accept="image/*" onchange="previewImage(this, 'building_preview')" class="form-control">
-                         <img id="building_preview" src="" style="display: none; width: 100%; height: auto; max-height: 200px; object-fit: contain; margin-top: 1rem; border-radius: 0.75rem;">
-                    </div>
-                    <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
-                        <button type="button" class="btn" style="background: #f1f5f9;" onclick="closeModal('building-modal')">Cancel</button>
-                        <button type="submit" name="add_building" class="btn btn-primary" id="building_btn">Save Property</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-
         <div class="table-responsive">
-            <table class="table dashboard-table align-middle">
+            <table class="table align-middle mb-0">
                 <thead>
                     <tr>
                         <th>Custom ID</th>
@@ -523,136 +429,88 @@ $flat_statuses = $conn->query("SELECT * FROM flat_statuses ORDER BY name");
                     </tr>
                 </thead>
                 <tbody>
-                    <?php while($row = $buildings->fetch_assoc()): ?>
-                    <tr>
-                        <td><span class="id-chip"><?php echo htmlspecialchars($row['custom_id']); ?></span></td>
-                        <td>
-                            <?php if($row['image_path']): ?>
-                                <img src="<?php echo htmlspecialchars($row['image_path']); ?>" style="width: 38px; height: 38px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0;">
-                            <?php else: ?>
-                                <div style="width: 38px; height: 38px; background: #f1f5f9; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #94a3b8;"><i class="fa-solid fa-building"></i></div>
-                            <?php endif; ?>
-                        </td>
-                        <td>
-                            <div class="fw-semibold text-slate-900"><?php echo htmlspecialchars($row['property_number'] ?: 'No #'); ?></div>
-                            <small class="text-secondary"><?php echo htmlspecialchars($row['name'] ?: ''); ?></small>
-                        </td>
-                        <td><span class="small fw-medium"><?php echo htmlspecialchars($row['street_name']); ?></span></td>
-                        <td>
-                            <span class="mature-badge <?php echo $row['category'] == 'Commercial' ? 'mature-badge-primary' : 'mature-badge-slate'; ?>">
-                                <?php echo htmlspecialchars($row['category']); ?>
-                            </span>
-                        </td>
-                        <td><small class="text-secondary"><?php echo htmlspecialchars($row['type']); ?></small></td>
-                        <td>
-                            <?php 
-                            $bst = strtolower($row['status'] ?? 'vacant');
-                            $b_badge = ($bst === 'active' || $bst === 'occupied') ? 'mature-badge-emerald' : 'mature-badge-slate';
-                            ?>
-                            <span class="mature-badge <?php echo $b_badge; ?>">
-                                <?php echo htmlspecialchars($row['status'] ?? 'Vacant'); ?>
-                            </span>
-                        </td>
-                        <td class="text-end">
-                            <a href="property_details?type=building&id=<?php echo $row['id']; ?>" class="btn btn-sm btn-outline-secondary py-1 px-2 me-1" title="View History"><i class="fa-solid fa-clock-rotate-left"></i></a>
-                            <button onclick='editBuilding(<?php echo json_encode($row); ?>)' class="btn btn-sm btn-outline-primary py-1 px-2 me-1" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
-                            <form method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to archive this building?');">
-                                <input type="hidden" name="archive_id" value="<?php echo $row['id']; ?>">
-                                <button type="submit" name="archive_building" class="btn btn-sm btn-outline-danger py-1 px-2" title="Archive"><i class="fa-solid fa-trash"></i></button>
-                            </form>
-                        </td>
-                    </tr>
-                    <?php endwhile; ?>
+                    <?php if ($buildings && $buildings->num_rows > 0): ?>
+                        <?php while($row = $buildings->fetch_assoc()): ?>
+                        <tr>
+                            <td><span class="badge bg-light text-dark border font-monospace"><?php echo htmlspecialchars($row['custom_id']); ?></span></td>
+                            <td>
+                                <?php if($row['image_path']): ?>
+                                    <img src="<?php echo htmlspecialchars($row['image_path']); ?>" style="width: 38px; height: 38px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0;">
+                                <?php else: ?>
+                                    <div style="width: 38px; height: 38px; background: #f1f5f9; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #94a3b8;"><i class="fa-solid fa-building"></i></div>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <div class="fw-semibold text-dark"><?php echo htmlspecialchars($row['property_number'] ?: 'No #'); ?></div>
+                                <small class="text-muted"><?php echo htmlspecialchars($row['name'] ?: ''); ?></small>
+                            </td>
+                            <td><span class="small fw-medium"><?php echo htmlspecialchars($row['street_name']); ?></span></td>
+                            <td>
+                                <span class="badge <?php echo $row['category'] == 'Commercial' ? 'bg-primary-subtle text-primary border border-primary-subtle' : 'bg-light text-dark border'; ?>">
+                                    <?php echo htmlspecialchars($row['category']); ?>
+                                </span>
+                            </td>
+                            <td><small class="text-muted"><?php echo htmlspecialchars($row['type']); ?></small></td>
+                            <td>
+                                <?php 
+                                $bst = strtolower($row['status'] ?? 'vacant');
+                                $b_cls = ($bst === 'active' || $bst === 'occupied') ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-light text-dark border';
+                                ?>
+                                <span class="badge <?php echo $b_cls; ?>">
+                                    <?php echo htmlspecialchars(ucfirst($row['status'] ?? 'Vacant')); ?>
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <a href="property_details?type=building&id=<?php echo $row['id']; ?>" class="btn btn-sm btn-outline-secondary py-1 px-2 me-1" title="View History"><i class="fa-solid fa-clock-rotate-left"></i></a>
+                                <button type="button" onclick='editBuilding(<?php echo json_encode($row); ?>)' class="btn btn-sm btn-outline-primary py-1 px-2 me-1" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+                                <form method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to archive this property?');">
+                                    <input type="hidden" name="archive_id" value="<?php echo $row['id']; ?>">
+                                    <button type="submit" name="archive_building" class="btn btn-sm btn-outline-danger py-1 px-2" title="Archive"><i class="fa-solid fa-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        <?php endwhile; ?>
+                    <?php else: ?>
+                        <tr><td colspan="8" class="text-center py-4 text-muted">No properties found. Click "Add Property" to create one.</td></tr>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
+        
+        <?php if ($total_building_pages > 1): ?>
+        <div class="d-flex justify-content-between align-items-center p-3 border-top flex-wrap gap-2">
+            <div class="small text-muted">
+                Showing <strong><?php echo min($total_buildings_count, $building_offset + 1); ?> - <?php echo min($total_buildings_count, $building_offset + $building_per_page); ?></strong> of <strong><?php echo $total_buildings_count; ?></strong> properties
+            </div>
+            <ul class="pagination pagination-sm m-0">
+                <li class="page-item <?php echo $building_page <= 1 ? 'disabled' : ''; ?>">
+                    <a class="page-link" href="?tab=buildings&building_page=<?php echo $building_page - 1; ?><?php echo $prop_search ? '&q=' . urlencode($prop_search) : ''; ?>">Previous</a>
+                </li>
+                <?php for ($p = max(1, $building_page - 2); $p <= min($total_building_pages, $building_page + 2); $p++): ?>
+                    <li class="page-item <?php echo $p == $building_page ? 'active' : ''; ?>">
+                        <a class="page-link" href="?tab=buildings&building_page=<?php echo $p; ?><?php echo $prop_search ? '&q=' . urlencode($prop_search) : ''; ?>"><?php echo $p; ?></a>
+                    </li>
+                <?php endfor; ?>
+                <li class="page-item <?php echo $building_page >= $total_building_pages ? 'disabled' : ''; ?>">
+                    <a class="page-link" href="?tab=buildings&building_page=<?php echo $building_page + 1; ?><?php echo $prop_search ? '&q=' . urlencode($prop_search) : ''; ?>">Next</a>
+                </li>
+            </ul>
+        </div>
+        <?php endif; ?>
     </div>
 </div>
 
-<!-- Flats Tab -->
+<!-- ==========================================
+     TAB 3: FLATS & UNITS (PAGINATED)
+     ========================================== -->
 <div id="flats" class="tab-content" style="display: <?php echo $active_tab == 'flats' ? 'block' : 'none'; ?>;">
-    <div class="futuristic-table-card">
-        <div class="futuristic-table-card-header">
-            <h3 class="m-0 fw-bold fs-6 text-slate-900"><i class="fa-solid fa-door-open text-secondary me-2"></i> Flats</h3>
-            <button class="btn btn-sm text-white" style="background: #0f172a;" onclick="openModal('flat-modal')"><i class="fa-solid fa-plus me-1"></i> Add Flat</button>
+    <div class="card-custom">
+        <div class="p-3 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <h3 class="m-0 fw-bold fs-6 text-dark"><i class="fa-solid fa-door-open text-primary me-2"></i> Flats &amp; Units (<?php echo $total_flats_count; ?> total)</h3>
+            <button class="btn btn-sm btn-primary fw-semibold" onclick="openModal('flat-modal')"><i class="fa-solid fa-plus me-1"></i> Add Flat</button>
         </div>
-
-        <!-- Flat Modal -->
-        <div id="flat-modal" class="custom-modal-backdrop">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2 id="flat-modal-title">Add Flat</h2>
-                    <button class="close-modal" onclick="closeModal('flat-modal')"><i class="fa-solid fa-times"></i></button>
-                </div>
-                <form method="POST" enctype="multipart/form-data">
-                    <input type="hidden" name="flat_id" id="flat_id">
-                    <div class="form-group">
-                        <label>Select Street</label>
-                        <select id="flat_street_id" class="form-control" onchange="fetchBuildingsForFlat(this.value)">
-                            <option value="">Select Street</option>
-                            <?php 
-                            $all_streets->data_seek(0); 
-                            while($s = $all_streets->fetch_assoc()): ?>
-                                <option value="<?php echo $s['id']; ?>"><?php echo htmlspecialchars($s['name']); ?></option>
-                            <?php endwhile; ?>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Select Building</label>
-                        <select name="building_id" id="flat_building_id" required class="form-control">
-                            <option value="">Select Street First</option>
-                        </select>
-                    </div>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Flat Number</label>
-                            <input type="text" name="number" id="flat_number" placeholder="e.g. 101" required class="form-control">
-                        </div>
-                        <div class="form-group">
-                            <label>Floor</label>
-                            <input type="text" name="floor" id="flat_floor" placeholder="e.g. 1" required class="form-control">
-                        </div>
-                        <div class="form-group">
-                            <label>Type</label>
-                            <select name="type" id="flat_type" class="form-control">
-                                <?php 
-                                $flat_types->data_seek(0);
-                                while($ft = $flat_types->fetch_assoc()): ?>
-                                    <option value="<?php echo htmlspecialchars($ft['name']); ?>"><?php echo htmlspecialchars($ft['name']); ?></option>
-                                <?php endwhile; ?>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Status</label>
-                            <select name="status" id="flat_status" class="form-control">
-                                <?php 
-                                $flat_statuses->data_seek(0);
-                                while($fs = $flat_statuses->fetch_assoc()): ?>
-                                    <option value="<?php echo htmlspecialchars($fs['name']); ?>"><?php echo htmlspecialchars($fs['name']); ?></option>
-                                <?php endwhile; ?>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Registration Date</label>
-                            <input type="date" name="registration_date" id="flat_reg_date" value="<?php echo date('Y-m-d'); ?>" class="form-control">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                         <label>Flat Image</label>
-                         <input type="file" name="image" accept="image/*" onchange="previewImage(this, 'flat_preview')" class="form-control">
-                         <img id="flat_preview" src="" style="display: none; width: 100%; height: auto; max-height: 200px; object-fit: contain; margin-top: 1rem; border-radius: 0.75rem;">
-                    </div>
-                    <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
-                        <button type="button" class="btn" style="background: #f1f5f9;" onclick="closeModal('flat-modal')">Cancel</button>
-                        <button type="submit" name="add_flat" class="btn btn-primary" id="flat_btn">Save Flat</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-
         <div class="table-responsive">
-            <table class="table dashboard-table align-middle">
+            <table class="table align-middle mb-0">
                 <thead>
                     <tr>
                         <th>Custom ID</th>
@@ -665,65 +523,349 @@ $flat_statuses = $conn->query("SELECT * FROM flat_statuses ORDER BY name");
                     </tr>
                 </thead>
                 <tbody>
-                    <?php while($row = $flats->fetch_assoc()): ?>
-                    <tr>
-                        <td><span class="id-chip"><?php echo htmlspecialchars($row['custom_id']); ?></span></td>
-                        <td>
-                            <?php if($row['image_path']): ?>
-                                <img src="<?php echo htmlspecialchars($row['image_path']); ?>" style="width: 38px; height: 38px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0;">
-                            <?php else: ?>
-                                <div style="width: 38px; height: 38px; background: #f1f5f9; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #94a3b8;"><i class="fa-solid fa-door-open"></i></div>
-                            <?php endif; ?>
-                        </td>
-                        <td>
-                            <div class="fw-semibold text-slate-900">Flat <?php echo htmlspecialchars($row['number']); ?></div>
-                            <small class="text-secondary"><?php echo htmlspecialchars($row['building_name'] . ' • ' . $row['street_name']); ?></small>
-                        </td>
-                        <td><small class="text-secondary"><?php echo htmlspecialchars($row['floor']); ?></small></td>
-                        <td><small class="text-secondary"><?php echo htmlspecialchars($row['type']); ?></small></td>
-                        <td>
-                            <?php 
-                            $fst = strtolower($row['status'] ?? 'vacant');
-                            $f_badge = ($fst === 'occupied') ? 'mature-badge-emerald' : (($fst === 'maintenance') ? 'mature-badge-amber' : 'mature-badge-slate');
-                            ?>
-                            <span class="mature-badge <?php echo $f_badge; ?>">
-                                <?php echo htmlspecialchars(ucfirst($row['status'] ?? 'Vacant')); ?>
-                            </span>
-                        </td>
-                        <td class="text-end">
-                            <a href="property_details?type=flat&id=<?php echo $row['id']; ?>" class="btn btn-sm btn-outline-secondary py-1 px-2 me-1" title="View History"><i class="fa-solid fa-clock-rotate-left"></i></a>
-                            <button onclick='editFlat(<?php echo json_encode($row); ?>)' class="btn btn-sm btn-outline-primary py-1 px-2 me-1" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
-                            <form method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to archive this flat?');">
-                                <input type="hidden" name="archive_id" value="<?php echo $row['id']; ?>">
-                                <button type="submit" name="archive_flat" class="btn btn-sm btn-outline-danger py-1 px-2" title="Archive"><i class="fa-solid fa-trash"></i></button>
-                            </form>
-                        </td>
-                    </tr>
-                    <?php endwhile; ?>
+                    <?php if ($flats && $flats->num_rows > 0): ?>
+                        <?php while($row = $flats->fetch_assoc()): ?>
+                        <tr>
+                            <td><span class="badge bg-light text-dark border font-monospace"><?php echo htmlspecialchars($row['custom_id']); ?></span></td>
+                            <td>
+                                <?php if($row['image_path']): ?>
+                                    <img src="<?php echo htmlspecialchars($row['image_path']); ?>" style="width: 38px; height: 38px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0;">
+                                <?php else: ?>
+                                    <div style="width: 38px; height: 38px; background: #f1f5f9; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #94a3b8;"><i class="fa-solid fa-door-open"></i></div>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <div class="fw-semibold text-dark">Flat <?php echo htmlspecialchars($row['number']); ?></div>
+                                <small class="text-muted"><?php echo htmlspecialchars($row['building_name'] . ' • ' . $row['street_name']); ?></small>
+                            </td>
+                            <td><small class="text-muted"><?php echo htmlspecialchars($row['floor']); ?></small></td>
+                            <td><small class="text-muted"><?php echo htmlspecialchars($row['type']); ?></small></td>
+                            <td>
+                                <?php 
+                                $fst = strtolower($row['status'] ?? 'vacant');
+                                $f_cls = ($fst === 'occupied') ? 'bg-success-subtle text-success border border-success-subtle' : (($fst === 'maintenance') ? 'bg-warning-subtle text-warning border border-warning-subtle' : 'bg-light text-muted border');
+                                ?>
+                                <span class="badge <?php echo $f_cls; ?>">
+                                    <?php echo htmlspecialchars(ucfirst($row['status'] ?? 'Vacant')); ?>
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <a href="property_details?type=flat&id=<?php echo $row['id']; ?>" class="btn btn-sm btn-outline-secondary py-1 px-2 me-1" title="View History"><i class="fa-solid fa-clock-rotate-left"></i></a>
+                                <button type="button" onclick='editFlat(<?php echo json_encode($row); ?>)' class="btn btn-sm btn-outline-primary py-1 px-2 me-1" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+                                <form method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to archive this flat?');">
+                                    <input type="hidden" name="archive_id" value="<?php echo $row['id']; ?>">
+                                    <button type="submit" name="archive_flat" class="btn btn-sm btn-outline-danger py-1 px-2" title="Archive"><i class="fa-solid fa-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        <?php endwhile; ?>
+                    <?php else: ?>
+                        <tr><td colspan="7" class="text-center py-4 text-muted">No flats found. Click "Add Flat" to register a new unit.</td></tr>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
+        
+        <?php if ($total_flat_pages > 1): ?>
+        <div class="d-flex justify-content-between align-items-center p-3 border-top flex-wrap gap-2">
+            <div class="small text-muted">
+                Showing <strong><?php echo min($total_flats_count, $flat_offset + 1); ?> - <?php echo min($total_flats_count, $flat_offset + $flat_per_page); ?></strong> of <strong><?php echo $total_flats_count; ?></strong> flats
+            </div>
+            <ul class="pagination pagination-sm m-0">
+                <li class="page-item <?php echo $flat_page <= 1 ? 'disabled' : ''; ?>">
+                    <a class="page-link" href="?tab=flats&flat_page=<?php echo $flat_page - 1; ?><?php echo $prop_search ? '&q=' . urlencode($prop_search) : ''; ?>">Previous</a>
+                </li>
+                <?php for ($p = max(1, $flat_page - 2); $p <= min($total_flat_pages, $flat_page + 2); $p++): ?>
+                    <li class="page-item <?php echo $p == $flat_page ? 'active' : ''; ?>">
+                        <a class="page-link" href="?tab=flats&flat_page=<?php echo $p; ?><?php echo $prop_search ? '&q=' . urlencode($prop_search) : ''; ?>"><?php echo $p; ?></a>
+                    </li>
+                <?php endfor; ?>
+                <li class="page-item <?php echo $flat_page >= $total_flat_pages ? 'disabled' : ''; ?>">
+                    <a class="page-link" href="?tab=flats&flat_page=<?php echo $flat_page + 1; ?><?php echo $prop_search ? '&q=' . urlencode($prop_search) : ''; ?>">Next</a>
+                </li>
+            </ul>
+        </div>
+        <?php endif; ?>
     </div>
 </div>
 
+<!-- ==========================================================================
+     GLOBAL MODALS (Extracted Outside Tab Containers for 100% Reliable Opening)
+     ========================================================================== -->
+
+<!-- 1. Street Modal -->
+<div id="street-modal" class="custom-modal-backdrop" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="street-modal-title">Add Street</h2>
+            <button type="button" class="close-modal" onclick="closeModal('street-modal')"><i class="fa-solid fa-times"></i></button>
+        </div>
+        <form method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="street_id" id="street_id">
+            <div class="row g-3">
+                <div class="col-12 col-md-6">
+                    <label class="form-label small fw-semibold">Street Name <span class="text-danger">*</span></label>
+                    <input type="text" name="name" id="street_name" required class="form-control" placeholder="e.g. Blossom Crescent">
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="form-label small fw-semibold">Assigned Zone <span class="text-danger">*</span></label>
+                    <select name="zone_id" id="street_zone_id" class="form-select" required>
+                        <option value="">-- Select Zone --</option>
+                        <?php 
+                        $all_z = $conn->query("SELECT id, name, code FROM zones WHERE estate_id = $estate_id AND status = 'active' ORDER BY name ASC");
+                        if ($all_z) {
+                            while($zr = $all_z->fetch_assoc()) {
+                                echo '<option value="' . $zr['id'] . '">' . htmlspecialchars($zr['name'] . ' (' . $zr['code'] . ')') . '</option>';
+                            }
+                        }
+                        ?>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <label class="form-label small fw-semibold">Registration Date</label>
+                    <input type="date" name="registration_date" id="street_reg_date" value="<?php echo date('Y-m-d'); ?>" class="form-control">
+                </div>
+                <div class="col-12">
+                    <label class="form-label small fw-semibold">Description</label>
+                    <textarea name="description" id="street_desc" class="form-control" rows="2" placeholder="Brief note about this street..."></textarea>
+                </div>
+                <div class="col-12">
+                    <label class="form-label small fw-semibold">Street Image</label>
+                    <input type="file" name="image" accept="image/*" onchange="previewImage(this, 'street_preview')" class="form-control">
+                    <img id="street_preview" src="" style="display: none; width: 100%; height: auto; max-height: 180px; object-fit: contain; margin-top: 0.75rem; border-radius: 0.75rem;">
+                </div>
+            </div>
+            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('street-modal')">Cancel</button>
+                <button type="submit" name="add_street" class="btn btn-primary" id="street_btn">Save Street</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 2. Building Modal -->
+<div id="building-modal" class="custom-modal-backdrop" style="display: none;">
+    <div class="modal-content" style="max-width: 720px;">
+        <div class="modal-header">
+            <h2 id="building-modal-title">Add Property</h2>
+            <button type="button" class="close-modal" onclick="closeModal('building-modal')"><i class="fa-solid fa-times"></i></button>
+        </div>
+        <form method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="building_id" id="building_id">
+            <div class="row g-3">
+                <div class="col-12 col-md-6">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <label class="form-label small fw-semibold mb-0">Select Street <span class="text-danger">*</span></label>
+                        <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none fw-semibold" style="font-size: 0.78rem;" onclick="openModal('street-modal')">
+                            <i class="fa-solid fa-plus-circle me-1"></i> Add Street
+                        </button>
+                    </div>
+                    <div class="input-group">
+                        <select name="street_id" id="building_street_id" required class="form-select">
+                            <?php 
+                            $all_streets->data_seek(0);
+                            while($s = $all_streets->fetch_assoc()): ?>
+                                <option value="<?php echo $s['id']; ?>"><?php echo htmlspecialchars($s['name']); ?></option>
+                            <?php endwhile; ?>
+                        </select>
+                        <button type="button" class="btn btn-outline-primary" onclick="openModal('street-modal')" title="Quick Add Street">
+                            <i class="fa-solid fa-road"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="form-label small fw-semibold">Property Number <span class="text-danger">*</span></label>
+                    <input type="text" name="property_number" id="building_property_number" required class="form-control" placeholder="e.g. 10A, Plot 4">
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="form-label small fw-semibold">Building Name (Optional)</label>
+                    <input type="text" name="name" id="building_name" class="form-control" placeholder="Display Name / Villa Name">
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="form-label small fw-semibold">Property Category</label>
+                    <select name="category" id="building_category" class="form-select" onchange="toggleCommercialFields(this.value)">
+                        <option value="Residential">Residential</option>
+                        <option value="Commercial">Commercial</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label small fw-semibold">Building Type</label>
+                    <select name="type" id="building_type" class="form-select">
+                        <?php 
+                        $building_types->data_seek(0);
+                        while($bt = $building_types->fetch_assoc()): ?>
+                            <option value="<?php echo htmlspecialchars($bt['name']); ?>"><?php echo htmlspecialchars($bt['name']); ?></option>
+                        <?php endwhile; ?>
+                    </select>
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label small fw-semibold">Floors Description</label>
+                    <select name="total_floors" id="building_floors" class="form-select">
+                        <?php 
+                        $building_floor_types->data_seek(0);
+                        while($bft = $building_floor_types->fetch_assoc()): ?>
+                            <option value="<?php echo htmlspecialchars($bft['name']); ?>"><?php echo htmlspecialchars($bft['name']); ?></option>
+                        <?php endwhile; ?>
+                    </select>
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label small fw-semibold">Status</label>
+                    <select name="status" id="building_status" class="form-select">
+                        <?php 
+                        $building_statuses->data_seek(0);
+                        while($bs = $building_statuses->fetch_assoc()): ?>
+                            <option value="<?php echo htmlspecialchars($bs['name']); ?>"><?php echo htmlspecialchars($bs['name']); ?></option>
+                        <?php endwhile; ?>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <label class="form-label small fw-semibold">Registration Date</label>
+                    <input type="date" name="registration_date" id="building_reg_date" value="<?php echo date('Y-m-d'); ?>" class="form-control">
+                </div>
+            </div>
+
+            <!-- Dynamic Commercial Fields Container -->
+            <div id="commercial_fields_container" style="display: none; border-top: 1px solid #e2e8f0; margin-top: 1.25rem; padding-top: 1.25rem;">
+                <h4 style="margin-bottom: 0.75rem; font-size: 0.85rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Commercial Property Details</h4>
+                <div id="dynamic_fields" class="row g-3">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+
+            <div class="mt-3">
+                <label class="form-label small fw-semibold">Property Image</label>
+                <input type="file" name="image" accept="image/*" onchange="previewImage(this, 'building_preview')" class="form-control">
+                <img id="building_preview" src="" style="display: none; width: 100%; height: auto; max-height: 180px; object-fit: contain; margin-top: 0.75rem; border-radius: 0.75rem;">
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('building-modal')">Cancel</button>
+                <button type="submit" name="add_building" class="btn btn-primary" id="building_btn">Save Property</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 3. Flat Modal -->
+<div id="flat-modal" class="custom-modal-backdrop" style="display: none;">
+    <div class="modal-content" style="max-width: 680px;">
+        <div class="modal-header">
+            <h2 id="flat-modal-title">Add Flat</h2>
+            <button type="button" class="close-modal" onclick="closeModal('flat-modal')"><i class="fa-solid fa-times"></i></button>
+        </div>
+        <form method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="flat_id" id="flat_id">
+            <div class="row g-3">
+                <div class="col-12 col-md-6">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <label class="form-label small fw-semibold mb-0">Select Street <span class="text-danger">*</span></label>
+                        <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none fw-semibold" style="font-size: 0.78rem;" onclick="openModal('street-modal')">
+                            <i class="fa-solid fa-plus-circle me-1"></i> Add Street
+                        </button>
+                    </div>
+                    <div class="input-group">
+                        <select id="flat_street_id" class="form-select" onchange="fetchBuildingsForFlat(this.value)" required>
+                            <option value="">Select Street</option>
+                            <?php 
+                            $all_streets->data_seek(0); 
+                            while($s = $all_streets->fetch_assoc()): ?>
+                                <option value="<?php echo $s['id']; ?>"><?php echo htmlspecialchars($s['name']); ?></option>
+                            <?php endwhile; ?>
+                        </select>
+                        <button type="button" class="btn btn-outline-primary" onclick="openModal('street-modal')" title="Quick Add Street">
+                            <i class="fa-solid fa-road"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <label class="form-label small fw-semibold mb-0">Select Building / Property <span class="text-danger">*</span></label>
+                        <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none fw-semibold" style="font-size: 0.78rem;" onclick="openModal('building-modal')">
+                            <i class="fa-solid fa-plus-circle me-1"></i> Add Property
+                        </button>
+                    </div>
+                    <div class="input-group">
+                        <select name="building_id" id="flat_building_id" required class="form-select">
+                            <option value="">Select Street First</option>
+                        </select>
+                        <button type="button" class="btn btn-outline-primary" onclick="openModal('building-modal')" title="Quick Add Building">
+                            <i class="fa-solid fa-building"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="form-label small fw-semibold">Flat / Unit Number <span class="text-danger">*</span></label>
+                    <input type="text" name="number" id="flat_number" placeholder="e.g. 101, Suite B" required class="form-control">
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="form-label small fw-semibold">Floor</label>
+                    <input type="text" name="floor" id="flat_floor" placeholder="e.g. Ground, 1st, 2nd" required class="form-control">
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="form-label small fw-semibold">Type</label>
+                    <select name="type" id="flat_type" class="form-select">
+                        <?php 
+                        $flat_types->data_seek(0);
+                        while($ft = $flat_types->fetch_assoc()): ?>
+                            <option value="<?php echo htmlspecialchars($ft['name']); ?>"><?php echo htmlspecialchars($ft['name']); ?></option>
+                        <?php endwhile; ?>
+                    </select>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="form-label small fw-semibold">Status</label>
+                    <select name="status" id="flat_status" class="form-select">
+                        <?php 
+                        $flat_statuses->data_seek(0);
+                        while($fs = $flat_statuses->fetch_assoc()): ?>
+                            <option value="<?php echo htmlspecialchars($fs['name']); ?>"><?php echo htmlspecialchars($fs['name']); ?></option>
+                        <?php endwhile; ?>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <label class="form-label small fw-semibold">Registration Date</label>
+                    <input type="date" name="registration_date" id="flat_reg_date" value="<?php echo date('Y-m-d'); ?>" class="form-control">
+                </div>
+                <div class="col-12">
+                    <label class="form-label small fw-semibold">Flat Image</label>
+                    <input type="file" name="image" accept="image/*" onchange="previewImage(this, 'flat_preview')" class="form-control">
+                    <img id="flat_preview" src="" style="display: none; width: 100%; height: auto; max-height: 180px; object-fit: contain; margin-top: 0.75rem; border-radius: 0.75rem;">
+                </div>
+            </div>
+            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('flat-modal')">Cancel</button>
+                <button type="submit" name="add_flat" class="btn btn-primary" id="flat_btn">Save Flat</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 <script>
 function openTab(evt, tabName) {
-    var i, tabcontent, tablinks;
-    tabcontent = document.getElementsByClassName("tab-content");
-    for (i = 0; i < tabcontent.length; i++) {
+    var tabcontent = document.getElementsByClassName("tab-content");
+    for (var i = 0; i < tabcontent.length; i++) {
         tabcontent[i].style.display = "none";
     }
-    tablinks = document.getElementsByClassName("tab-btn");
-    for (i = 0; i < tablinks.length; i++) {
+    var tablinks = document.querySelectorAll(".nav-pills .nav-link");
+    for (var i = 0; i < tablinks.length; i++) {
         tablinks[i].classList.remove("active");
-        tablinks[i].style.color = "";
-        tablinks[i].style.borderBottom = "";
+        const b = tablinks[i].querySelector('.badge');
+        if (b) {
+            b.className = 'badge bg-secondary-subtle text-secondary ms-1 rounded-pill';
+        }
     }
-    document.getElementById(tabName).style.display = "block";
-    evt.currentTarget.classList.add("active");
-    evt.currentTarget.style.color = "";
-    evt.currentTarget.style.borderBottom = "";
+    const target = document.getElementById(tabName);
+    if (target) target.style.display = "block";
+    
+    if (evt && evt.currentTarget) {
+        evt.currentTarget.classList.add("active");
+        const activeBadge = evt.currentTarget.querySelector('.badge');
+        if (activeBadge) {
+            activeBadge.className = 'badge bg-white text-primary ms-1 rounded-pill';
+        }
+    }
+    
+    const hiddenInput = document.getElementById('active_tab_input');
+    if (hiddenInput) hiddenInput.value = tabName;
     
     if (window.history.replaceState) {
         const url = new URL(window.location);
@@ -746,41 +888,89 @@ function previewImage(input, previewId) {
 
 // Modal Management
 function openModal(id) {
-    document.getElementById(id).style.display = 'flex';
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.add('show');
+    el.classList.remove('hide');
+    el.style.setProperty('display', 'flex', 'important');
+    el.style.setProperty('pointer-events', 'auto', 'important');
+    el.style.setProperty('visibility', 'visible', 'important');
+    el.style.setProperty('opacity', '1', 'important');
+
     if (id === 'street-modal') {
-        document.getElementById('street-modal-title').innerText = 'Add Street';
-        document.getElementById('street_id').value = '';
-        document.getElementById('street_name').value = '';
-        document.getElementById('street_desc').value = '';
-        if (document.getElementById('street_zone_id')) {
-            document.getElementById('street_zone_id').value = '';
-        }
-        document.getElementById('street_reg_date').value = '<?php echo date('Y-m-d'); ?>';
-        document.getElementById('street_preview').style.display = 'none';
+        const title = document.getElementById('street-modal-title');
+        if (title) title.innerText = 'Add Street';
+        const sid = document.getElementById('street_id');
+        if (sid) sid.value = '';
+        const sname = document.getElementById('street_name');
+        if (sname) sname.value = '';
+        const sdesc = document.getElementById('street_desc');
+        if (sdesc) sdesc.value = '';
+        const szone = document.getElementById('street_zone_id');
+        if (szone) szone.value = '';
+        const sreg = document.getElementById('street_reg_date');
+        if (sreg) sreg.value = '<?php echo date('Y-m-d'); ?>';
+        const sprev = document.getElementById('street_preview');
+        if (sprev) sprev.style.display = 'none';
+        const btn = document.getElementById('street_btn');
+        if (btn) btn.innerText = 'Save Street';
     }
     if (id === 'building-modal') {
-        document.getElementById('building-modal-title').innerText = 'Add Property';
-        document.getElementById('building_id').value = '';
-        document.getElementById('building_property_number').value = '';
-        document.getElementById('building_name').value = '';
-        document.getElementById('building_category').value = 'Residential';
-        document.getElementById('building_reg_date').value = '<?php echo date('Y-m-d'); ?>';
-        document.getElementById('building_preview').style.display = 'none';
-        toggleCommercialFields('Residential'); // Hide dynamic fields
+        const title = document.getElementById('building-modal-title');
+        if (title) title.innerText = 'Add Property';
+        const bid = document.getElementById('building_id');
+        if (bid) bid.value = '';
+        const bnum = document.getElementById('building_property_number');
+        if (bnum) bnum.value = '';
+        const bname = document.getElementById('building_name');
+        if (bname) bname.value = '';
+        const bcat = document.getElementById('building_category');
+        if (bcat) bcat.value = 'Residential';
+        const breg = document.getElementById('building_reg_date');
+        if (breg) breg.value = '<?php echo date('Y-m-d'); ?>';
+        const bprev = document.getElementById('building_preview');
+        if (bprev) bprev.style.display = 'none';
+        if (typeof toggleCommercialFields === 'function') toggleCommercialFields('Residential');
+        const btn = document.getElementById('building_btn');
+        if (btn) btn.innerText = 'Save Property';
     }
     if (id === 'flat-modal') {
-        document.getElementById('flat-modal-title').innerText = 'Add Flat';
-        document.getElementById('flat_id').value = '';
-        document.getElementById('flat_number').value = '';
-        document.getElementById('flat_floor').value = '';
-        document.getElementById('flat_reg_date').value = '<?php echo date('Y-m-d'); ?>';
-        document.getElementById('flat_preview').style.display = 'none';
+        const title = document.getElementById('flat-modal-title');
+        if (title) title.innerText = 'Add Flat';
+        const fid = document.getElementById('flat_id');
+        if (fid) fid.value = '';
+        const fnum = document.getElementById('flat_number');
+        if (fnum) fnum.value = '';
+        const ffl = document.getElementById('flat_floor');
+        if (ffl) ffl.value = '';
+        const freg = document.getElementById('flat_reg_date');
+        if (freg) freg.value = '<?php echo date('Y-m-d'); ?>';
+        const fprev = document.getElementById('flat_preview');
+        if (fprev) fprev.style.display = 'none';
+        const btn = document.getElementById('flat_btn');
+        if (btn) btn.innerText = 'Save Flat';
     }
 }
 
 function closeModal(id) {
-    document.getElementById(id).style.display = 'none';
+    const el = document.getElementById(id);
+    if (el) {
+        el.classList.remove('show');
+        el.classList.add('hide');
+        el.style.setProperty('display', 'none', 'important');
+        el.style.setProperty('pointer-events', 'none', 'important');
+    }
 }
+
+// Click outside to close custom modals
+window.addEventListener('click', function(e) {
+    if (e.target && e.target.classList && e.target.classList.contains('custom-modal-backdrop')) {
+        e.target.classList.remove('show');
+        e.target.classList.add('hide');
+        e.target.style.setProperty('display', 'none', 'important');
+        e.target.style.setProperty('pointer-events', 'none', 'important');
+    }
+});
 
 // Dynamic Fields Logic
 let commercialFieldsDef = [];
@@ -788,6 +978,7 @@ let commercialFieldsDef = [];
 function toggleCommercialFields(category) {
     const container = document.getElementById('commercial_fields_container');
     const dynamicFieldsDiv = document.getElementById('dynamic_fields');
+    if (!container || !dynamicFieldsDiv) return;
     
     if (category === 'Commercial') {
         container.style.display = 'block';
@@ -799,7 +990,7 @@ function toggleCommercialFields(category) {
                         commercialFieldsDef = res.data;
                         renderDynamicFields(dynamicFieldsDiv);
                     }
-                });
+                }).catch(() => {});
         } else {
             renderDynamicFields(dynamicFieldsDiv);
         }
@@ -811,8 +1002,8 @@ function toggleCommercialFields(category) {
 function renderDynamicFields(target, values = {}) {
     target.innerHTML = '';
     commercialFieldsDef.forEach(field => {
-        const div = document.createElement('div');
-        div.className = 'form-group';
+        const col = document.createElement('div');
+        col.className = 'col-12 col-md-6';
         
         let inputHtml = '';
         const val = values[field.id] || '';
@@ -820,7 +1011,7 @@ function renderDynamicFields(target, values = {}) {
 
         if (field.field_type === 'dropdown') {
             const options = field.field_options.split(',').map(o => o.trim());
-            inputHtml = `<select name="commercial_meta[${field.id}]" class="form-control" ${required}>
+            inputHtml = `<select name="commercial_meta[${field.id}]" class="form-select" ${required}>
                             <option value="">Select ${field.field_label}</option>
                             ${options.map(o => `<option value="${o}" ${val == o ? 'selected' : ''}>${o}</option>`).join('')}
                          </select>`;
@@ -828,12 +1019,12 @@ function renderDynamicFields(target, values = {}) {
             inputHtml = `<input type="${field.field_type}" name="commercial_meta[${field.id}]" value="${val}" class="form-control" ${required} placeholder="${field.field_label}">`;
         }
 
-        div.innerHTML = `<label>${field.field_label}</label>${inputHtml}`;
-        target.appendChild(div);
+        col.innerHTML = `<label class="form-label small fw-semibold">${field.field_label}</label>${inputHtml}`;
+        target.appendChild(col);
     });
     
     if (commercialFieldsDef.length === 0) {
-        target.innerHTML = '<div style="grid-column: span 2; color: #94a3b8; font-size: 0.875rem;">No custom fields configured for commercial properties. Edit them in Settings.</div>';
+        target.innerHTML = '<div class="col-12 text-muted small">No custom fields configured for commercial properties.</div>';
     }
 }
 
@@ -847,6 +1038,8 @@ function editStreet(data) {
     if (document.getElementById('street_zone_id')) {
         document.getElementById('street_zone_id').value = data.zone_id || '';
     }
+    const btn = document.getElementById('street_btn');
+    if (btn) btn.innerText = 'Update Street';
     if (data.image_path) {
         document.getElementById('street_preview').src = data.image_path;
         document.getElementById('street_preview').style.display = 'block';
@@ -867,15 +1060,16 @@ function editBuilding(data) {
     document.getElementById('building_floors').value = data.total_floors;
     document.getElementById('building_status').value = data.status || 'Vacant';
     document.getElementById('building_reg_date').value = data.registration_date || '<?php echo date('Y-m-d'); ?>';
+    const btn = document.getElementById('building_btn');
+    if (btn) btn.innerText = 'Update Property';
     
     if (data.category === 'Commercial') {
         toggleCommercialFields('Commercial');
-        // Wait for fields to load if necessary, or just wait for render
         setTimeout(() => {
             let commData = {};
             try { commData = JSON.parse(data.commercial_data || '{}'); } catch(e) {}
             renderDynamicFields(document.getElementById('dynamic_fields'), commData);
-        }, 500);
+        }, 300);
     }
 
     if(data.image_path) {
@@ -891,13 +1085,11 @@ function editFlat(data) {
     document.getElementById('flat-modal-title').innerText = 'Update Flat';
     document.getElementById('flat_id').value = data.id;
     
-    // Pre-select street and fetch buildings
     const streetSelect = document.getElementById('flat_street_id');
     if(streetSelect && data.street_id) {
         streetSelect.value = data.street_id;
         fetchBuildingsForFlat(data.street_id, data.building_id);
     } else {
-        // Fallback if no street selected (shouldn't happen with correct query)
         document.getElementById('flat_building_id').innerHTML = `<option value="${data.building_id}" selected>${data.building_name}</option>`;
     }
 
@@ -906,6 +1098,8 @@ function editFlat(data) {
     document.getElementById('flat_type').value = data.type;
     document.getElementById('flat_status').value = data.status || 'Vacant';
     document.getElementById('flat_reg_date').value = data.registration_date || '<?php echo date('Y-m-d'); ?>';
+    const btn = document.getElementById('flat_btn');
+    if (btn) btn.innerText = 'Update Flat';
     
     if(data.image_path) {
         document.getElementById('flat_preview').src = data.image_path;
@@ -917,6 +1111,7 @@ function editFlat(data) {
 
 function fetchBuildingsForFlat(streetId, selectedBuildingId = null) {
     const buildingSelect = document.getElementById('flat_building_id');
+    if (!buildingSelect) return;
     buildingSelect.innerHTML = '<option value="">Loading...</option>';
 
     if (!streetId) {
@@ -934,9 +1129,12 @@ function fetchBuildingsForFlat(streetId, selectedBuildingId = null) {
                 });
                 buildingSelect.innerHTML = html;
             }
+        }).catch(() => {
+            buildingSelect.innerHTML = '<option value="">Error loading buildings</option>';
         });
 }
 </script>
 
 <?php include '../includes/footer.php'; ?>
+
 

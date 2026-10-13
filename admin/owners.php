@@ -6,9 +6,7 @@ error_reporting(E_ALL);
 require_once '../config.php';
 require_once '../includes/auth_guard.php';
 requireAdminAccess();
-
-include '../includes/header.php';
-include '../includes/sidebar.php';
+$estate_id = get_estate_id();
 
 if (!function_exists('generateCustomID')) {
     function generateCustomID($conn, $table, $prefix) {
@@ -111,6 +109,9 @@ $total_owners_count = intval($owner_kpi['total_owners'] ?? 0);
 $building_owners_count = intval($owner_kpi['building_owners'] ?? 0);
 $flat_owners_count = intval($owner_kpi['flat_owners'] ?? 0);
 $verified_ids_count = intval($owner_kpi['verified_ids'] ?? 0);
+
+include '../includes/header.php';
+include '../includes/sidebar.php';
 ?>
 
 <div class="page-header-futuristic mb-4">
@@ -259,7 +260,7 @@ $verified_ids_count = intval($owner_kpi['verified_ids'] ?? 0);
 </div>
 
 <!-- Owner Registration Modal -->
-<div id="owner-modal" class="custom-modal-backdrop">
+<div id="owner-modal" class="custom-modal-backdrop" style="display: none;">
     <div class="modal-content mature-card" style="max-width: 760px; border-radius: 0.85rem; border: 1px solid var(--border-color); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
         <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
             <div style="display: flex; align-items: center; gap: 0.65rem;">
@@ -589,7 +590,11 @@ function selectOwnerScope(scope) {
 }
 
 function openOwnerModal() {
-    document.getElementById('owner-modal').style.display = 'flex';
+    const m = document.getElementById('owner-modal');
+    if (m) {
+        m.classList.add('show');
+        m.style.display = 'flex';
+    }
     document.getElementById('owner_id').value = '';
     document.getElementById('first_name').value = '';
     document.getElementById('last_name').value = '';
@@ -678,8 +683,19 @@ function fetchOwnerFlats(buildingId, selectedFlatId = null, callback = null) {
 }
 
 function closeOwnerModal() {
-    document.getElementById('owner-modal').style.display = 'none';
+    const m = document.getElementById('owner-modal');
+    if (m) {
+        m.classList.remove('show');
+        m.style.display = 'none';
+    }
 }
+
+// Click outside to close modal
+window.addEventListener('click', function(e) {
+    if (e.target && e.target.id === 'owner-modal') {
+        closeOwnerModal();
+    }
+});
 
 function editOwner(data) {
     openOwnerModal();

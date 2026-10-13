@@ -4,6 +4,7 @@ $page_title = 'Estate';
 require_once __DIR__ . '/includes/super_header.php';
 require_once __DIR__ . '/../includes/Lifecycle.php';
 require_once __DIR__ . '/../includes/Support.php';
+require_once __DIR__ . '/../includes/TenantStats.php';
 
 $id = intval($_GET['id'] ?? $_POST['id'] ?? 0);
 $estate = Tenancy::find($id);
@@ -17,6 +18,12 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $reason = trim($_POST['reason'] ?? '');
     try {
         switch ($a) {
+            case 'update_profile':
+                sa_require_role(['superadmin']);
+                require_once __DIR__ . '/includes/estate_profile.php';
+                $updated = sa_update_estate_profile($platform, $id, $_POST);
+                redirectWithFlash($base, "Estate '$updated' updated successfully!");
+                break;
             case 'override':
                 sa_require_role(['superadmin']);
                 $k = $_POST['module_key'] ?? ''; $state = $_POST['state'] ?? 'clear';
@@ -32,6 +39,25 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 Entitlements::flush($id); Tenancy::mirror($id);
                 Audit::log('module.estate_override', ['estate_id' => $id, 'module' => 'modules', 'entity_type' => 'module', 'entity_id' => $k, 'details' => "Override for $k: " . ($before['state'] ?? 'none') . ' -> ' . $state . ($reason ? " ($reason)" : ''), 'before' => ['state' => $before['state'] ?? null], 'after' => ['state' => $state]]);
                 redirectWithFlash("$base&tab=modules", "Module override saved for $k.");
+            case 'feature_override':
+                sa_require_role(['superadmin']);
+                $catalog = FeatureCatalog::all();
+                $cur = FeatureCatalog::overrides($id);
+                $changed = 0;
+                foreach (($_POST['fo'] ?? []) as $slug => $state) {
+                    if (!isset($catalog[$slug]) || !in_array($state, ['on', 'off', 'clear'], true)) continue;
+                    $old = $cur[$slug] ?? 'clear';
+                    if ($old === $state) continue;
+                    if ($state === 'clear') { $d = $platform->prepare("DELETE FROM estate_feature_overrides WHERE estate_id = ? AND feature_slug = ?"); $d->bind_param('is', $id, $slug); $d->execute(); }
+                    else {
+                        $u = $platform->prepare("INSERT INTO estate_feature_overrides (estate_id, feature_slug, state, reason, set_by) VALUES (?,?,?,?,?) ON DUPLICATE KEY UPDATE state = VALUES(state), reason = VALUES(reason), set_by = VALUES(set_by)");
+                        $u->bind_param('isssi', $id, $slug, $state, $reason, $SA['id']); $u->execute();
+                    }
+                    Audit::log('feature.estate_override', ['estate_id' => $id, 'module' => 'modules', 'entity_type' => 'feature', 'entity_id' => $slug, 'details' => "Feature override for $slug: $old -> $state" . ($reason ? " ($reason)" : ''), 'before' => ['state' => $old], 'after' => ['state' => $state]]);
+                    $changed++;
+                }
+                Entitlements::flush($id); Tenancy::mirror($id);
+                redirectWithFlash("$base&tab=modules", $changed ? "$changed feature override(s) saved." : 'No feature changes.');
             case 'suspend':
                 sa_require_role(['superadmin']);
                 if (!sa_confirmed($estate['name'])) throw new RuntimeException('Type the estate name to confirm suspension.');
@@ -118,18 +144,25 @@ $daysLeft = Lifecycle::retentionDaysLeft($estate);
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
     <div><h4 class="mb-0"><?= e($estate['name']) ?> <?= sa_badge($estate['status']) ?></h4>
         <div class="small text-secondary">Code <code><?= e($estate['domain_prefix']) ?></code> &middot; registered <?= sa_d($estate['created_at']) ?> &middot; <?= e(EstateService::statusLabel($estate['onboarding_status'])) ?></div></div>
-    <?php if (!empty($estate['db_name']) && !in_array($estate['status'], ['deleted', 'archived'])): ?>
-    <button class="btn btn-warning btn-sm fw-semibold" data-bs-toggle="collapse" data-bs-target="#impBox">Enter estate as Central Admin</button>
-    <?php endif; ?>
+    <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-primary btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#editEstateModal">
+            <i class="fa-solid fa-pen-to-square me-1"></i> Edit Estate Details
+        </button>
+        <?php if (!empty($estate['db_name']) && !in_array($estate['status'], ['deleted', 'archived'])): ?>
+        <button class="btn btn-warning btn-sm fw-semibold" data-bs-toggle="collapse" data-bs-target="#impBox">
+            <i class="fa-solid fa-right-to-bracket me-1"></i> Enter as Central Admin
+        </button>
+        <?php endif; ?>
+    </div>
 </div>
 <div class="collapse mb-3" id="impBox"><form method="post" action="impersonate" class="card-custom p-3 d-flex flex-wrap gap-2 align-items-end"><input type="hidden" name="estate_id" value="<?= $id ?>">
     <div class="flex-grow-1"><label class="form-label small mb-1">Reason (audit log)</label><input class="form-control form-control-sm" name="reason" required placeholder="e.g. onboarding support ticket TK-..."></div><button class="btn btn-warning btn-sm">Enter</button></form></div>
 
 <ul class="nav nav-pills mb-3 flex-nowrap overflow-auto"><?php foreach ($tabs as $k => $l): ?><li class="nav-item"><a class="nav-link py-1 <?= $tab === $k ? 'active' : '' ?>" href="<?= $base ?>&tab=<?= $k ?>"><?= $l ?></a></li><?php endforeach; ?></ul>
 
-<?php if ($tab === 'overview'): ?>
+<?php if ($tab === 'overview'): $liveStats = !empty($estate['db_name']) && !in_array($estate['status'], ['deleted', 'archived'], true) ? TenantStats::collect($estate) : null; ?>
 <div class="row g-3">
-  <div class="col-lg-6"><div class="card-custom p-3 h-100"><h6 class="fw-bold">Subscription</h6>
+  <div class="col-lg-4"><div class="card-custom p-3 h-100"><h6 class="fw-bold">Subscription</h6>
     <?php if ($sub): $snap = json_decode($sub['plan_snapshot_json'] ?? '', true); ?>
       <dl class="row small mb-0">
         <dt class="col-5">Plan</dt><dd class="col-7"><?= e($sub['plan_name']) ?> (<?= e($sub['billing_cycle']) ?>)</dd>
@@ -142,7 +175,32 @@ $daysLeft = Lifecycle::retentionDaysLeft($estate);
       </dl>
     <?php else: ?><p class="text-secondary small mb-0">No subscription yet. <?php if ($estate['status'] === 'trial'): ?>Trial ends <?= sa_d($estate['trial_ends_at']) ?>.<?php endif; ?></p><?php endif; ?>
   </div></div>
-  <div class="col-lg-6"><div class="card-custom p-3 h-100"><h6 class="fw-bold">Lifecycle</h6>
+  <div class="col-lg-4"><div class="card-custom p-3 h-100">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h6 class="fw-bold mb-0">Tenant Database</h6>
+      <?php if ($liveStats): ?>
+        <span class="badge bg-<?= $liveStats['db_ok'] ? 'success' : 'danger' ?>-subtle text-<?= $liveStats['db_ok'] ? 'success' : 'danger' ?> rounded-pill fw-semibold">
+          <i class="fa-solid fa-circle text-<?= $liveStats['db_ok'] ? 'success' : 'danger' ?> me-1" style="font-size:7px;"></i><?= $liveStats['db_ok'] ? 'Live' : 'Unreachable' ?>
+        </span>
+      <?php endif; ?>
+    </div>
+    <?php if ($liveStats): ?>
+      <?php if (!$liveStats['db_ok']): ?>
+        <div class="alert alert-danger py-2 small mb-2"><?= e($liveStats['db_error'] ?: 'Connection failed') ?></div>
+      <?php endif; ?>
+      <dl class="row small mb-0">
+        <dt class="col-6">Active Residents</dt><dd class="col-6 fw-bold"><?= intval($liveStats['residents']) ?></dd>
+        <dt class="col-6">Central Admins</dt><dd class="col-6"><?= intval($liveStats['admins']) ?></dd>
+        <dt class="col-6">Staff Accounts</dt><dd class="col-6"><?= intval($liveStats['staff']) ?></dd>
+        <dt class="col-6">Open Maintenance</dt><dd class="col-6"><?= intval($liveStats['open_maintenance']) ?></dd>
+        <dt class="col-6">Unpaid Invoices</dt><dd class="col-6"><?= intval($liveStats['unpaid_invoices']) ?></dd>
+        <dt class="col-6">Last Login</dt><dd class="col-6"><?= sa_dt($liveStats['last_login_at']) ?></dd>
+      </dl>
+    <?php else: ?>
+      <p class="text-secondary small mb-0">No tenant database environment provisioned.</p>
+    <?php endif; ?>
+  </div></div>
+  <div class="col-lg-4"><div class="card-custom p-3 h-100"><h6 class="fw-bold">Lifecycle</h6>
     <dl class="row small mb-0">
       <dt class="col-5">Central Admin</dt><dd class="col-7"><?= e($estate['central_admin_email'] ?: $estate['contact_email']) ?></dd>
       <dt class="col-5">Environment</dt><dd class="col-7"><?= $estate['db_name'] ? '<code>' . e($estate['db_name']) . '</code>' : 'none' ?></dd>
@@ -186,6 +244,32 @@ $daysLeft = Lifecycle::retentionDaysLeft($estate);
       <input name="reason" class="form-control form-control-sm d-none d-lg-block" style="width:150px" placeholder="Reason"><button class="btn btn-sm btn-primary">Save</button></form><?php endif; ?></td>
 </tr><?php endforeach; ?></tbody></table></div></div>
 
+<?php
+require_once dirname(__DIR__) . '/includes/FeatureGrid.php';
+$fOv = FeatureCatalog::overrides($id); $fAllowed = []; $fSrc = [];
+foreach (FeatureCatalog::all() as $fs => $_f) { $dec = Entitlements::featureDecide($id, $fs); $fAllowed[$fs] = $dec['allowed']; $fSrc[$fs] = $dec['source']; }
+?>
+<h6 class="fw-bold mt-4">Features by module group</h6>
+<p class="small text-secondary">Ticked = the estate can currently use it (plan + overrides). The estate can only assign ticked features to its roles; the rest are faint and locked for them. Use the dropdown to force a feature on or off for this estate only.</p>
+<form method="post">
+  <input type="hidden" name="action" value="feature_override">
+  <?= render_feature_grid(FeatureCatalog::grouped(), [
+      'name' => 'seen', 'readonly' => true, 'checked' => $fAllowed,
+      'extra' => function ($f) use ($fOv, $fSrc, $SA) {
+          $s = $fOv[$f['slug']] ?? 'clear';
+          $h = '<br><small class="text-secondary">' . e(Entitlements::sourceLabel($fSrc[$f['slug']])) . '</small>';
+          if ($SA['role'] === 'superadmin') {
+              $h .= '<select name="fo[' . e($f['slug']) . ']" class="form-select form-select-sm mt-1" style="width:auto" onclick="event.stopPropagation()">'
+                  . '<option value="clear"' . ($s === 'clear' ? ' selected' : '') . '>Follow plan</option>'
+                  . '<option value="on"' . ($s === 'on' ? ' selected' : '') . '>Force ON</option>'
+                  . '<option value="off"' . ($s === 'off' ? ' selected' : '') . '>Force OFF</option></select>';
+          }
+          return $h;
+      },
+  ]) ?>
+  <?php if ($SA['role'] === 'superadmin'): ?><div class="d-flex gap-2 mt-3"><input name="reason" class="form-control form-control-sm" style="max-width:320px" placeholder="Reason (recorded in audit log)"><button class="btn btn-primary btn-sm">Save feature overrides</button></div><?php endif; ?>
+</form>
+
 <?php elseif ($tab === 'billing'): $h = Billing::history($id); $plans = $platform->query("SELECT id,name FROM plans WHERE status='active' ORDER BY sort_order")->fetch_all(MYSQLI_ASSOC); ?>
 <div class="row g-3 mb-3">
  <?php if ($SA['role'] === 'superadmin'): ?><div class="col-lg-6"><form method="post" class="card-custom p-3"><input type="hidden" name="action" value="set_plan"><h6 class="fw-bold">Assign plan manually (no payment)</h6>
@@ -202,8 +286,18 @@ $daysLeft = Lifecycle::retentionDaysLeft($estate);
 <?php foreach ($h['events'] as $ev): ?><tr><td class="small text-secondary text-nowrap"><?= sa_dt($ev['created_at']) ?></td><td class="small"><?= e($ev['title']) ?></td><td class="small text-end"><?= $ev['amount'] !== null ? sa_money($ev['amount']) : '' ?></td></tr><?php endforeach; ?></tbody></table></div></div>
 
 <?php elseif ($tab === 'support'): $tickets = Support::forEstate($id); ?>
-<div class="card-custom"><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Ticket</th><th>Subject</th><th>Status</th><th>Updated</th></tr></thead><tbody>
-<?php foreach ($tickets as $t): ?><tr><td><a href="ticket?id=<?= $t['id'] ?>"><?= e($t['ticket_no']) ?></a></td><td><?= e($t['subject']) ?></td><td><?= sa_badge($t['status']) ?></td><td class="small"><?= sa_dt($t['updated_at']) ?></td></tr><?php endforeach; if (!$tickets) echo '<tr><td colspan="4" class="text-secondary">No tickets.</td></tr>'; ?></tbody></table></div></div>
+<div class="card-custom"><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Ticket</th><th>Subject</th><th>Priority</th><th>Status</th><th>Assignee</th><th>Updated</th></tr></thead><tbody>
+<?php foreach ($tickets as $t): ?>
+<tr style="cursor:pointer;" onclick="location.href='ticket?id=<?= intval($t['id']) ?>'" title="Open ticket <?= e($t['ticket_no']) ?>">
+  <td><a class="fw-semibold text-decoration-none" href="ticket?id=<?= intval($t['id']) ?>" onclick="event.stopPropagation();"><?= e($t['ticket_no']) ?></a></td>
+  <td><?= e($t['subject']) ?></td>
+  <td><span class="badge text-bg-<?= $t['priority'] === 'urgent' ? 'danger' : ($t['priority'] === 'high' ? 'warning' : 'secondary') ?> rounded-pill"><?= e(ucfirst($t['priority'])) ?></span></td>
+  <td><?= sa_badge($t['status']) ?></td>
+  <td class="small"><?= !empty($t['assignee_name']) ? e($t['assignee_name']) : '<span class="text-secondary">Unassigned</span>' ?></td>
+  <td class="small"><?= sa_dt($t['updated_at']) ?></td>
+</tr>
+<?php endforeach; if (!$tickets) echo '<tr><td colspan="6" class="text-secondary text-center py-4">No tickets recorded for this estate.</td></tr>'; ?>
+</tbody></table></div></div>
 
 <?php elseif ($tab === 'audit'): $r = $platform->query("SELECT * FROM platform_audit_logs WHERE estate_id = $id ORDER BY id DESC LIMIT 100"); ?>
 <div class="card-custom"><div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>When</th><th>Who</th><th>Action</th><th>Details</th></tr></thead><tbody>
@@ -215,4 +309,89 @@ $daysLeft = Lifecycle::retentionDaysLeft($estate);
 <?php while ($b = $r->fetch_assoc()): ?><tr><td class="small"><?= sa_dt($b['created_at']) ?></td><td><?= e($b['kind']) ?></td><td class="small"><?= round($b['size_bytes'] / 1024) ?> KB</td><td><?= sa_badge($b['status']) ?></td>
  <td><?php if ($b['status'] === 'ok' && $SA['role'] === 'superadmin' && $estate['db_name']): ?><button class="btn btn-sm btn-outline-danger" onclick="saConfirm({action:'backups',title:'Restore backup #<?= $b['id'] ?>',message:'The CURRENT database of this estate will be replaced by this backup (a safety backup is taken first).',phrase:<?= json_encode('RESTORE ' . $estate['domain_prefix']) ?>,button:'Restore',fields:{action:'restore',backup_id:'<?= $b['id'] ?>',estate_id:'<?= $id ?>'}})">Restore</button><?php endif; ?></td></tr><?php endwhile; ?></tbody></table></div></div>
 <?php endif; ?>
+
+<!-- Edit Estate Details Modal -->
+<div class="modal fade" id="editEstateModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            <div class="modal-header border-bottom p-3.5">
+                <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-primary"></i>
+                    <span>Edit Estate: <span class="text-primary"><?= e($estate['name']) ?></span></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST">
+                <input type="hidden" name="action" value="update_profile">
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-7">
+                            <label class="form-label small fw-semibold">Estate Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control" value="<?= e($estate['name']) ?>" required>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label small fw-semibold">Estate Code / Prefix <span class="text-danger">*</span></label>
+                            <input type="text" name="domain_prefix" class="form-control font-monospace" value="<?= e($estate['domain_prefix']) ?>" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Contact Email</label>
+                            <input type="email" name="contact_email" class="form-control" value="<?= e($estate['contact_email']) ?>">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Contact Phone</label>
+                            <input type="text" name="contact_phone" class="form-control" value="<?= e($estate['contact_phone']) ?>">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">City</label>
+                            <input type="text" name="city" class="form-control" value="<?= e($estate['city']) ?>">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">State</label>
+                            <input type="text" name="state" class="form-control" value="<?= e($estate['state'] ?? '') ?>">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Country</label>
+                            <input type="text" name="country" class="form-control" value="<?= e($estate['country'] ?? '') ?>">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Organisation type</label>
+                            <input type="text" name="organisation_type" class="form-control" value="<?= e($estate['organisation_type'] ?? '') ?>" placeholder="e.g. Residential estate">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Custom domain</label>
+                            <input type="text" name="custom_domain" class="form-control font-monospace" value="<?= e($estate['custom_domain'] ?? '') ?>" placeholder="portal.example.com">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Trial ends</label>
+                            <input type="datetime-local" name="trial_ends_at" class="form-control" value="<?= !empty($estate['trial_ends_at']) ? e(date('Y-m-d\TH:i', strtotime($estate['trial_ends_at']))) : '' ?>">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Status</label>
+                            <select name="status" class="form-select">
+                                <?php foreach (EstateService::ESTATE_STATUSES as $st_opt): ?>
+                                    <option value="<?= $st_opt ?>" <?= $estate['status'] === $st_opt ? 'selected' : '' ?>><?= e(EstateService::statusLabel($st_opt)) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Address</label>
+                            <input type="text" name="address" class="form-control" value="<?= e($estate['address']) ?>" placeholder="Physical street address">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Internal Notes</label>
+                            <textarea name="notes" class="form-control" rows="3" placeholder="Administrative remarks, billing notes..."><?= e($estate['notes']) ?></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top p-3 d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-primary px-3 fw-semibold">
+                        <i class="fa-solid fa-floppy-disk me-1"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <?php require_once __DIR__ . '/includes/super_footer.php'; ?>

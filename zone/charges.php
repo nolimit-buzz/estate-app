@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             } else {
                 $code = strtolower(str_replace(' ', '-', $name));
                 $conn->query("INSERT INTO zonal_charge_types (estate_id, zone_id, name, code, icon, color, description, status) 
-                              VALUES ($estate_id, $zone_id, '$name', '$code', 'fa-tag', '#7e22ce', 'Custom zonal tariff', 'Active')");
+                              VALUES ($estate_id, $zone_id, '$name', '$code', 'fa-tag', '#6b4eff', 'Custom zonal tariff', 'Active')");
                 $charge_type_id = $conn->insert_id;
             }
 
@@ -209,7 +209,7 @@ include 'sidebar.php';
         <a href="billing_config" class="btn btn-outline-secondary" style="display:inline-flex; align-items:center; gap:0.5rem; font-weight:600; padding:0.6rem 1.1rem; border-radius:0.5rem; text-decoration:none;">
             <i class="fa-solid fa-sliders"></i> Installments & Policy
         </a>
-        <button onclick="openCreateChargeModal()" class="btn btn-primary" style="display:inline-flex; align-items:center; gap:0.5rem; font-weight:600; padding:0.6rem 1.25rem; border-radius:0.5rem; background:#6b21a8; border-color:#6b21a8;">
+        <button onclick="openCreateChargeModal()" class="btn btn-primary" style="display:inline-flex; align-items:center; gap:0.5rem; font-weight:600; padding:0.6rem 1.25rem; border-radius:0.5rem; background:#5a3fe6; border-color:#5a3fe6;">
             <i class="fa-solid fa-plus"></i> Create Charge
         </button>
     </div>
@@ -241,7 +241,7 @@ include 'sidebar.php';
                     <span class="kpi-title">Applicable Tariffs</span>
                     <div class="kpi-value"><?= number_format($total_charges) ?></div>
                 </div>
-                <div class="kpi-icon-wrap" style="color: #7e22ce; background: rgba(126, 34, 206, 0.1);">
+                <div class="kpi-icon-wrap" style="color: #6b4eff; background: rgba(107, 78, 255, 0.1);">
                     <i class="fa-solid fa-tags"></i>
                 </div>
             </div>
@@ -250,7 +250,7 @@ include 'sidebar.php';
                 <span class="mature-badge mature-badge-slate"><i class="fa-solid fa-layer-group me-1"></i> Catalog</span>
             </div>
             <div class="kpi-progress-bar">
-                <div class="kpi-progress-fill" style="width: 100%; background: #7e22ce;"></div>
+                <div class="kpi-progress-fill" style="width: 100%; background: #6b4eff;"></div>
             </div>
         </div>
     </div>
@@ -285,7 +285,7 @@ include 'sidebar.php';
                     <span class="kpi-title">Periodic Recurring Dues</span>
                     <div class="kpi-value"><?= number_format($recurring_charges) ?></div>
                 </div>
-                <div class="kpi-icon-wrap" style="color: #0284c7; background: rgba(2, 132, 199, 0.1);">
+                <div class="kpi-icon-wrap" style="color: #6b4eff; background: rgba(107, 78, 255, 0.1);">
                     <i class="fa-solid fa-arrows-rotate"></i>
                 </div>
             </div>
@@ -409,11 +409,11 @@ include 'sidebar.php';
                     ?>
                         <tr class="charge-row" data-scope="local" data-frequency="<?= htmlspecialchars($freq_val) ?>" data-status="<?= htmlspecialchars($status_val) ?>" data-search="<?= htmlspecialchars($search_meta) ?>">
                             <td>
-                                <span class="id-chip" style="background: rgba(126, 34, 206, 0.1); color: #7e22ce; border-color: rgba(126, 34, 206, 0.25);"><?= htmlspecialchars($charge_code) ?></span>
+                                <span class="id-chip" style="background: rgba(107, 78, 255, 0.1); color: #6b4eff; border-color: rgba(107, 78, 255, 0.25);"><?= htmlspecialchars($charge_code) ?></span>
                             </td>
                             <td>
                                 <div style="font-weight: 700; color: #1e293b; font-size: 0.93rem; display: flex; align-items: center; gap: 0.4rem;">
-                                    <i class="fa-solid fa-tag text-purple" style="color: #7e22ce; font-size: 0.8rem;"></i>
+                                    <i class="fa-solid fa-tag text-purple" style="color: #6b4eff; font-size: 0.8rem;"></i>
                                     <?= htmlspecialchars($category_name) ?>
                                 </div>
                             </td>
@@ -423,7 +423,7 @@ include 'sidebar.php';
                                 </div>
                             </td>
                             <td>
-                                <span class="mature-badge" style="background: rgba(126, 34, 206, 0.12); color: #6b21a8; border: 1px solid rgba(126, 34, 206, 0.25);">
+                                <span class="mature-badge" style="background: rgba(107, 78, 255, 0.12); color: #5a3fe6; border: 1px solid rgba(107, 78, 255, 0.25);">
                                     <i class="fa-solid fa-map-pin me-1"></i> Zone Local
                                 </span>
                             </td>
@@ -435,7 +435,7 @@ include 'sidebar.php';
                             </td>
                             <td>
                                 <?php if ($allow_inst): ?>
-                                    <span class="badge" style="background: rgba(168, 85, 247, 0.12); color: #7e22ce; font-size: 0.75rem; border: 1px solid rgba(168, 85, 247, 0.25);">
+                                    <span class="badge" style="background: rgba(107, 78, 255, 0.12); color: #6b4eff; font-size: 0.75rem; border: 1px solid rgba(107, 78, 255, 0.25);">
                                         <i class="fa-solid fa-chart-pie me-1"></i> Allowed
                                     </span>
                                 <?php else: ?>
@@ -510,7 +510,7 @@ include 'sidebar.php';
                             </td>
                             <td>
                                 <?php if (!empty($row['allow_installments'])): ?>
-                                    <span class="badge" style="background: rgba(168, 85, 247, 0.12); color: #7e22ce; font-size: 0.75rem;">Allowed</span>
+                                    <span class="badge" style="background: rgba(107, 78, 255, 0.12); color: #6b4eff; font-size: 0.75rem;">Allowed</span>
                                 <?php else: ?>
                                     <span class="badge bg-light text-muted border" style="font-size: 0.75rem;">Full Pay</span>
                                 <?php endif; ?>
@@ -544,7 +544,7 @@ include 'sidebar.php';
     <div class="modal-content mature-card" style="max-width: 500px; width: 100%; margin: auto; max-height: calc(100vh - 4.5rem); overflow-y: auto; border-radius: 0.85rem; border: 1px solid var(--border-color); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); padding: 1.5rem; padding-bottom: 2.5rem;">
         <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.25rem;">
             <div style="display: flex; align-items: center; gap: 0.65rem;">
-                <div style="width: 36px; height: 36px; border-radius: 0.45rem; background: rgba(126, 34, 206, 0.1); color: #7e22ce; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+                <div style="width: 36px; height: 36px; border-radius: 0.45rem; background: rgba(107, 78, 255, 0.1); color: #6b4eff; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
                     <i class="fa-solid fa-plus"></i>
                 </div>
                 <div>
@@ -590,7 +590,7 @@ include 'sidebar.php';
             </div>
 
             <!-- 5. Allow Installments -->
-            <div class="p-2.5 rounded border mb-3" style="background: rgba(126, 34, 206, 0.05); border-color: rgba(126, 34, 206, 0.2) !important;">
+            <div class="p-2.5 rounded border mb-3" style="background: rgba(107, 78, 255, 0.05); border-color: rgba(107, 78, 255, 0.2) !important;">
                 <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3">
                     <div style="flex: 1; min-width: 0;">
                         <label class="form-check-label fw-bold d-block mb-1" for="add_allow_installments" style="cursor: pointer; font-size: 0.88rem;">
@@ -606,7 +606,7 @@ include 'sidebar.php';
 
             <div style="display: flex; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
                 <button type="button" onclick="document.getElementById('chargeModal').style.display='none'" class="btn btn-outline-secondary" style="font-weight: 600; padding: 0.6rem 1.25rem;">Cancel</button>
-                <button type="submit" class="btn btn-primary" style="font-weight: 600; padding: 0.6rem 1.5rem; background: #6b21a8; border-color: #6b21a8;">Save Charge</button>
+                <button type="submit" class="btn btn-primary" style="font-weight: 600; padding: 0.6rem 1.5rem; background: #5a3fe6; border-color: #5a3fe6;">Save Charge</button>
             </div>
         </form>
     </div>
@@ -620,7 +620,7 @@ include 'sidebar.php';
     <div class="modal-content mature-card" style="max-width: 500px; width: 100%; margin: auto; max-height: calc(100vh - 4.5rem); overflow-y: auto; border-radius: 0.85rem; border: 1px solid var(--border-color); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); padding: 1.5rem; padding-bottom: 2.5rem;">
         <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.25rem;">
             <div style="display: flex; align-items: center; gap: 0.65rem;">
-                <div style="width: 36px; height: 36px; border-radius: 0.45rem; background: rgba(126, 34, 206, 0.1); color: #7e22ce; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+                <div style="width: 36px; height: 36px; border-radius: 0.45rem; background: rgba(107, 78, 255, 0.1); color: #6b4eff; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
                     <i class="fa-solid fa-pen-to-square"></i>
                 </div>
                 <div>
@@ -667,7 +667,7 @@ include 'sidebar.php';
             </div>
 
             <!-- 5. Allow Installments -->
-            <div class="p-2.5 rounded border mb-3" style="background: rgba(126, 34, 206, 0.05); border-color: rgba(126, 34, 206, 0.2) !important;">
+            <div class="p-2.5 rounded border mb-3" style="background: rgba(107, 78, 255, 0.05); border-color: rgba(107, 78, 255, 0.2) !important;">
                 <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3">
                     <div style="flex: 1; min-width: 0;">
                         <label class="form-check-label fw-bold d-block mb-1" for="edit_allow_installments" style="cursor: pointer; font-size: 0.88rem;">
@@ -683,7 +683,7 @@ include 'sidebar.php';
 
             <div style="display: flex; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
                 <button type="button" onclick="document.getElementById('editChargeModal').style.display='none'" class="btn btn-outline-secondary" style="font-weight: 600; padding: 0.6rem 1.25rem;">Cancel</button>
-                <button type="submit" class="btn btn-primary" style="font-weight: 600; padding: 0.6rem 1.5rem; background: #6b21a8; border-color: #6b21a8;">Save Changes</button>
+                <button type="submit" class="btn btn-primary" style="font-weight: 600; padding: 0.6rem 1.5rem; background: #5a3fe6; border-color: #5a3fe6;">Save Changes</button>
             </div>
         </form>
     </div>

@@ -39,26 +39,33 @@ $branding = get_estate_branding($conn);
 $estate_name = $branding['estate_name'] ?? 'Main Estate';
 $estate_logo_url = $branding['estate_logo_url'] ?? '';
 ?>
-<aside class="sidebar">
+<aside class="sidebar sidebar-named">
     <div class="sidebar-header">
-        <div class="logo d-flex align-items-center gap-2">
-            <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(168, 85, 247, 0.15); color: #9333ea; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; border: 1px solid rgba(168, 85, 247, 0.3);">
-                <i class="fa-solid fa-layer-group"></i>
-            </div>
-            <div>
-                <span style="font-size: 0.95rem; font-weight: 700; display: block; line-height: 1.2; letter-spacing: -0.01em; color: #0f172a;"><?php echo htmlspecialchars($zone_name_display); ?></span>
-                <span class="badge bg-purple-100 text-purple-700" style="font-size: 0.65rem; background: rgba(168, 85, 247, 0.12); color: #7e22ce;"><?php echo htmlspecialchars($zone_code_display); ?></span>
+        <a href="index" class="sidebar-brand-ring" title="<?php echo htmlspecialchars($estate_name); ?>">
+            <i class="fa-solid fa-circle-notch"></i>
+        </a>
+        <div class="d-flex flex-column" style="min-width: 0;">
+            <h5 class="sidebar-brand-title text-truncate"><?php echo htmlspecialchars($zone_name_display); ?></h5>
+            <div class="sidebar-brand-sub">
+                <span style="width: 6px; height: 6px; border-radius: 50%; background: #6b4eff; display: inline-block;"></span>
+                <span>Zonal Admin (<?= htmlspecialchars($zone_code_display) ?>)</span>
             </div>
         </div>
     </div>
     
     <nav class="sidebar-nav">
         <ul>
-            <li class="nav-label">Core Operations</li>
-            <li><a href="index" class="<?php echo ($current_page == 'index') ? 'active' : ''; ?>"><i class="fa-solid fa-chart-pie"></i> Zone Dashboard</a></li>
+            <li class="nav-section-label">Core Operations</li>
             <li>
-                <a href="notifications" class="<?php echo ($current_page == 'notifications') ? 'active' : ''; ?> d-flex align-items-center">
-                    <i class="fa-solid fa-bell"></i> Action &amp; Notifications
+                <a href="index" class="<?php echo ($current_page == 'index') ? 'active' : ''; ?>" title="Zone Dashboard">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span class="nav-name-tag">Zone Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a href="notifications" class="<?php echo ($current_page == 'notifications') ? 'active' : ''; ?> d-flex align-items-center" title="Action & Notifications">
+                    <i class="fa-solid fa-bell"></i>
+                    <span class="nav-name-tag">Action &amp; Notifications</span>
                     <?php if ($zb_unread_count > 0 || $zb_pending_requests_cnt > 0): ?>
                         <span class="badge bg-danger rounded-pill ms-auto" style="font-size: 0.65rem; padding: 2px 7px;">
                             <?php echo ($zb_unread_count + $zb_pending_requests_cnt); ?>
@@ -67,11 +74,17 @@ $estate_logo_url = $branding['estate_logo_url'] ?? '';
                 </a>
             </li>
             
-            <li class="nav-label">Zonal Assets & Directory</li>
-            <li><a href="properties" class="<?php echo ($current_page == 'properties' || $current_page == 'property_details') ? 'active' : ''; ?>"><i class="fa-solid fa-road"></i> Streets & Units</a></li>
+            <li class="nav-section-label">Zonal Assets &amp; Directory</li>
             <li>
-                <a href="residents" class="<?php echo ($current_page == 'residents' || $current_page == 'resident_timeline') ? 'active' : ''; ?> d-flex align-items-center">
-                    <i class="fa-solid fa-users"></i> Zone Residents
+                <a href="properties" class="<?php echo ($current_page == 'properties' || $current_page == 'property_details') ? 'active' : ''; ?>" title="Streets & Units">
+                    <i class="fa-solid fa-road"></i>
+                    <span class="nav-name-tag">Streets &amp; Units</span>
+                </a>
+            </li>
+            <li>
+                <a href="residents" class="<?php echo ($current_page == 'residents' || $current_page == 'resident_timeline') ? 'active' : ''; ?> d-flex align-items-center" title="Zone Residents">
+                    <i class="fa-solid fa-users"></i>
+                    <span class="nav-name-tag">Zone Residents</span>
                     <?php if ($zb_pending_requests_cnt > 0): ?>
                         <span class="badge bg-warning text-dark rounded-pill ms-auto" style="font-size: 0.65rem; padding: 2px 7px;" title="<?php echo $zb_pending_requests_cnt; ?> pending contact change request(s)">
                             <?php echo $zb_pending_requests_cnt; ?> req
@@ -79,25 +92,108 @@ $estate_logo_url = $branding['estate_logo_url'] ?? '';
                     <?php endif; ?>
                 </a>
             </li>
-            <li><a href="archives" class="<?php echo ($current_page == 'archives') ? 'active' : ''; ?>"><i class="fa-solid fa-box-archive"></i> Zonal Archives</a></li>
-            <li><a href="policies" class="<?php echo ($current_page == 'policies') ? 'active' : ''; ?>"><i class="fa-solid fa-gavel"></i> Zonal &amp; Central Policies</a></li>
-            <li><a href="broadcasts" class="<?php echo ($current_page == 'broadcasts') ? 'active' : ''; ?>"><i class="fa-solid fa-bullhorn"></i> Zonal Notices &amp; Broadcasts</a></li>
-            <li><a href="community_chat" class="<?php echo ($current_page == 'community_chat') ? 'active' : ''; ?>"><i class="fa-solid fa-comments"></i> Estate Forum</a></li>
-            <li><a href="emergency" class="<?php echo ($current_page == 'emergency') ? 'active' : ''; ?> text-danger fw-bold"><i class="fa-solid fa-truck-medical text-danger"></i> Emergency &amp; Panic Hub</a></li>
-            <li><a href="directory" class="<?php echo ($current_page == 'directory') ? 'active' : ''; ?>"><i class="fa-solid fa-address-book"></i> Estate Directory</a></li>
-            <li><a href="artisans" class="<?php echo ($current_page == 'artisans') ? 'active' : ''; ?>"><i class="fa-solid fa-wrench"></i> Verified Artisans</a></li>
-            <li><a href="owners" class="<?php echo ($current_page == 'owners') ? 'active' : ''; ?>"><i class="fa-solid fa-user-tie"></i> Property Owners</a></li>
+            <li>
+                <a href="archives" class="<?php echo ($current_page == 'archives') ? 'active' : ''; ?>" title="Zonal Archives">
+                    <i class="fa-solid fa-box-archive"></i>
+                    <span class="nav-name-tag">Zonal Archives</span>
+                </a>
+            </li>
+            <li>
+                <a href="policies" class="<?php echo ($current_page == 'policies') ? 'active' : ''; ?>" title="Zonal & Central Policies">
+                    <i class="fa-solid fa-gavel"></i>
+                    <span class="nav-name-tag">Zonal &amp; Central Policies</span>
+                </a>
+            </li>
+            <li>
+                <a href="broadcasts" class="<?php echo ($current_page == 'broadcasts') ? 'active' : ''; ?>" title="Zonal Notices & Broadcasts">
+                    <i class="fa-solid fa-bullhorn"></i>
+                    <span class="nav-name-tag">Zonal Notices &amp; Broadcasts</span>
+                </a>
+            </li>
+            <li>
+                <a href="community_chat" class="<?php echo ($current_page == 'community_chat') ? 'active' : ''; ?>" title="Estate Forum">
+                    <i class="fa-solid fa-comments"></i>
+                    <span class="nav-name-tag">Estate Forum</span>
+                </a>
+            </li>
+            <li>
+                <a href="emergency" class="<?php echo ($current_page == 'emergency') ? 'active' : ''; ?> text-danger fw-bold" title="Emergency & Panic Hub">
+                    <i class="fa-solid fa-truck-medical text-danger"></i>
+                    <span class="nav-name-tag text-danger">Emergency &amp; Panic Hub</span>
+                </a>
+            </li>
+            <li>
+                <a href="directory" class="<?php echo ($current_page == 'directory') ? 'active' : ''; ?>" title="Estate Directory">
+                    <i class="fa-solid fa-address-book"></i>
+                    <span class="nav-name-tag">Estate Directory</span>
+                </a>
+            </li>
+            <li>
+                <a href="artisans" class="<?php echo ($current_page == 'artisans') ? 'active' : ''; ?>" title="Verified Artisans">
+                    <i class="fa-solid fa-wrench"></i>
+                    <span class="nav-name-tag">Verified Artisans</span>
+                </a>
+            </li>
+            <li>
+                <a href="owners" class="<?php echo ($current_page == 'owners') ? 'active' : ''; ?>" title="Property Owners">
+                    <i class="fa-solid fa-user-tie"></i>
+                    <span class="nav-name-tag">Property Owners</span>
+                </a>
+            </li>
             
-            <li class="nav-label">Local Billing & Reports</li>
-            <li><a href="charges" class="<?php echo ($current_page == 'charges') ? 'active' : ''; ?>"><i class="fa-solid fa-list-check"></i> Local Levies & Dues</a></li>
-            <li><a href="billing_config" class="<?php echo ($current_page == 'billing_config') ? 'active' : ''; ?>"><i class="fa-solid fa-sliders"></i> Billing & Installments</a></li>
-            <li><a href="finance" class="<?php echo ($current_page == 'finance' || $current_page == 'receipt') ? 'active' : ''; ?>"><i class="fa-solid fa-file-invoice-dollar"></i> Invoices & Billing</a></li>
-            <li><a href="reports" class="<?php echo ($current_page == 'reports') ? 'active' : ''; ?>"><i class="fa-solid fa-chart-simple"></i> Zonal Reports</a></li>
-            
-            <li class="nav-label">Session</li>
-            <li><a href="../logout"><i class="fa-solid fa-right-from-bracket text-danger"></i> Logout</a></li>
+            <li class="nav-section-label">Local Billing &amp; Reports</li>
+            <li>
+                <a href="charges" class="<?php echo ($current_page == 'charges') ? 'active' : ''; ?>" title="Local Levies & Dues">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span class="nav-name-tag">Local Levies &amp; Dues</span>
+                </a>
+            </li>
+            <li>
+                <a href="billing_config" class="<?php echo ($current_page == 'billing_config') ? 'active' : ''; ?>" title="Billing & Installments">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span class="nav-name-tag">Billing &amp; Installments</span>
+                </a>
+            </li>
+            <li>
+                <a href="finance" class="<?php echo ($current_page == 'finance' || $current_page == 'receipt') ? 'active' : ''; ?>" title="Invoices & Billing">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                    <span class="nav-name-tag">Invoices &amp; Billing</span>
+                </a>
+            </li>
+            <li>
+                <a href="reports" class="<?php echo ($current_page == 'reports') ? 'active' : ''; ?>" title="Zonal Reports">
+                    <i class="fa-solid fa-chart-simple"></i>
+                    <span class="nav-name-tag">Zonal Reports</span>
+                </a>
+            </li>
         </ul>
     </nav>
+    <div class="sidebar-footer-actions">
+        <div class="sidebar-user-block">
+            <div class="sidebar-user-avatar" style="background: rgba(107, 78, 255, 0.15); color: #6b4eff;">
+                <?php
+                $z_initials = 'ZA';
+                if (!empty($_SESSION['name'])) {
+                    $parts = explode(' ', trim($_SESSION['name']));
+                    $z_initials = strtoupper(substr($parts[0], 0, 1) . (isset($parts[1]) ? substr($parts[1], 0, 1) : ''));
+                }
+                echo htmlspecialchars($z_initials);
+                ?>
+            </div>
+            <div class="sidebar-user-text">
+                <div class="sidebar-user-name"><?php echo htmlspecialchars($_SESSION['name'] ?? 'Zone Admin'); ?></div>
+                <div class="sidebar-user-role"><?php echo htmlspecialchars($zone_code_display . ' Admin'); ?></div>
+            </div>
+        </div>
+        <div class="sidebar-footer-links">
+            <a href="../change_password" class="sidebar-footer-link" title="Change Password">
+                <i class="fa-solid fa-key" style="font-size: 11px;"></i> Password
+            </a>
+            <a href="../logout" class="sidebar-footer-link text-danger" title="Sign Out">
+                <i class="fa-solid fa-right-from-bracket" style="font-size: 11px;"></i> Sign out
+            </a>
+        </div>
+    </div>
 </aside>
 
 <main class="main-content">
@@ -112,7 +208,7 @@ $estate_logo_url = $branding['estate_logo_url'] ?? '';
                 <i class="fa-solid fa-bars"></i>
             </div>
             <div class="d-none d-md-flex align-items-center gap-2 text-secondary small">
-                <span class="mature-badge py-1 px-2.5 rounded-pill" style="background: rgba(168, 85, 247, 0.12); color: #7e22ce; font-weight: 600; font-size: 0.8rem; border: 1px solid rgba(168, 85, 247, 0.25);">
+                <span class="mature-badge py-1 px-2.5 rounded-pill" style="background: rgba(107, 78, 255, 0.12); color: #6b4eff; font-weight: 600; font-size: 0.8rem; border: 1px solid rgba(107, 78, 255, 0.25);">
                     <i class="fa-solid fa-layer-group me-1 text-purple"></i> <?php echo htmlspecialchars($zone_name_display); ?>
                 </span>
                 <span class="text-secondary opacity-50">•</span>
@@ -122,29 +218,33 @@ $estate_logo_url = $branding['estate_logo_url'] ?? '';
             </div>
         </div>
 
-        <!-- Desktop Quick Search (Image 3 Style) -->
-        <form action="residents" method="GET" class="desktop-topbar-search m-0" onsubmit="if(!this.q.value.trim()){return false;}">
+        <!-- Modern Dribbble Search Bar with ⌘ K -->
+        <form action="residents" method="GET" class="desktop-topbar-search topbar-search-box m-0" onsubmit="if(!this.q.value.trim()){return false;}">
             <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" name="q" placeholder="Search zonal residents, units, streets..." autocomplete="off">
+            <input type="text" name="q" placeholder="Search..." autocomplete="off">
+            <span class="topbar-kbd-pill" title="Press Ctrl+K or ⌘K">⌘ K</span>
         </form>
 
-        <div class="d-flex align-items-center gap-2 gap-sm-3">
+        <div class="topbar-right-actions ms-auto">
+            <!-- Messages / Community Forum Chat Icon -->
+            <a href="community_chat" class="topbar-action-circle" title="Messages & Forum">
+                <i class="fa-regular fa-comment-dots"></i>
+            </a>
+
             <!-- Notification Bell with Quick Action Dropdown -->
             <div class="dropdown position-relative">
-                <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle position-relative d-inline-flex align-items-center justify-content-center" id="zoneNotifBellBtn" data-bs-toggle="dropdown" aria-expanded="false" style="width: 36px; height: 36px; min-width: 36px; min-height: 36px; aspect-ratio: 1 / 1 !important; flex-shrink: 0 !important; padding: 0;" title="Zonal Notifications &amp; Actions">
-                    <i class="fa-solid fa-bell text-secondary"></i>
+                <button type="button" class="topbar-action-circle border-0" id="zoneNotifBellBtn" data-bs-toggle="dropdown" aria-expanded="false" title="Zonal Notifications &amp; Actions">
+                    <i class="fa-regular fa-bell"></i>
                     <?php if ($zb_unread_count > 0 || $zb_pending_requests_cnt > 0): ?>
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-white" style="font-size: 0.65rem; padding: 0.25em 0.5em;">
-                            <?php echo ($zb_unread_count + $zb_pending_requests_cnt); ?>
-                        </span>
+                        <span class="topbar-badge-dot"></span>
                     <?php endif; ?>
                 </button>
                 <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 p-0 mt-2" style="width: 330px; max-width: 90vw; z-index: 1055; overflow: hidden;">
                     <div class="p-3 bg-light border-bottom d-flex justify-content-between align-items-center">
                         <span class="fw-bold text-slate-900" style="font-size: 0.9rem;">
-                            <i class="fa-solid fa-bell text-purple me-1" style="color: #7e22ce;"></i> Zonal Notifications
+                            <i class="fa-solid fa-bell text-purple me-1" style="color: #6b4eff;"></i> Zonal Notifications
                         </span>
-                        <a href="notifications" class="small text-decoration-none fw-semibold" style="color: #7e22ce;">Action Center &rarr;</a>
+                        <a href="notifications" class="small text-decoration-none fw-semibold" style="color: #6b4eff;">Action Center &rarr;</a>
                     </div>
                     <div class="p-0" style="max-height: 290px; overflow-y: auto;">
                         <?php if ($zb_pending_requests_cnt > 0): ?>
@@ -166,16 +266,16 @@ $estate_logo_url = $branding['estate_logo_url'] ?? '';
                             <?php foreach ($zb_recent_notifs as $rn): 
                                 $is_unr = ($rn['is_read'] == 0);
                             ?>
-                                <a href="notifications" class="dropdown-item p-2.5 border-bottom d-flex align-items-start gap-2" style="white-space: normal; <?php echo $is_unr ? 'background: #fdf4ff;' : ''; ?>">
-                                    <div style="width: 28px; height: 28px; border-radius: 6px; background: rgba(168, 85, 247, 0.1); color: #7e22ce; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.75rem; margin-top: 2px;">
-                                        <i class="fa-solid <?php echo stripos($rn['title'], 'Contact') !== false ? 'fa-id-card-clip text-warning' : 'fa-bell'; ?>"></i>
-                                    </div>
-                                    <div style="flex: 1; min-width: 0;">
-                                        <div class="fw-semibold text-truncate <?php echo $is_unr ? 'text-dark' : 'text-secondary'; ?>" style="font-size: 0.8rem;"><?php echo htmlspecialchars($rn['title']); ?></div>
-                                        <div class="small text-muted text-truncate" style="font-size: 0.73rem;"><?php echo htmlspecialchars($rn['message']); ?></div>
-                                        <div class="text-muted" style="font-size: 0.68rem;"><?php echo date('M d, H:i', strtotime($rn['created_at'])); ?></div>
-                                    </div>
-                                </a>
+                            <a href="notifications" class="dropdown-item p-2.5 border-bottom d-flex align-items-start gap-2" style="white-space: normal; <?php echo $is_unr ? 'background: #fdf4ff;' : ''; ?>">
+                                <div style="width: 28px; height: 28px; border-radius: 6px; background: rgba(107, 78, 255, 0.1); color: #6b4eff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.75rem; margin-top: 2px;">
+                                    <i class="fa-solid <?php echo stripos($rn['title'], 'Contact') !== false ? 'fa-id-card-clip text-warning' : 'fa-bell'; ?>"></i>
+                                </div>
+                                <div style="flex: 1; min-width: 0;">
+                                    <div class="fw-semibold text-truncate <?php echo $is_unr ? 'text-dark' : 'text-secondary'; ?>" style="font-size: 0.8rem;"><?php echo htmlspecialchars($rn['title']); ?></div>
+                                    <div class="small text-muted text-truncate" style="font-size: 0.73rem;"><?php echo htmlspecialchars($rn['message']); ?></div>
+                                    <div class="text-muted" style="font-size: 0.68rem;"><?php echo date('M d, H:i', strtotime($rn['created_at'])); ?></div>
+                                </div>
+                            </a>
                             <?php endforeach; ?>
                         <?php elseif ($zb_pending_requests_cnt === 0): ?>
                             <div class="text-center py-4 text-muted small">
@@ -193,34 +293,29 @@ $estate_logo_url = $branding['estate_logo_url'] ?? '';
             </div>
 
             <!-- Emergency Direct Hotlines Button (No Alarm) -->
-            <button type="button" class="estate-hotline-btn btn btn-outline-danger btn-sm rounded-pill px-2 px-sm-3 d-inline-flex align-items-center gap-2" title="Direct Emergency Hotlines (Call directly without triggering alarm)">
+            <button type="button" class="estate-hotline-btn btn btn-outline-danger btn-sm rounded-pill px-2 px-sm-3 d-inline-flex align-items-center gap-2" title="Direct Emergency Hotlines">
                 <i class="fa-solid fa-phone-volume text-danger hotline-pulse-icon"></i>
                 <span class="fw-semibold d-none d-sm-inline">Hotlines</span>
             </button>
 
-            <button type="button" class="theme-toggle-btn" title="Toggle Day/Night Mode">
-                <i class="fa-solid fa-moon"></i>
-                <span class="theme-text d-none d-sm-inline">Dark Mode</span>
-            </button>
-
-            <!-- User Profile Dropdown (Image 3 Style) -->
+            <!-- User Profile Dropdown (Welcome back [Name]) -->
             <div class="dropdown">
-                <button type="button" class="btn p-0 border-0 d-flex align-items-center gap-2 text-decoration-none" data-bs-toggle="dropdown" aria-expanded="false" style="background: transparent;">
-                    <div class="text-end d-none d-sm-block">
-                        <div class="user-name fw-bold" style="font-size: 0.84rem; line-height: 1.2;"><?php echo htmlspecialchars($_SESSION['name'] ?? 'Zone Admin'); ?></div>
-                        <small class="text-secondary text-uppercase" style="font-size: 0.68rem; letter-spacing: 0.04em;">Zone Administrator</small>
-                    </div>
-                    <?php 
-                    $initials = 'ZA';
-                    if (!empty($_SESSION['name'])) {
-                        $parts = explode(' ', trim($_SESSION['name']));
-                        $initials = strtoupper(substr($parts[0], 0, 1) . (isset($parts[1]) ? substr($parts[1], 0, 1) : ''));
-                    }
-                    ?>
-                    <div class="user-avatar" style="width: 36px; height: 36px; border-radius: 8px; background: #581c87; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; border: 1px solid rgba(255,255,255,0.15);">
+                <?php 
+                $initials = 'ZA';
+                if (!empty($_SESSION['name'])) {
+                    $parts = explode(' ', trim($_SESSION['name']));
+                    $initials = strtoupper(substr($parts[0], 0, 1) . (isset($parts[1]) ? substr($parts[1], 0, 1) : ''));
+                }
+                ?>
+                <button type="button" class="btn p-0 border-0 topbar-user-profile-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                    <div class="topbar-user-initials-avatar">
                         <?php echo $initials; ?>
                     </div>
-                    <i class="fa-solid fa-chevron-down text-muted" style="font-size: 0.65rem;"></i>
+                    <div class="topbar-user-details d-none d-sm-flex">
+                        <span class="topbar-user-welcome">Welcome back</span>
+                        <span class="topbar-user-fullname"><?php echo htmlspecialchars($_SESSION['name'] ?? 'Zone Admin'); ?></span>
+                    </div>
+                    <i class="fa-solid fa-chevron-down text-muted ms-1" style="font-size: 0.65rem;"></i>
                 </button>
                 <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 p-2 mt-2" style="min-width: 220px; z-index: 1055;">
                     <div class="px-3 py-2 border-bottom mb-1">
@@ -249,12 +344,12 @@ $estate_logo_url = $branding['estate_logo_url'] ?? '';
                 <?php if (!empty($estate_logo_url)): ?>
                     <img src="<?php echo htmlspecialchars($estate_logo_url); ?>" alt="Estate Logo" class="estate-header-logo">
                 <?php else: ?>
-                    <div class="estate-header-fallback" style="background: linear-gradient(135deg, #7e22ce 0%, #6b21a8 100%);">
+                    <div class="estate-header-fallback" style="background: linear-gradient(135deg, #6b4eff 0%, #5a3fe6 100%);">
                         <i class="fa-solid fa-tree-city"></i>
                     </div>
                 <?php endif; ?>
                 <div class="estate-header-info">
-                    <span class="estate-header-tag" style="color: #a855f7;">Estate</span>
+                    <span class="estate-header-tag" style="color: #6b4eff;">Estate</span>
                     <span class="estate-header-name"><?php echo htmlspecialchars($estate_name); ?></span>
                 </div>
             </div>

@@ -5,11 +5,14 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Simple sidebar toggle script
-    document.querySelector('.toggle-sidebar').addEventListener('click', function() {
-        document.querySelector('.sidebar').classList.toggle('active');
-        document.querySelector('.main-content').classList.toggle('expanded');
-    });
+    // Null-safe sidebar toggle script
+    const sbToggle = document.querySelector('.toggle-sidebar');
+    if (sbToggle) {
+        sbToggle.addEventListener('click', function() {
+            const sb = document.querySelector('.sidebar');
+            if (sb) sb.classList.toggle('active');
+        });
+    }
 </script>
 </body>
 </html>

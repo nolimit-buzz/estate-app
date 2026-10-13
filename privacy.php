@@ -82,6 +82,7 @@ require_once 'includes/public_layout.php';
             text-decoration: underline;
         }
     </style>
+    <link rel="stylesheet" href="css/dashboard-theme-public.css?v=<?php echo defined('ASSET_VER') ? ASSET_VER : time(); ?>">
 </head>
 <body>
     <?php public_header(); ?>

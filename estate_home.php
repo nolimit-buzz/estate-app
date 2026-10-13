@@ -79,6 +79,7 @@ if ($pol_q) {
             --brand-primary: <?php echo $theme_color; ?>;
         }
     </style>
+    <link rel="stylesheet" href="css/dashboard-theme-public.css?v=<?php echo defined('ASSET_VER') ? ASSET_VER : time(); ?>">
 </head>
 <body class="landing-page">
 

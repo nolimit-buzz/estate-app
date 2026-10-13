@@ -712,7 +712,7 @@ include 'sidebar.php';
         <a href="archives?tab=residents" class="btn-export-ghost" title="Zonal Archives Vault">
             <i class="fa-solid fa-box-archive text-warning"></i> Archives Vault
         </a>
-        <button type="button" class="btn-primary-action-pill" style="background: linear-gradient(135deg, #7e22ce 0%, #6b21a8 100%); box-shadow: 0 4px 14px -2px rgba(126, 34, 206, 0.4);" onclick="openResidentModal()">
+        <button type="button" class="btn-primary-action-pill" style="background: linear-gradient(135deg, #6b4eff 0%, #5a3fe6 100%); box-shadow: 0 4px 14px -2px rgba(107, 78, 255, 0.4);" onclick="openResidentModal()">
             <i class="fa-solid fa-user-plus"></i> + Onboard Resident
         </button>
     </div>
@@ -740,7 +740,7 @@ include 'sidebar.php';
                     <span class="kpi-title">Active Resident Population</span>
                     <div class="kpi-value"><?php echo number_format($active_res_count); ?></div>
                 </div>
-                <div class="kpi-icon-wrap" style="background: rgba(126, 34, 206, 0.12); color: #7e22ce;">
+                <div class="kpi-icon-wrap" style="background: rgba(107, 78, 255, 0.12); color: #6b4eff;">
                     <i class="fa-solid fa-users"></i>
                 </div>
             </div>
@@ -749,7 +749,7 @@ include 'sidebar.php';
                 <span class="mature-badge mature-badge-emerald">Active In Zone</span>
             </div>
             <div class="kpi-progress-bar">
-                <div class="kpi-progress-fill" style="width: <?php echo $total_pop_count > 0 ? round(($active_res_count / $total_pop_count) * 100) : 100; ?>%; background: #7e22ce;"></div>
+                <div class="kpi-progress-fill" style="width: <?php echo $total_pop_count > 0 ? round(($active_res_count / $total_pop_count) * 100) : 100; ?>%; background: #6b4eff;"></div>
             </div>
         </div>
     </div>
@@ -908,7 +908,7 @@ include 'sidebar.php';
             </div>
             <div class="d-flex align-items-center gap-2">
                 <span class="tech-chip"><i class="fa-solid fa-user-check"></i> Showing: <span id="visibleResidentCount"><?php echo $residents ? $residents->num_rows : 0; ?></span></span>
-                <button class="btn btn-sm text-white" style="background: #7e22ce; border-color: #7e22ce;" onclick="openResidentModal()">
+                <button class="btn btn-sm text-white" style="background: #6b4eff; border-color: #6b4eff;" onclick="openResidentModal()">
                     <i class="fa-solid fa-user-plus me-1"></i> Onboard Resident
                 </button>
             </div>
@@ -982,7 +982,7 @@ include 'sidebar.php';
                                 <td>
                                     <div style="font-weight: 500; font-size: 0.84rem; color: var(--text-color);"><?php echo htmlspecialchars($row['email']); ?></div>
                                     <div style="font-size: 0.76rem; color: var(--text-muted); font-family: monospace;"><?php echo htmlspecialchars($row['phone']); ?></div>
-                                    <a href="../admin/generate_id?id=<?php echo $row['id']; ?>&type=resident" target="_blank" style="display: inline-flex; align-items: center; gap: 0.3rem; margin-top: 0.25rem; font-size: 0.74rem; color: #7e22ce; text-decoration: none; font-weight: 600;">
+                                    <a href="../admin/generate_id?id=<?php echo $row['id']; ?>&type=resident" target="_blank" style="display: inline-flex; align-items: center; gap: 0.3rem; margin-top: 0.25rem; font-size: 0.74rem; color: #6b4eff; text-decoration: none; font-weight: 600;">
                                         <i class="fa-solid fa-id-card"></i> Digital ID
                                     </a>
                                 </td>
@@ -1041,7 +1041,7 @@ include 'sidebar.php';
             </div>
             <div class="d-flex align-items-center gap-2">
                 <span class="tech-chip"><i class="fa-solid fa-car-side"></i> Total: <?php echo $vehicles ? $vehicles->num_rows : 0; ?></span>
-                <button class="btn btn-sm text-white" style="background: #7e22ce; border-color: #7e22ce;" onclick="openModal('vehicle-modal')">
+                <button class="btn btn-sm text-white" style="background: #6b4eff; border-color: #6b4eff;" onclick="openModal('vehicle-modal')">
                     <i class="fa-solid fa-car me-1"></i> Add Vehicle
                 </button>
             </div>
@@ -1067,7 +1067,7 @@ include 'sidebar.php';
                             <tr>
                                 <td><span class="id-chip"><?php echo htmlspecialchars($row['custom_id']); ?></span></td>
                                 <td>
-                                    <span class="id-chip" style="font-size: 0.85rem; font-weight: 700; letter-spacing: 0.05em; background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe;">
+                                    <span class="id-chip" style="font-size: 0.85rem; font-weight: 700; letter-spacing: 0.05em; background: #eff6ff; color: #5a3fe6; border-color: #bfdbfe;">
                                         <i class="fa-solid fa-car me-1"></i> <?php echo htmlspecialchars($row['reg_number']); ?>
                                     </span>
                                 </td>
@@ -1128,7 +1128,7 @@ include 'sidebar.php';
             </div>
             <div class="d-flex align-items-center gap-2">
                 <span class="tech-chip"><i class="fa-solid fa-dog"></i> Total: <?php echo $pets ? $pets->num_rows : 0; ?></span>
-                <button class="btn btn-sm text-white" style="background: #7e22ce; border-color: #7e22ce;" onclick="openModal('pet-modal')">
+                <button class="btn btn-sm text-white" style="background: #6b4eff; border-color: #6b4eff;" onclick="openModal('pet-modal')">
                     <i class="fa-solid fa-paw me-1"></i> Add Pet
                 </button>
             </div>
@@ -1205,7 +1205,7 @@ include 'sidebar.php';
             </div>
             <div class="d-flex align-items-center gap-2">
                 <span class="tech-chip"><i class="fa-solid fa-id-badge"></i> Total: <?php echo $staff ? $staff->num_rows : 0; ?></span>
-                <button class="btn btn-sm text-white" style="background: #7e22ce; border-color: #7e22ce;" onclick="openModal('staff-modal')">
+                <button class="btn btn-sm text-white" style="background: #6b4eff; border-color: #6b4eff;" onclick="openModal('staff-modal')">
                     <i class="fa-solid fa-user-plus me-1"></i> Add Staff
                 </button>
             </div>
@@ -1430,7 +1430,7 @@ include 'sidebar.php';
                 <!-- Assigned Residence Location Hierarchy (Zone-Filtered) -->
                 <div class="form-group" style="grid-column: span 2;">
                     <label style="font-weight: 600; color: #1e293b; margin-bottom: 0.5rem; display: block;">
-                        <i class="fa-solid fa-location-dot text-purple me-1" style="color: #7e22ce;"></i> Assigned Residence Location (Zone Scoped)
+                        <i class="fa-solid fa-location-dot text-purple me-1" style="color: #6b4eff;"></i> Assigned Residence Location (Zone Scoped)
                     </label>
                     <div style="background: #f8fafc; padding: 1.25rem; border-radius: 0.5rem; border: 1px solid #e2e8f0;">
                         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
@@ -1505,14 +1505,14 @@ include 'sidebar.php';
             <div class="form-group" style="margin-top: 1rem;">
                 <label>Profile Image</label>
                 <input type="file" name="image" accept="image/*" class="form-control" onchange="previewImage(this, 'res_preview')">
-                <img id="res_preview" src="" style="display: none; width: 80px; height: 80px; object-fit: cover; border-radius: 50%; margin-top: 1rem; border: 2px solid #7e22ce;">
+                <img id="res_preview" src="" style="display: none; width: 80px; height: 80px; object-fit: cover; border-radius: 50%; margin-top: 1rem; border: 2px solid #6b4eff;">
             </div>
 
             <!-- DYNAMIC MULTI-ENTITY ACCORDIONS (Onboarding Extras) -->
             <div id="multiEntitySections" style="margin-top: 1.5rem; border-top: 1px solid #e2e8f0; padding-top: 1rem;">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h6 class="fw-bold text-dark mb-0">
-                        <i class="fa-solid fa-users-viewfinder text-purple me-1" style="color: #7e22ce;"></i> Additional Household Entities (Optional)
+                        <i class="fa-solid fa-users-viewfinder text-purple me-1" style="color: #6b4eff;"></i> Additional Household Entities (Optional)
                     </h6>
                     <div class="dropdown">
                         <button class="btn btn-xs btn-outline-primary dropdown-toggle rounded-pill px-3 py-1" type="button" data-bs-toggle="dropdown" style="font-size: 0.78rem;">
@@ -1532,7 +1532,7 @@ include 'sidebar.php';
 
             <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; border-top: 1px solid #e2e8f0; padding-top: 1.5rem;">
                 <button type="button" class="btn" style="background: #f1f5f9; color: #475569;" onclick="closeModal('resident-modal')">Cancel</button>
-                <button type="submit" class="btn btn-primary" id="res_submit_btn" style="background: #7e22ce; border-color: #7e22ce;">Save Resident</button>
+                <button type="submit" class="btn btn-primary" id="res_submit_btn" style="background: #6b4eff; border-color: #6b4eff;">Save Resident</button>
             </div>
         </form>
     </div>
@@ -1606,7 +1606,7 @@ include 'sidebar.php';
             </div>
             <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
                 <button type="button" class="btn" style="background: #f1f5f9;" onclick="closeModal('vehicle-modal')">Cancel</button>
-                <button type="submit" name="add_vehicle" class="btn btn-primary" id="veh_btn" style="background: #7e22ce; border-color: #7e22ce;">Save Vehicle</button>
+                <button type="submit" name="add_vehicle" class="btn btn-primary" id="veh_btn" style="background: #6b4eff; border-color: #6b4eff;">Save Vehicle</button>
             </div>
         </form>
     </div>
@@ -1659,7 +1659,7 @@ include 'sidebar.php';
             </div>
             <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
                 <button type="button" class="btn" style="background: #f1f5f9;" onclick="closeModal('pet-modal')">Cancel</button>
-                <button type="submit" name="add_pet" class="btn btn-primary" id="pet_btn" style="background: #7e22ce; border-color: #7e22ce;">Save Pet</button>
+                <button type="submit" name="add_pet" class="btn btn-primary" id="pet_btn" style="background: #6b4eff; border-color: #6b4eff;">Save Pet</button>
             </div>
         </form>
     </div>
@@ -1740,7 +1740,7 @@ include 'sidebar.php';
             </div>
             <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
                 <button type="button" class="btn" style="background: #f1f5f9;" onclick="closeModal('staff-modal')">Cancel</button>
-                <button type="submit" name="add_staff" class="btn btn-primary" id="stf_btn" style="background: #7e22ce; border-color: #7e22ce;">Save Staff</button>
+                <button type="submit" name="add_staff" class="btn btn-primary" id="stf_btn" style="background: #6b4eff; border-color: #6b4eff;">Save Staff</button>
             </div>
         </form>
     </div>
@@ -1800,7 +1800,12 @@ function previewImage(input, previewId) {
 function openModal(modalId) {
     const element = document.getElementById(modalId);
     if (!element) return;
-    element.style.display = 'flex';
+    element.classList.add('show');
+    element.classList.remove('hide');
+    element.style.setProperty('display', 'flex', 'important');
+    element.style.setProperty('pointer-events', 'auto', 'important');
+    element.style.setProperty('visibility', 'visible', 'important');
+    element.style.setProperty('opacity', '1', 'important');
     
     const today = new Date().toISOString().split('T')[0];
     
@@ -1832,7 +1837,10 @@ function openModal(modalId) {
 function closeModal(modalId) {
     const element = document.getElementById(modalId);
     if (element) {
-        element.style.display = 'none';
+        element.classList.remove('show');
+        element.classList.add('hide');
+        element.style.setProperty('display', 'none', 'important');
+        element.style.setProperty('pointer-events', 'none', 'important');
     }
 }
 

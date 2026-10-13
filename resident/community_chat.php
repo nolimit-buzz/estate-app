@@ -33,8 +33,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 
-// If AJAX fetch messages
-if (isset($_GET['fetch_messages'])) {
+function fetch_resident_forum_messages($conn, $estate_id, $current_user_id) {
+    $estate_id = intval($estate_id);
+    $current_user_id = intval($current_user_id);
     $sql = "SELECT c.id, c.user_id, c.message, c.created_at,
                    u.name as sender_name, u.role as user_role,
                    COALESCE(z_user.name, MAX(z_res.name)) as zone_name,
@@ -58,7 +59,7 @@ if (isset($_GET['fetch_messages'])) {
     $messages = [];
     if ($messages_res) {
         while ($m = $messages_res->fetch_assoc()) {
-            $is_me = ($m['user_id'] == $user_id);
+            $is_me = ($m['user_id'] == $current_user_id);
             $m['is_me'] = $is_me;
             $m['can_delete'] = $is_me;
             $timestamp = strtotime($m['created_at']);
@@ -91,10 +92,18 @@ if (isset($_GET['fetch_messages'])) {
             $messages[] = $m;
         }
     }
+    return $messages;
+}
+
+// If AJAX fetch messages
+if (isset($_GET['fetch_messages'])) {
     header('Content-Type: application/json');
-    echo json_encode($messages);
+    echo json_encode(fetch_resident_forum_messages($conn, $estate_id, $user_id));
     exit;
 }
+
+// Pre-render initial messages for 0ms delay
+$initial_messages = fetch_resident_forum_messages($conn, $estate_id, $user_id);
 
 $user_res = $conn->query("SELECT name FROM users WHERE id = $user_id");
 $current_user = $user_res ? $user_res->fetch_assoc() : null;
@@ -156,11 +165,36 @@ include 'sidebar.php';
 
     <!-- Scrollable Messages Body -->
     <div class="resident-chat-container" id="chatContainer">
-        <!-- Messages loaded dynamically -->
-        <div class="d-flex align-items-center justify-content-center py-5 text-secondary">
-            <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
-            <span>Connecting to estate forum stream...</span>
-        </div>
+        <?php if (empty($initial_messages)): ?>
+            <div class="text-center py-5 my-auto text-secondary">
+                <div class="w-12 h-12 rounded-circle bg-light d-inline-flex align-items-center justify-content-center text-muted mb-3" style="width:54px; height:54px; font-size:1.5rem;">
+                    <i class="fa-solid fa-comments"></i>
+                </div>
+                <h6 class="font-bold text-slate-700 mb-1">No Messages Yet</h6>
+                <p class="text-secondary small mb-0">Start the conversation with fellow estate residents!</p>
+            </div>
+        <?php else: ?>
+            <?php foreach ($initial_messages as $msg): ?>
+                <div class="resident-message-bubble <?= $msg['is_me'] ? 'resident-message-me' : 'resident-message-other' ?> position-relative">
+                    <?php if ($msg['can_delete']): ?>
+                        <div class="chat-bubble-actions">
+                            <button type="button" class="btn btn-sm btn-link text-danger p-0 px-1" onclick="deleteMessage(<?= $msg['id'] ?>)" title="Delete My Message">
+                                <i class="fa-solid fa-trash-can" style="font-size: 0.75rem;"></i>
+                            </button>
+                        </div>
+                    <?php endif; ?>
+                    <div class="sender-pill <?= $msg['is_me'] ? 'sender-pill-me' : 'sender-pill-other' ?>">
+                        <span><i class="fa-solid fa-circle-user"></i> <?= htmlspecialchars($msg['sender_name']) ?></span>
+                        <span class="<?= $msg['role_class'] ?>"><i class="<?= $msg['role_icon'] ?> me-1"></i><?= htmlspecialchars($msg['role_label']) ?></span>
+                    </div>
+                    <div class="message-content" style="white-space: pre-wrap; padding-right: 1.25rem;"><?= htmlspecialchars($msg['message']) ?></div>
+                    <div class="chat-time-stamp <?= $msg['is_me'] ? 'chat-time-me' : 'chat-time-other' ?>">
+                        <span><?= htmlspecialchars($msg['time']) ?></span>
+                        <?= $msg['is_me'] ? '<i class="fa-solid fa-check-double text-sky-200 ms-1" style="font-size:0.65rem;"></i>' : '' ?>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
     </div>
 
     <!-- Modern Chat Input Footer Bar -->
@@ -189,8 +223,8 @@ include 'sidebar.php';
 }
 .chat-capsule-wrapper:focus-within {
     background: #ffffff;
-    border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    border-color: #6b4eff;
+    box-shadow: 0 0 0 3px rgba(107, 78, 255, 0.15);
 }
 .chat-input-control {
     border: none;
@@ -211,11 +245,11 @@ include 'sidebar.php';
     min-width: 44px;
     min-height: 44px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    background: linear-gradient(135deg, #6b4eff, #5a3fe6);
     color: #ffffff;
     border: none;
     outline: none;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+    box-shadow: 0 4px 12px rgba(107, 78, 255, 0.35);
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     font-size: 1rem;
@@ -223,8 +257,8 @@ include 'sidebar.php';
 }
 .chat-send-btn:hover {
     transform: scale(1.06);
-    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.45);
-    background: linear-gradient(135deg, #1d4ed8, #1e40af);
+    box-shadow: 0 6px 16px rgba(107, 78, 255, 0.45);
+    background: linear-gradient(135deg, #5a3fe6, #4a31cc);
 }
 .chat-send-btn:active {
     transform: scale(0.96);
@@ -289,7 +323,7 @@ body.dark-mode .chat-input-control::placeholder {
     flex-wrap: wrap;
 }
 .sender-pill-other {
-    color: var(--primary-color, #2563eb);
+    color: var(--primary-color, #6b4eff);
 }
 .sender-pill-me {
     color: rgba(255, 255, 255, 0.95);
@@ -306,7 +340,7 @@ body.dark-mode .chat-input-control::placeholder {
     font-weight: 600;
 }
 .badge-role-zone {
-    background: #7e22ce;
+    background: #6b4eff;
     color: #ffffff;
     font-size: 0.68rem;
     padding: 2px 7px;
@@ -381,7 +415,19 @@ body.dark-mode .p-3.border-top {
     const chatForm = document.getElementById('chatForm');
     const messageInput = document.getElementById('messageInput');
     const sendBtn = document.getElementById('sendBtn');
-    let lastMessageCount = 0;
+    let lastMessageCount = <?= count($initial_messages) ?>;
+
+    if (chatContainer) {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    const getChatApiUrl = () => {
+        let base = window.location.pathname.replace(/\/$/, '');
+        if (!base.endsWith('community_chat') && !base.endsWith('community_chat.php')) {
+            base = 'community_chat.php';
+        }
+        return base;
+    };
 
     function escapeHtml(text) {
         const div = document.createElement('div');
@@ -391,7 +437,9 @@ body.dark-mode .p-3.border-top {
 
     async function fetchMessages(forceScroll = false) {
         try {
-            const res = await fetch('community_chat?fetch_messages=1');
+            const apiUrl = getChatApiUrl() + '?fetch_messages=1';
+            const res = await fetch(apiUrl);
+            if (!res.ok) return;
             const data = await res.json();
             
             const isAtBottom = chatContainer.scrollHeight - chatContainer.clientHeight <= chatContainer.scrollTop + 120;
@@ -469,7 +517,7 @@ body.dark-mode .p-3.border-top {
         formData.append('ajax', '1');
 
         try {
-            await fetch('community_chat', {
+            await fetch(getChatApiUrl(), {
                 method: 'POST',
                 body: formData
             });
@@ -494,7 +542,7 @@ body.dark-mode .p-3.border-top {
         formData.append('ajax', '1');
 
         try {
-            await fetch('community_chat', {
+            await fetch(getChatApiUrl(), {
                 method: 'POST',
                 body: formData
             });

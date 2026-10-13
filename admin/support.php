@@ -31,7 +31,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 }
 $tickets = Support::forEstate($eid);
 $cur = $id ? $p->query("SELECT * FROM support_tickets WHERE id = $id AND estate_id = $eid")->fetch_assoc() : null;
-$msgs = $cur ? $p->query("SELECT * FROM ticket_messages WHERE ticket_id = $id ORDER BY id")->fetch_all(MYSQLI_ASSOC) : [];
+$msgs = $cur ? $p->query("SELECT * FROM ticket_messages WHERE ticket_id = $id AND is_internal = 0 ORDER BY id")->fetch_all(MYSQLI_ASSOC) : [];
 include '../includes/header.php';
 include '../includes/sidebar.php';
 ?>

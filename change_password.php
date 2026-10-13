@@ -161,6 +161,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             line-height: 1.45;
         }
     </style>
+    <link rel="stylesheet" href="css/dashboard-theme-public.css?v=<?php echo defined('ASSET_VER') ? ASSET_VER : time(); ?>">
 </head>
 <body class="landing-page">
     <div class="auth-page" style="background-image: url('images/hero_estate.jpg');">

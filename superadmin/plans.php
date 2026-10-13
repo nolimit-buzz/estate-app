@@ -2,6 +2,7 @@
 // superadmin/plans.php - Plan Builder: plans, prices, limits, included/optional modules, versions & impact on existing estates
 $page_title = 'Plans & pricing';
 require_once __DIR__ . '/includes/super_header.php';
+require_once dirname(__DIR__) . '/includes/FeatureGrid.php';
 sa_require_role(['superadmin', 'finance']);
 
 $mods = $platform->query("SELECT module_key, name, category, default_price, global_enabled FROM modules ORDER BY sort_order")->fetch_all(MYSQLI_ASSOC);
@@ -30,9 +31,13 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         ];
         if ($f['name'] === '') throw new RuntimeException('Plan name is required.');
         if ($f['monthly'] < 0 || $f['annual'] < 0) throw new RuntimeException('Prices cannot be negative.');
-        $incl = $_POST['mod'] ?? []; // module_key => none|included|optional
-        $prices = $_POST['mod_price'] ?? [];
         $valid = array_column($mods, 'module_key');
+        // Selected features (permission slugs); modules are derived from them so route/sidebar gating stays consistent.
+        $catalog = FeatureCatalog::all();
+        $feats = array_values(array_filter(array_keys($_POST['feat'] ?? []), fn($s) => isset($catalog[$s])));
+        $incl = [];
+        foreach (FeatureCatalog::modulesFor($feats) as $k) $incl[$k] = 'included';
+        foreach (array_keys($_POST['mod'] ?? []) as $k) $incl[$k] = 'included'; // modules without a feature group
         $before = $pid ? Plans::snapshot($pid) : null;
 
         if ($pid) {
@@ -50,13 +55,15 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             $st->execute();
             $pid = $platform->insert_id;
         }
-        $pm = $platform->prepare("INSERT INTO plan_modules (plan_id, module_key, inclusion, module_price) VALUES (?,?,?,?)");
-        foreach ($incl as $k => $mode) {
-            if (!in_array($k, $valid, true) || !in_array($mode, ['included', 'optional'], true)) continue;
-            $price = ($prices[$k] ?? '') === '' ? null : max(0, floatval($prices[$k]));
-            $pm->bind_param('issd', $pid, $k, $mode, $price);
+        $pm = $platform->prepare("INSERT INTO plan_modules (plan_id, module_key, inclusion, module_price) VALUES (?,?,'included',NULL)");
+        foreach (array_keys($incl) as $k) {
+            if (!in_array($k, $valid, true)) continue;
+            $pm->bind_param('is', $pid, $k);
             $pm->execute();
         }
+        $platform->query("DELETE FROM plan_features WHERE plan_id = $pid");
+        $pf = $platform->prepare("INSERT IGNORE INTO plan_features (plan_id, feature_slug) VALUES (?,?)");
+        foreach ($feats as $slug) { $pf->bind_param('is', $pid, $slug); $pf->execute(); }
         $after = Plans::snapshot($pid);
         $vrow = $platform->query("SELECT version FROM plans WHERE id = $pid")->fetch_assoc();
         $note = trim($_POST['change_note'] ?? '');
@@ -90,9 +97,12 @@ require_once __DIR__ . '/includes/super_topbar.php';
 if ($isNew || $editId):
     $plan = $editId ? Plans::get($editId) : ['id' => 0, 'name' => '', 'description' => '', 'monthly_price' => 0, 'annual_price' => 0, 'resident_limit' => 100, 'user_limit' => 10, 'storage_limit_mb' => 1024, 'support_level' => 'email', 'features' => '', 'is_featured' => 0, 'show_public' => 1, 'status' => 'active', 'sort_order' => 100, 'version' => 0];
     if (!$plan) { echo '<div class="alert alert-danger">Plan not found.</div>'; require __DIR__ . '/includes/super_footer.php'; exit; }
-    $cur = []; $curPrice = [];
+    $cur = []; $curFeat = [];
     if ($editId) foreach (Plans::modules($editId) as $m) { $cur[$m['module_key']] = $m['inclusion']; }
-    if ($editId) { $r = $platform->query("SELECT module_key, module_price FROM plan_modules WHERE plan_id = $editId"); while ($x = $r->fetch_assoc()) $curPrice[$x['module_key']] = $x['module_price']; }
+    if ($editId) $curFeat = array_flip(FeatureCatalog::planFeatures($editId));
+    $grouped = FeatureCatalog::grouped();
+    $groupedMods = [];
+    foreach (FeatureCatalog::all() as $f) if ($f['module_key']) $groupedMods[$f['module_key']] = true;
     $subs = $editId ? intval($platform->query("SELECT COUNT(*) c FROM subscriptions WHERE plan_id = $editId AND status IN ('active','renewed','grace_period','past_due')")->fetch_assoc()['c']) : 0;
 ?>
 <form method="post" class="row g-3">
@@ -113,22 +123,21 @@ if ($isNew || $editId):
    <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="is_featured" id="ft" value="1" <?= $plan['is_featured'] ? 'checked' : '' ?>><label class="form-check-label" for="ft">Highlight as most popular</label></div>
    <div class="mb-2"><label class="form-label small">Change note</label><input class="form-control" name="change_note" placeholder="Recorded in plan history & audit log"></div>
    <?php if ($editId): ?><div class="alert alert-warning small mb-2"><strong><?= $subs ?></strong> active subscription(s) use this plan. By default they keep their current (grandfathered) terms.
-     <div class="form-check mt-1"><input class="form-check-input" type="checkbox" name="apply_existing" id="ap" value="1"><label class="form-check-label" for="ap">Apply the new modules, limits to existing subscribers now</label></div></div><?php endif; ?>
+     <div class="form-check mt-1"><input class="form-check-input" type="checkbox" name="apply_existing" id="ap" value="1"><label class="form-check-label" for="ap">Apply the new features, limits and price to existing subscribers now</label></div></div><?php endif; ?>
    <button class="btn btn-primary">Save plan</button> <a class="btn btn-light" href="plans">Cancel</a>
  </div></div>
  <div class="col-lg-7"><div class="card-custom p-3">
-   <h6 class="fw-bold">Modules in this plan</h6><p class="small text-secondary">Included = part of the price. Optional = estate may add it for the add-on price (blank = module default price).</p>
-   <div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>Module</th><th>Availability</th><th>Add-on price / month</th></tr></thead><tbody>
-   <?php foreach ($mods as $m): $mode = $cur[$m['module_key']] ?? 'none'; ?>
-   <tr><td><?= e($m['name']) ?><div class="small text-secondary"><?= e($m['category']) ?><?= $m['global_enabled'] ? '' : ' · globally disabled' ?></div></td>
-     <td><select name="mod[<?= e($m['module_key']) ?>]" class="form-select form-select-sm"><option value="none" <?= $mode === 'none' ? 'selected' : '' ?>>Not in plan</option><option value="included" <?= $mode === 'included' ? 'selected' : '' ?>>Included</option><option value="optional" <?= $mode === 'optional' ? 'selected' : '' ?>>Optional add-on</option></select></td>
-     <td><input class="form-control form-control-sm" type="number" step="0.01" min="0" name="mod_price[<?= e($m['module_key']) ?>]" value="<?= e($curPrice[$m['module_key']] ?? '') ?>" placeholder="<?= e($m['default_price']) ?>"></td></tr>
-   <?php endforeach; ?></tbody></table></div>
+   <h6 class="fw-bold">Features in this plan</h6><p class="small text-secondary">Tick what this plan unlocks. The plan has one fixed price (left); features are not priced individually. Estates can only assign these features to their roles; everything else appears faint and disabled.</p>
+   <?= render_feature_grid($grouped, ['name' => 'feat', 'checked' => $curFeat]) ?>
+   <?php $others = array_filter($mods, fn($m) => empty($groupedMods[$m['module_key']])); if ($others): ?>
+   <h6 class="fw-bold mt-4">Other platform modules</h6>
+   <div class="row g-2"><?php foreach ($others as $m): ?><div class="col-md-6"><label class="d-flex gap-2 small"><input type="checkbox" class="form-check-input" name="mod[<?= e($m['module_key']) ?>]" value="1" <?= isset($cur[$m['module_key']]) ? 'checked' : '' ?>><span><?= e($m['name']) ?><span class="text-secondary"> · <?= e($m['category']) ?><?= $m['global_enabled'] ? '' : ' · globally disabled' ?></span></span></label></div><?php endforeach; ?></div>
+   <?php endif; ?>
  </div></div>
 </form>
-<?php else: $plans = $platform->query("SELECT p.*, (SELECT COUNT(*) FROM subscriptions s WHERE s.plan_id = p.id AND s.status IN ('active','renewed','grace_period','past_due')) subs, (SELECT COUNT(*) FROM plan_modules pm WHERE pm.plan_id = p.id AND pm.inclusion='included') inc FROM plans p ORDER BY sort_order")->fetch_all(MYSQLI_ASSOC); ?>
-<div class="d-flex justify-content-between mb-3"><p class="text-secondary mb-0 small">All prices, limits and module inclusion are configured here and feed the public pricing page and billing engine.</p><a href="plans?new=1" class="btn btn-primary btn-sm">New plan</a></div>
-<div class="card-custom"><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Plan</th><th>Monthly</th><th class="d-none d-md-table-cell">Annual</th><th>Residents</th><th class="d-none d-md-table-cell">Modules</th><th>Estates</th><th>Status</th><th></th></tr></thead><tbody>
+<?php else: $plans = $platform->query("SELECT p.*, (SELECT COUNT(*) FROM subscriptions s WHERE s.plan_id = p.id AND s.status IN ('active','renewed','grace_period','past_due')) subs, (SELECT COUNT(*) FROM plan_features pf WHERE pf.plan_id = p.id) inc FROM plans p ORDER BY sort_order")->fetch_all(MYSQLI_ASSOC); ?>
+<div class="d-flex justify-content-between mb-3"><p class="text-secondary mb-0 small">All prices, limits and module inclusion are configured here (one fixed price per plan, features chosen per plan) and feed the public pricing page and billing engine.</p><a href="plans?new=1" class="btn btn-primary btn-sm">New plan</a></div>
+<div class="card-custom"><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Plan</th><th>Monthly</th><th class="d-none d-md-table-cell">Annual</th><th>Residents</th><th class="d-none d-md-table-cell">Features</th><th>Estates</th><th>Status</th><th></th></tr></thead><tbody>
 <?php foreach ($plans as $p): ?><tr><td class="fw-semibold"><?= e($p['name']) ?> <span class="text-secondary small">v<?= intval($p['version']) ?></span><div class="small text-secondary"><?= e($p['description']) ?></div></td>
  <td><?= sa_money($p['monthly_price']) ?></td><td class="d-none d-md-table-cell"><?= sa_money($p['annual_price']) ?></td><td><?= $p['resident_limit'] ? number_format($p['resident_limit']) : '∞' ?></td><td class="d-none d-md-table-cell"><?= intval($p['inc']) ?></td><td><?= intval($p['subs']) ?></td><td><?= sa_badge($p['status']) ?></td>
  <td class="text-end text-nowrap"><a class="btn btn-sm btn-outline-primary" href="plans?id=<?= $p['id'] ?>">Edit</a>

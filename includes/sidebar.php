@@ -32,92 +32,160 @@ if ($sb_uid > 0 && isset($conn)) {
     }
 }
 ?>
-<aside class="sidebar">
+<aside class="sidebar sidebar-named">
     <div class="sidebar-header">
-        <div class="logo d-flex align-items-center">
-            <?php if(!empty($app_company_logo_url)): ?>
-                <img src="<?php echo htmlspecialchars($app_company_logo_url); ?>" alt="<?php echo htmlspecialchars($app_company_name); ?>" style="height: 32px; width: auto; max-width: 140px; border-radius: 6px; object-fit: contain;">
-                <div class="d-flex flex-column ms-2 text-start">
-                    <span style="font-size: 1.02rem; font-weight: 800; letter-spacing: -0.01em; line-height: 1.2; color: inherit;"><?php echo htmlspecialchars($app_company_name); ?></span>
-                    <span style="font-size: 0.65rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Estate Platform</span>
-                </div>
-            <?php else: ?>
-                <div style="width: 34px; height: 34px; border-radius: 8px; background: rgba(59, 130, 246, 0.12); color: var(--primary-color, #2563eb); display: flex; align-items: center; justify-content: center; font-size: 1rem;">
-                    <i class="fa-solid fa-building-user"></i>
-                </div>
-                <div class="d-flex flex-column ms-2 text-start">
-                    <span style="font-size: 1.02rem; font-weight: 800; letter-spacing: -0.01em; line-height: 1.2; color: inherit;"><?php echo htmlspecialchars($app_company_name); ?></span>
-                    <span style="font-size: 0.65rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Estate Platform</span>
-                </div>
-            <?php endif; ?>
+        <a href="../admin/index" class="sidebar-brand-ring" title="<?php echo htmlspecialchars($estate_name); ?>">
+            <i class="fa-solid fa-circle-notch"></i>
+        </a>
+        <div class="d-flex flex-column" style="min-width: 0;">
+            <h5 class="sidebar-brand-title text-truncate"><?php echo htmlspecialchars($estate_name); ?></h5>
+            <div class="sidebar-brand-sub">
+                <span style="width: 6px; height: 6px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
+                <span>Central Admin</span>
+            </div>
         </div>
     </div>
     
     <nav class="sidebar-nav">
         <ul>
             <?php if (is_impersonating_estate()): ?>
-                <li class="nav-label text-warning" style="color: #f59e0b !important;">SaaS Governance</li>
+                <li class="nav-section-label text-warning" style="color: #f59e0b !important;">SaaS Governance</li>
                 <li>
-                    <a href="../superadmin/index" class="text-warning fw-bold d-flex align-items-center" style="background: rgba(245, 158, 11, 0.08); border-left: 3px solid #f59e0b; border-radius: 8px; margin-bottom: 8px;">
-                        <i class="fa-solid fa-bolt text-warning"></i> Super Admin Console
+                    <a href="../superadmin/index" class="text-warning fw-bold d-flex align-items-center" style="background: rgba(245, 158, 11, 0.08); border-left: 3px solid #f59e0b; border-radius: 8px; margin-bottom: 8px;" title="Super Admin Console">
+                        <i class="fa-solid fa-bolt text-warning"></i>
+                        <span class="nav-name-tag">Super Admin Console</span>
                         <span class="badge bg-warning text-dark ms-auto" style="font-size: 0.65rem;">SAAS</span>
                     </a>
                 </li>
             <?php endif; ?>
-            <li class="nav-label">Core Operations</li>
-            <li><a href="../admin/index" class="<?php echo ($current_page == 'index') ? 'active' : ''; ?>"><i class="fa-solid fa-chart-pie"></i> Dashboard</a></li>
+
+            <li class="nav-section-label">Core Operations</li>
             <li>
-                <a href="../admin/notifications" class="<?php echo ($current_page == 'notifications') ? 'active' : ''; ?> d-flex align-items-center">
-                    <i class="fa-solid fa-bell"></i> Action &amp; Notifications
+                <a href="../admin/index" class="<?php echo ($current_page == 'index') ? 'active' : ''; ?>" title="Dashboard">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span class="nav-name-tag">Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a href="../admin/notifications" class="<?php echo ($current_page == 'notifications') ? 'active' : ''; ?> d-flex align-items-center" title="Action & Notifications">
+                    <i class="fa-solid fa-bell"></i>
+                    <span class="nav-name-tag">Action &amp; Notifications</span>
                     <?php if ($sb_unread_count > 0 || $sb_pending_requests_cnt > 0): ?>
-                        <span class="badge bg-danger rounded-pill ms-auto" style="font-size: 0.65rem; padding: 2px 7px;">
+                        <span class="badge bg-danger rounded-pill ms-auto">
                             <?php echo ($sb_unread_count + $sb_pending_requests_cnt); ?>
                         </span>
                     <?php endif; ?>
                 </a>
             </li>
             
-            <li class="nav-label">Real Estate & Assets</li>
+            <li class="nav-section-label">Real Estate &amp; Assets</li>
             <?php if (isModuleEnabled('zonal_divisions')): ?>
-                <li><a href="../admin/zones" class="<?php echo ($current_page == 'zones') ? 'active' : ''; ?>"><i class="fa-solid fa-layer-group"></i> Zones & Sectors</a></li>
+                <li>
+                    <a href="../admin/zones" class="<?php echo ($current_page == 'zones') ? 'active' : ''; ?>" title="Zones & Sectors">
+                        <i class="fa-solid fa-layer-group"></i>
+                        <span class="nav-name-tag">Zones &amp; Sectors</span>
+                    </a>
+                </li>
             <?php endif; ?>
-            <li><a href="../admin/properties" class="<?php echo ($current_page == 'properties' || $current_page == 'property_details') ? 'active' : ''; ?>"><i class="fa-solid fa-city"></i> Properties & Units</a></li>
-            <li><a href="../admin/owners" class="<?php echo ($current_page == 'owners') ? 'active' : ''; ?>"><i class="fa-solid fa-id-card-clip"></i> Property Owners</a></li>
             <li>
-                <a href="../admin/residents" class="<?php echo ($current_page == 'residents' || $current_page == 'resident_timeline') ? 'active' : ''; ?> d-flex align-items-center">
-                    <i class="fa-solid fa-users"></i> Residents Registry
+                <a href="../admin/properties" class="<?php echo ($current_page == 'properties' || $current_page == 'property_details') ? 'active' : ''; ?>" title="Properties & Units">
+                    <i class="fa-solid fa-city"></i>
+                    <span class="nav-name-tag">Properties &amp; Units</span>
+                </a>
+            </li>
+            <li>
+                <a href="../admin/owners" class="<?php echo ($current_page == 'owners') ? 'active' : ''; ?>" title="Property Owners">
+                    <i class="fa-solid fa-id-card-clip"></i>
+                    <span class="nav-name-tag">Property Owners</span>
+                </a>
+            </li>
+            <li>
+                <a href="../admin/residents" class="<?php echo ($current_page == 'residents' || $current_page == 'resident_timeline') ? 'active' : ''; ?> d-flex align-items-center" title="Residents Registry">
+                    <i class="fa-solid fa-users"></i>
+                    <span class="nav-name-tag">Residents Registry</span>
                     <?php if ($sb_pending_requests_cnt > 0): ?>
-                        <span class="badge bg-warning text-dark rounded-pill ms-auto" style="font-size: 0.65rem; padding: 2px 7px;" title="<?php echo $sb_pending_requests_cnt; ?> pending contact change request(s)">
+                        <span class="badge bg-warning text-dark rounded-pill ms-auto" title="<?php echo $sb_pending_requests_cnt; ?> pending contact change request(s)">
                             <?php echo $sb_pending_requests_cnt; ?> req
                         </span>
                     <?php endif; ?>
                 </a>
             </li>
-            <li><a href="../admin/directory" class="<?php echo ($current_page == 'directory') ? 'active' : ''; ?>"><i class="fa-solid fa-address-book"></i> Member Directory</a></li>
+            <li>
+                <a href="../admin/directory" class="<?php echo ($current_page == 'directory') ? 'active' : ''; ?>" title="Member Directory">
+                    <i class="fa-solid fa-address-book"></i>
+                    <span class="nav-name-tag">Member Directory</span>
+                </a>
+            </li>
             <?php if (isModuleEnabled('broadcast_messaging')): ?>
-                <li><a href="../admin/broadcasts" class="<?php echo ($current_page == 'broadcasts') ? 'active' : ''; ?>"><i class="fa-solid fa-bullhorn"></i> Broadcasts &amp; Notices</a></li>
+                <li>
+                    <a href="../admin/broadcasts" class="<?php echo ($current_page == 'broadcasts') ? 'active' : ''; ?>" title="Broadcasts & Notices">
+                        <i class="fa-solid fa-bullhorn"></i>
+                        <span class="nav-name-tag">Broadcasts &amp; Notices</span>
+                    </a>
+                </li>
             <?php endif; ?>
-            <li><a href="../admin/community_chat" class="<?php echo ($current_page == 'community_chat') ? 'active' : ''; ?>"><i class="fa-solid fa-comments"></i> Estate Forum</a></li>
-            <li><a href="../admin/staff" class="<?php echo ($current_page == 'staff') ? 'active' : ''; ?>"><i class="fa-solid fa-user-gear"></i> Estate Staff</a></li>
-            <li><a href="../admin/archives" class="<?php echo ($current_page == 'archives') ? 'active' : ''; ?>"><i class="fa-solid fa-box-archive"></i> Archives Vault</a></li>
+            <li>
+                <a href="../admin/community_chat" class="<?php echo ($current_page == 'community_chat') ? 'active' : ''; ?>" title="Estate Forum">
+                    <i class="fa-solid fa-comments"></i>
+                    <span class="nav-name-tag">Estate Forum</span>
+                </a>
+            </li>
+            <li>
+                <a href="../admin/staff" class="<?php echo ($current_page == 'staff') ? 'active' : ''; ?>" title="Estate Staff">
+                    <i class="fa-solid fa-user-gear"></i>
+                    <span class="nav-name-tag">Estate Staff</span>
+                </a>
+            </li>
+            <li>
+                <a href="../admin/archives" class="<?php echo ($current_page == 'archives') ? 'active' : ''; ?>" title="Archives Vault">
+                    <i class="fa-solid fa-box-archive"></i>
+                    <span class="nav-name-tag">Archives Vault</span>
+                </a>
+            </li>
             <?php if (isModuleEnabled('bylaws_policies')): ?>
-                <li><a href="../admin/policies" class="<?php echo ($current_page == 'policies') ? 'active' : ''; ?>"><i class="fa-solid fa-gavel"></i> Policies &amp; Bylaws</a></li>
+                <li>
+                    <a href="../admin/policies" class="<?php echo ($current_page == 'policies') ? 'active' : ''; ?>" title="Policies & Bylaws">
+                        <i class="fa-solid fa-gavel"></i>
+                        <span class="nav-name-tag">Policies &amp; Bylaws</span>
+                    </a>
+                </li>
             <?php endif; ?>
             
             <?php if (isModuleEnabled('billing_invoicing')): ?>
-                <li class="nav-label">Finance & Facilities</li>
-                <li><a href="../admin/finance" class="<?php echo ($current_page == 'finance' || $current_page == 'receipt') ? 'active' : ''; ?>"><i class="fa-solid fa-wallet"></i> Finance Hub</a></li>
-                <li><a href="../admin/charges" class="<?php echo ($current_page == 'charges') ? 'active' : ''; ?>"><i class="fa-solid fa-tags"></i> Charge Catalog</a></li>
-                <li><a href="../admin/billing_config" class="<?php echo ($current_page == 'billing_config') ? 'active' : ''; ?>"><i class="fa-solid fa-sliders"></i> Billing & Installments</a></li>
+                <li class="nav-section-label">Finance &amp; Facilities</li>
+                <li>
+                    <a href="../admin/finance" class="<?php echo ($current_page == 'finance' || $current_page == 'receipt') ? 'active' : ''; ?>" title="Finance Hub">
+                        <i class="fa-solid fa-wallet"></i>
+                        <span class="nav-name-tag">Finance Hub</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="../admin/charges" class="<?php echo ($current_page == 'charges') ? 'active' : ''; ?>" title="Charge Catalog">
+                        <i class="fa-solid fa-tags"></i>
+                        <span class="nav-name-tag">Charge Catalog</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="../admin/billing_config" class="<?php echo ($current_page == 'billing_config') ? 'active' : ''; ?>" title="Billing & Installments">
+                        <i class="fa-solid fa-sliders"></i>
+                        <span class="nav-name-tag">Billing &amp; Installments</span>
+                    </a>
+                </li>
             <?php endif; ?>
 
-            <li><a href="../admin/maintenance" class="<?php echo ($current_page == 'maintenance') ? 'active' : ''; ?>"><i class="fa-solid fa-screwdriver-wrench"></i> Maintenance Dispatch</a></li>
+            <li>
+                <a href="../admin/maintenance" class="<?php echo ($current_page == 'maintenance') ? 'active' : ''; ?>" title="Maintenance Dispatch">
+                    <i class="fa-solid fa-screwdriver-wrench"></i>
+                    <span class="nav-name-tag">Maintenance Dispatch</span>
+                </a>
+            </li>
             <?php if (isModuleEnabled('artisan_marketplace')): ?>
                 <li>
-                    <a href="../admin/artisans" class="<?php echo ($current_page == 'artisans') ? 'active' : ''; ?> d-flex align-items-center">
-                        <i class="fa-solid fa-user-check"></i> Artisan Registry
+                    <a href="../admin/artisans" class="<?php echo ($current_page == 'artisans') ? 'active' : ''; ?> d-flex align-items-center" title="Artisan Registry">
+                        <i class="fa-solid fa-user-check"></i>
+                        <span class="nav-name-tag">Artisan Registry</span>
                         <?php if ($sb_pending_artisans_cnt > 0): ?>
-                            <span class="badge bg-warning text-dark rounded-pill ms-auto" style="font-size: 0.65rem; padding: 2px 7px;" title="<?php echo $sb_pending_artisans_cnt; ?> pending artisan verification(s)">
+                            <span class="badge bg-warning text-dark rounded-pill ms-auto" title="<?php echo $sb_pending_artisans_cnt; ?> pending artisan verification(s)">
                                 <?php echo $sb_pending_artisans_cnt; ?> new
                             </span>
                         <?php endif; ?>
@@ -125,52 +193,173 @@ if ($sb_uid > 0 && isset($conn)) {
                 </li>
             <?php endif; ?>
             
-            <li class="nav-label">Portals</li>
+            <li class="nav-section-label">Portals</li>
             <?php if (isModuleEnabled('zonal_divisions')): ?>
-                <li><a href="../zone/index" target="_blank"><i class="fa-solid fa-network-wired"></i> Zone Portal <i class="fa-solid fa-arrow-up-right-from-square ms-auto small opacity-50"></i></a></li>
+                <li>
+                    <a href="../zone/index" target="_blank" title="Zone Portal">
+                        <i class="fa-solid fa-network-wired"></i>
+                        <span class="nav-name-tag">Zone Portal</span>
+                        <i class="fa-solid fa-arrow-up-right-from-square ms-auto small opacity-50" style="font-size: 10px;"></i>
+                    </a>
+                </li>
             <?php endif; ?>
-            <li><a href="../resident/index" target="_blank"><i class="fa-solid fa-house-chimney-user"></i> Resident Portal <i class="fa-solid fa-arrow-up-right-from-square ms-auto small opacity-50"></i></a></li>
+            <li>
+                <a href="../resident/index" target="_blank" title="Resident Portal">
+                    <i class="fa-solid fa-house-chimney-user"></i>
+                    <span class="nav-name-tag">Resident Portal</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square ms-auto small opacity-50" style="font-size: 10px;"></i>
+                </a>
+            </li>
 
-            <li class="nav-label">Security & System</li>
+            <li class="nav-section-label">Security &amp; System</li>
             <?php if (isModuleEnabled('emergency_sos')): ?>
-                <li><a href="../admin/emergency" class="<?php echo ($current_page == 'emergency') ? 'active' : ''; ?> text-danger fw-bold"><i class="fa-solid fa-truck-medical text-danger"></i> Emergency &amp; Panic Hub</a></li>
+                <li>
+                    <a href="../admin/emergency" class="<?php echo ($current_page == 'emergency') ? 'active' : ''; ?> text-danger fw-bold" title="Emergency & Panic Hub">
+                        <i class="fa-solid fa-truck-medical text-danger"></i>
+                        <span class="nav-name-tag">Emergency Hub</span>
+                    </a>
+                </li>
             <?php endif; ?>
-            <li><a href="../admin/incidents" class="<?php echo ($current_page == 'incidents') ? 'active' : ''; ?>"><i class="fa-solid fa-book-skull text-danger"></i> Incident &amp; Occurrence Book</a></li>
+            <li>
+                <a href="../admin/incidents" class="<?php echo ($current_page == 'incidents') ? 'active' : ''; ?>" title="Incident & Occurrence Book">
+                    <i class="fa-solid fa-book-skull text-danger"></i>
+                    <span class="nav-name-tag">Incident Book</span>
+                </a>
+            </li>
             <?php if (isModuleEnabled('security_patrol')): ?>
-                <li><a href="../admin/roster" class="<?php echo ($current_page == 'roster') ? 'active' : ''; ?>"><i class="fa-solid fa-calendar-check"></i> Security Duty Roster</a></li>
+                <li>
+                    <a href="../admin/roster" class="<?php echo ($current_page == 'roster') ? 'active' : ''; ?>" title="Security Duty Roster">
+                        <i class="fa-solid fa-calendar-check"></i>
+                        <span class="nav-name-tag">Security Duty Roster</span>
+                    </a>
+                </li>
             <?php endif; ?>
             <?php if (isModuleEnabled('visitor_passes')): ?>
-                <li><a href="../admin/security" class="<?php echo ($current_page == 'security') ? 'active' : ''; ?>"><i class="fa-solid fa-shield-halved"></i> Gate Visitor Passes</a></li>
+                <li>
+                    <a href="../admin/security" class="<?php echo ($current_page == 'security') ? 'active' : ''; ?>" title="Gate Visitor Passes">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <span class="nav-name-tag">Gate Visitor Passes</span>
+                    </a>
+                </li>
             <?php endif; ?>
             <?php if (isModuleEnabled('ussd_offline_sync')): ?>
-                <li><a href="../admin/africastalking" class="<?php echo ($current_page == 'africastalking') ? 'active' : ''; ?>"><i class="fa-solid fa-signal text-primary"></i> USSD &amp; Offline Sync</a></li>
+                <li>
+                    <a href="../admin/africastalking" class="<?php echo ($current_page == 'africastalking') ? 'active' : ''; ?>" title="USSD & Offline Sync">
+                        <i class="fa-solid fa-signal text-primary"></i>
+                        <span class="nav-name-tag">USSD &amp; Offline Sync</span>
+                    </a>
+                </li>
             <?php endif; ?>
-            <li><a href="../admin/email_logs" class="<?php echo ($current_page == 'email_logs') ? 'active' : ''; ?>"><i class="fa-solid fa-envelope-open-text"></i> Email Logs</a></li>
-            <li><a href="../admin/whatsapp_logs" class="<?php echo ($current_page == 'whatsapp_logs') ? 'active' : ''; ?>"><i class="fa-brands fa-whatsapp text-success"></i> WhatsApp Logs</a></li>
-            <li><a href="../admin/users" class="<?php echo ($current_page == 'users') ? 'active' : ''; ?>"><i class="fa-solid fa-user-shield"></i> User Accounts &amp; Security</a></li>
-            <li><a href="../admin/audit_logs" class="<?php echo ($current_page == 'audit_logs') ? 'active' : ''; ?>"><i class="fa-solid fa-clock-rotate-left"></i> System Audit</a></li>
+            <li>
+                <a href="../admin/email_logs" class="<?php echo ($current_page == 'email_logs') ? 'active' : ''; ?>" title="Email Logs">
+                    <i class="fa-solid fa-envelope-open-text"></i>
+                    <span class="nav-name-tag">Email Logs</span>
+                </a>
+            </li>
+            <li>
+                <a href="../admin/whatsapp_logs" class="<?php echo ($current_page == 'whatsapp_logs') ? 'active' : ''; ?>" title="WhatsApp Logs">
+                    <i class="fa-brands fa-whatsapp text-success"></i>
+                    <span class="nav-name-tag">WhatsApp Logs</span>
+                </a>
+            </li>
+            <li>
+                <a href="../admin/users" class="<?php echo ($current_page == 'users') ? 'active' : ''; ?>" title="User Accounts & Security">
+                    <i class="fa-solid fa-user-shield"></i>
+                    <span class="nav-name-tag">User Accounts</span>
+                </a>
+            </li>
+            <li>
+                <a href="../admin/audit_logs" class="<?php echo ($current_page == 'audit_logs') ? 'active' : ''; ?>" title="System Audit">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span class="nav-name-tag">System Audit</span>
+                </a>
+            </li>
             
-            <li class="nav-label">Settings &amp; White-Label</li>
-            <li><a href="../admin/branding" class="<?php echo ($current_page == 'branding') ? 'active' : ''; ?>"><i class="fa-solid fa-paintbrush text-info"></i> White-Label &amp; Branding</a></li>
-            <li><a href="../admin/settings" class="<?php echo ($current_page == 'settings') ? 'active' : ''; ?>"><i class="fa-solid fa-sliders"></i> Settings</a></li>
+            <li class="nav-section-label">Settings &amp; White-Label</li>
+            <li>
+                <a href="../admin/branding" class="<?php echo ($current_page == 'branding') ? 'active' : ''; ?>" title="White-Label & Branding">
+                    <i class="fa-solid fa-paintbrush text-info"></i>
+                    <span class="nav-name-tag">Branding</span>
+                </a>
+            </li>
+            <li>
+                <a href="../admin/settings" class="<?php echo ($current_page == 'settings') ? 'active' : ''; ?>" title="Settings">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span class="nav-name-tag">Settings</span>
+                </a>
+            </li>
 
             <?php if (in_array($_SESSION['role'] ?? '', ['admin', 'manager'], true)): ?>
-                <li class="nav-label">Subscription &amp; Support</li>
-                <li><a href="../admin/subscription" class="<?php echo ($current_page == 'subscription') ? 'active' : ''; ?>"><i class="fa-solid fa-receipt"></i> Subscription &amp; Billing</a></li>
-                <li><a href="../admin/onboarding" class="<?php echo ($current_page == 'onboarding') ? 'active' : ''; ?>"><i class="fa-solid fa-list-check"></i> Onboarding</a></li>
-                <li><a href="../admin/invitations" class="<?php echo ($current_page == 'invitations') ? 'active' : ''; ?>"><i class="fa-solid fa-envelope-open-text"></i> Invitations</a></li>
-                <li><a href="../admin/support" class="<?php echo ($current_page == 'support') ? 'active' : ''; ?>"><i class="fa-solid fa-life-ring"></i> Support</a></li>
-                <li><a href="../admin/export" class="<?php echo ($current_page == 'export') ? 'active' : ''; ?>"><i class="fa-solid fa-file-export"></i> Data Export</a></li>
+                <li class="nav-section-label">Subscription &amp; Support</li>
+                <li>
+                    <a href="../admin/subscription" class="<?php echo ($current_page == 'subscription') ? 'active' : ''; ?>" title="Subscription & Billing">
+                        <i class="fa-solid fa-receipt"></i>
+                        <span class="nav-name-tag">Subscription</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="../admin/onboarding" class="<?php echo ($current_page == 'onboarding') ? 'active' : ''; ?>" title="Onboarding">
+                        <i class="fa-solid fa-list-check"></i>
+                        <span class="nav-name-tag">Onboarding</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="../admin/invitations" class="<?php echo ($current_page == 'invitations') ? 'active' : ''; ?>" title="Invitations">
+                        <i class="fa-solid fa-envelope-open-text"></i>
+                        <span class="nav-name-tag">Invitations</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="../admin/support" class="<?php echo ($current_page == 'support') ? 'active' : ''; ?>" title="Support">
+                        <i class="fa-solid fa-life-ring"></i>
+                        <span class="nav-name-tag">Support</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="../admin/export" class="<?php echo ($current_page == 'export') ? 'active' : ''; ?>" title="Data Export">
+                        <i class="fa-solid fa-file-export"></i>
+                        <span class="nav-name-tag">Data Export</span>
+                    </a>
+                </li>
             <?php endif; ?>
 
             <?php if (is_impersonating_estate()): ?>
-                <li class="nav-label text-warning">Super Admin HQ</li>
-                <li><a href="../superadmin/index" style="color: #f59e0b; font-weight: 700;"><i class="fa-solid fa-layer-group text-warning"></i> SaaS Command Center</a></li>
+                <li class="nav-section-label text-warning">Super Admin HQ</li>
+                <li>
+                    <a href="../superadmin/index" style="color: #f59e0b; font-weight: 700;" title="SaaS Command Center">
+                        <i class="fa-solid fa-layer-group text-warning"></i>
+                        <span class="nav-name-tag">SaaS Command Center</span>
+                    </a>
+                </li>
             <?php endif; ?>
-
-            <li><a href="../logout"><i class="fa-solid fa-arrow-right-from-bracket text-danger"></i> Logout</a></li>
         </ul>
     </nav>
+    <div class="sidebar-footer-actions">
+        <div class="sidebar-user-block">
+            <div class="sidebar-user-avatar">
+                <?php
+                $initials = 'CA';
+                if (!empty($_SESSION['name'])) {
+                    $parts = explode(' ', trim($_SESSION['name']));
+                    $initials = strtoupper(substr($parts[0], 0, 1) . (isset($parts[1]) ? substr($parts[1], 0, 1) : ''));
+                }
+                echo htmlspecialchars($initials);
+                ?>
+            </div>
+            <div class="sidebar-user-text">
+                <div class="sidebar-user-name"><?php echo htmlspecialchars($_SESSION['name'] ?? 'Central Admin'); ?></div>
+                <div class="sidebar-user-role"><?php echo htmlspecialchars(ucfirst($_SESSION['role'] ?? 'Admin')); ?></div>
+            </div>
+        </div>
+        <div class="sidebar-footer-links">
+            <a href="../change_password" class="sidebar-footer-link" title="Change Password">
+                <i class="fa-solid fa-key" style="font-size: 11px;"></i> Password
+            </a>
+            <a href="../logout" class="sidebar-footer-link text-danger" title="Sign Out">
+                <i class="fa-solid fa-right-from-bracket" style="font-size: 11px;"></i> Sign out
+            </a>
+        </div>
+    </div>
 </aside>
 <main class="main-content">
     <?php 
@@ -180,35 +369,30 @@ if ($sb_uid > 0 && isset($conn)) {
     ?>
     <header class="top-bar">
         <div class="d-flex align-items-center gap-3">
-            <div class="toggle-sidebar">
-                <i class="fa-solid fa-bars"></i>
+            <div class="toggle-sidebar d-md-none" style="cursor: pointer;">
+                <i class="fa-solid fa-bars fs-5"></i>
             </div>
-            <div class="d-none d-xl-flex align-items-center gap-2 text-secondary small">
-                <span class="mature-badge mature-badge-slate py-1 px-2">
-                    <i class="fa-solid fa-shield-halved text-primary me-1"></i> Central Admin
-                </span>
-                <span class="text-secondary opacity-50">•</span>
-                <span class="d-inline-flex align-items-center gap-1 text-success" style="font-size: 0.75rem;">
-                    <i class="fa-solid fa-circle" style="font-size: 0.45rem;"></i> System Live
-                </span>
-            </div>
+            
+            <!-- Modern Dribbble Search Bar with ⌘ K -->
+            <form action="../admin/residents" method="GET" class="desktop-topbar-search topbar-search-box m-0" onsubmit="if(!this.q.value.trim()){return false;}">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" name="q" placeholder="Search..." autocomplete="off">
+                <span class="topbar-kbd-pill" title="Press Ctrl+K or ⌘K">⌘ K</span>
+            </form>
         </div>
 
-        <!-- Desktop Quick Search (Image 3 Style) -->
-        <form action="../admin/residents" method="GET" class="desktop-topbar-search m-0" onsubmit="if(!this.q.value.trim()){return false;}">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" name="q" placeholder="Search anything (residents, passes, units, artisans)..." autocomplete="off">
-        </form>
+        <div class="topbar-right-actions ms-auto">
+            <!-- Messages / Community Forum Chat Icon -->
+            <a href="../admin/community_chat" class="topbar-action-circle" title="Messages & Forum">
+                <i class="fa-regular fa-comment-dots"></i>
+            </a>
 
-        <div class="d-flex align-items-center gap-2 gap-sm-3">
             <!-- Notification Bell with Quick Action Dropdown -->
             <div class="dropdown position-relative">
-                <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle position-relative d-inline-flex align-items-center justify-content-center" id="topNotifBellBtn" data-bs-toggle="dropdown" aria-expanded="false" style="width: 36px; height: 36px; min-width: 36px; min-height: 36px; aspect-ratio: 1 / 1 !important; flex-shrink: 0 !important; padding: 0;" title="Notifications &amp; Pending Requests">
-                    <i class="fa-solid fa-bell text-secondary"></i>
+                <button type="button" class="topbar-action-circle border-0" id="topNotifBellBtn" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications & Pending Requests">
+                    <i class="fa-regular fa-bell"></i>
                     <?php if ($sb_unread_count > 0 || $sb_pending_requests_cnt > 0): ?>
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-white" style="font-size: 0.65rem; padding: 0.25em 0.5em;">
-                            <?php echo ($sb_unread_count + $sb_pending_requests_cnt); ?>
-                        </span>
+                        <span class="topbar-badge-dot"></span>
                     <?php endif; ?>
                 </button>
                 <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 p-0 mt-2" style="width: 330px; max-width: 90vw; z-index: 1055; overflow: hidden;">
@@ -265,34 +449,29 @@ if ($sb_uid > 0 && isset($conn)) {
             </div>
 
             <!-- Emergency Direct Hotlines Button (No Alarm) -->
-            <button type="button" class="estate-hotline-btn btn btn-outline-danger btn-sm rounded-pill px-2 px-sm-3 d-inline-flex align-items-center gap-2" title="Direct Emergency Hotlines (Call directly without triggering alarm)">
+            <button type="button" class="estate-hotline-btn btn btn-outline-danger btn-sm rounded-pill px-2 px-sm-3 d-inline-flex align-items-center gap-2" title="Direct Emergency Hotlines">
                 <i class="fa-solid fa-phone-volume text-danger hotline-pulse-icon"></i>
                 <span class="fw-semibold d-none d-sm-inline">Hotlines</span>
             </button>
 
-            <button type="button" class="theme-toggle-btn" title="Toggle Day/Night Mode">
-                <i class="fa-solid fa-moon"></i>
-                <span class="theme-text d-none d-sm-inline">Dark Mode</span>
-            </button>
-
-            <!-- User Profile Dropdown (Image 3 Style) -->
+            <!-- User Profile Dropdown (Welcome back Wade Warren) -->
             <div class="dropdown">
-                <button type="button" class="btn p-0 border-0 d-flex align-items-center gap-2 text-decoration-none" data-bs-toggle="dropdown" aria-expanded="false" style="background: transparent;">
-                    <div class="text-end d-none d-sm-block">
-                        <div class="user-name fw-bold" style="font-size: 0.84rem; line-height: 1.2;"><?php echo htmlspecialchars($_SESSION['name'] ?? 'Admin User'); ?></div>
-                        <small class="text-secondary text-uppercase" style="font-size: 0.68rem; letter-spacing: 0.04em;"><?php echo htmlspecialchars($_SESSION['role'] ?? 'Administrator'); ?></small>
-                    </div>
-                    <?php 
-                    $initials = 'AD';
-                    if (!empty($_SESSION['name'])) {
-                        $parts = explode(' ', trim($_SESSION['name']));
-                        $initials = strtoupper(substr($parts[0], 0, 1) . (isset($parts[1]) ? substr($parts[1], 0, 1) : ''));
-                    }
-                    ?>
-                    <div class="user-avatar" style="width: 36px; height: 36px; border-radius: 8px; background: #0f172a; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; border: 1px solid rgba(255,255,255,0.12);">
+                <?php 
+                $initials = 'WW';
+                if (!empty($_SESSION['name'])) {
+                    $parts = explode(' ', trim($_SESSION['name']));
+                    $initials = strtoupper(substr($parts[0], 0, 1) . (isset($parts[1]) ? substr($parts[1], 0, 1) : ''));
+                }
+                ?>
+                <button type="button" class="btn p-0 border-0 topbar-user-profile-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                    <div class="topbar-user-initials-avatar">
                         <?php echo $initials; ?>
                     </div>
-                    <i class="fa-solid fa-chevron-down text-muted" style="font-size: 0.65rem;"></i>
+                    <div class="topbar-user-details d-none d-sm-flex">
+                        <span class="topbar-user-welcome">Welcome back</span>
+                        <span class="topbar-user-fullname"><?php echo htmlspecialchars($_SESSION['name'] ?? 'Wade Warren'); ?></span>
+                    </div>
+                    <i class="fa-solid fa-chevron-down text-muted ms-1" style="font-size: 0.65rem;"></i>
                 </button>
                 <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 p-2 mt-2" style="min-width: 220px; z-index: 1055;">
                     <div class="px-3 py-2 border-bottom mb-1">
@@ -316,22 +495,6 @@ if ($sb_uid > 0 && isset($conn)) {
                     </a>
                 </div>
             </div>
-
-            <!-- Estate Branding Badge at EXTREME Right Corner -->
-            <div class="vr opacity-25 d-none d-sm-block my-1" style="height: 24px;"></div>
-            <a href="../admin/settings" class="estate-header-brand" title="Estate: <?php echo htmlspecialchars($estate_name); ?> (Click to manage in Settings)">
-                <?php if (!empty($estate_logo_url)): ?>
-                    <img src="<?php echo htmlspecialchars($estate_logo_url); ?>" alt="Estate Logo" class="estate-header-logo">
-                <?php else: ?>
-                    <div class="estate-header-fallback">
-                        <i class="fa-solid fa-tree-city"></i>
-                    </div>
-                <?php endif; ?>
-                <div class="estate-header-info">
-                    <span class="estate-header-tag">Estate</span>
-                    <span class="estate-header-name"><?php echo htmlspecialchars($estate_name); ?></span>
-                </div>
-            </a>
         </div>
     </header>
     <div class="content-wrapper">

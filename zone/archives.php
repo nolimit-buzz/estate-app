@@ -241,16 +241,16 @@ include 'sidebar.php';
     </div>
 <?php endif; ?>
 
-<div class="glass archives-vault-card" style="border-radius: 0.75rem; background: white; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
-    <div class="tabs" style="display: flex; gap: 0.75rem; border-bottom: 2px solid #e2e8f0; margin-bottom: 1.5rem; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: 2px;">
-        <button id="tab-res-btn" class="tab-btn active" onclick="openArchTab(event, 'res-archives')">
-            <i class="fa-solid fa-users me-1"></i> Archived Residents (<?php echo $archived_residents ? $archived_residents->num_rows : 0; ?>)
+<div class="card-custom p-4 mb-4">
+    <div class="nav nav-pills gap-1 p-1 bg-light rounded-3 mb-4 d-inline-flex flex-wrap border">
+        <button id="tab-res-btn" class="nav-link active py-2 px-3.5 fw-semibold rounded-2" onclick="openArchTab(event, 'res-archives')">
+            <i class="fa-solid fa-users me-1.5"></i> Archived Residents (<?php echo $archived_residents ? $archived_residents->num_rows : 0; ?>)
         </button>
-        <button id="tab-staff-btn" class="tab-btn" onclick="openArchTab(event, 'staff-archives')">
-            <i class="fa-solid fa-user-gear me-1"></i> Domestic Staff Archives (<?php echo $archived_domestic ? $archived_domestic->num_rows : 0; ?>)
+        <button id="tab-staff-btn" class="nav-link py-2 px-3.5 fw-semibold rounded-2" onclick="openArchTab(event, 'staff-archives')">
+            <i class="fa-solid fa-user-gear me-1.5"></i> Domestic Staff (<?php echo $archived_domestic ? $archived_domestic->num_rows : 0; ?>)
         </button>
-        <button id="tab-prop-btn" class="tab-btn" onclick="openArchTab(event, 'prop-archives')">
-            <i class="fa-solid fa-building me-1"></i> Zonal Property Archives
+        <button id="tab-prop-btn" class="nav-link py-2 px-3.5 fw-semibold rounded-2" onclick="openArchTab(event, 'prop-archives')">
+            <i class="fa-solid fa-building me-1.5"></i> Zonal Property Archives
         </button>
     </div>
 
@@ -564,13 +564,14 @@ function openArchTab(evt, tabName) {
     for (i = 0; i < tabcontent.length; i++) {
         tabcontent[i].style.display = "none";
     }
-    tablinks = document.getElementsByClassName("tab-btn");
+    tablinks = document.querySelectorAll(".nav-pills .nav-link");
     for (i = 0; i < tablinks.length; i++) {
-        tablinks[i].className = tablinks[i].className.replace(" active", "");
+        tablinks[i].classList.remove("active");
     }
-    document.getElementById(tabName).style.display = "block";
+    const target = document.getElementById(tabName);
+    if (target) target.style.display = "block";
     if (evt && evt.currentTarget) {
-        evt.currentTarget.className += " active";
+        evt.currentTarget.classList.add("active");
     }
 }
 

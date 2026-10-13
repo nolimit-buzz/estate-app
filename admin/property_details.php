@@ -4,9 +4,6 @@ require_once '../config.php';
 require_once '../includes/auth_guard.php';
 requireAdminAccess();
 
-include '../includes/header.php';
-include '../includes/sidebar.php';
-
 $type = $_GET['type'] ?? ''; // street, building, flat
 $id = intval($_GET['id'] ?? 0);
 
@@ -57,6 +54,9 @@ if (!$prop) {
 }
 
 $display_name = $prop['name'] ?? ('Flat ' . $prop['number']);
+
+include '../includes/header.php';
+include '../includes/sidebar.php';
 ?>
 
 <div class="page-header-futuristic">

@@ -47,7 +47,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 ?><!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Platform sign-in</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../css/saas.css"></head>
+<link rel="stylesheet" href="../css/saas.css">    <link rel="stylesheet" href="../css/dashboard-theme-public.css?v=<?php echo defined('ASSET_VER') ? ASSET_VER : time(); ?>">
+</head>
 <body><div class="auth-shell"><div></div><main class="auth-main"><div class="form-card narrow">
     <span class="eyebrow">Platform administration</span><h1>Sign in</h1>
     <?php if ($error): ?><div class="alert err"><?php echo htmlspecialchars($error); ?></div><?php endif; ?>

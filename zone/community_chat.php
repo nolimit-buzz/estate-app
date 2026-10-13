@@ -38,8 +38,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// If AJAX fetch messages
-if (isset($_GET['fetch_messages'])) {
+function fetch_zone_forum_messages($conn, $estate_id, $current_user_id) {
+    $estate_id = intval($estate_id);
+    $current_user_id = intval($current_user_id);
     $sql = "SELECT c.id, c.user_id, c.message, c.created_at,
                    u.name as sender_name, u.role as user_role,
                    COALESCE(z_user.name, MAX(z_res.name)) as zone_name,
@@ -63,7 +64,7 @@ if (isset($_GET['fetch_messages'])) {
     $messages = [];
     if ($messages_res) {
         while ($m = $messages_res->fetch_assoc()) {
-            $is_me = ($m['user_id'] == $user_id);
+            $is_me = ($m['user_id'] == $current_user_id);
             $m['is_me'] = $is_me;
             $m['can_delete'] = $is_me;
             $timestamp = strtotime($m['created_at']);
@@ -96,10 +97,18 @@ if (isset($_GET['fetch_messages'])) {
             $messages[] = $m;
         }
     }
+    return $messages;
+}
+
+// If AJAX fetch messages
+if (isset($_GET['fetch_messages'])) {
     header('Content-Type: application/json');
-    echo json_encode($messages);
+    echo json_encode(fetch_zone_forum_messages($conn, $estate_id, $user_id));
     exit;
 }
+
+// Pre-render initial messages for 0ms delay
+$initial_messages = fetch_zone_forum_messages($conn, $estate_id, $user_id);
 
 // Total messages counter for badge
 $count_res = $conn->query("SELECT COUNT(*) as total FROM community_chat WHERE estate_id = $estate_id");
@@ -116,7 +125,7 @@ include 'sidebar.php';
 <div class="desktop-only d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
     <div>
         <div class="d-flex align-items-center gap-2 mb-1">
-            <span class="mature-badge py-1 px-2.5 rounded-pill" style="background: rgba(168, 85, 247, 0.12); color: #7e22ce; font-weight: 600; font-size: 0.8rem; border: 1px solid rgba(168, 85, 247, 0.25);">
+            <span class="mature-badge py-1 px-2.5 rounded-pill" style="background: rgba(107, 78, 255, 0.12); color: #6b4eff; font-weight: 600; font-size: 0.8rem; border: 1px solid rgba(107, 78, 255, 0.25);">
                 <i class="fa-solid fa-layer-group me-1"></i> <?php echo htmlspecialchars($zone_name_display); ?>
             </span>
             <span class="text-secondary small">• Estate Forum Live</span>
@@ -128,7 +137,7 @@ include 'sidebar.php';
         <span class="badge bg-light text-dark border px-3 py-2 rounded-pill font-monospace small d-flex align-items-center gap-2">
             <span class="status-dot-pulse bg-success"></span> Connected
         </span>
-        <span class="badge py-2 px-3 rounded-pill font-monospace small text-white" style="background: #7e22ce;">
+        <span class="badge py-2 px-3 rounded-pill font-monospace small text-white" style="background: #6b4eff;">
             <?= number_format($total_chat_messages) ?> Posts
         </span>
         <button type="button" onclick="fetchMessages(true)" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1.5" title="Refresh stream">
@@ -141,7 +150,7 @@ include 'sidebar.php';
     <!-- Chat Header Bar -->
     <div class="resident-card-header d-flex justify-content-between align-items-center px-4 py-3 border-bottom" style="background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(10px);">
         <div class="d-flex align-items-center gap-3">
-            <div class="p-2 rounded-circle text-white d-flex align-items-center justify-content-center" style="width: 42px; height: 42px; background: #7e22ce;">
+            <div class="p-2 rounded-circle text-white d-flex align-items-center justify-content-center" style="width: 42px; height: 42px; background: #6b4eff;">
                 <i class="fa-solid fa-comments fs-5"></i>
             </div>
             <div>
@@ -156,7 +165,7 @@ include 'sidebar.php';
             </div>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <span class="badge bg-purple-50 border px-3 py-1.5 rounded-pill small" style="color: #7e22ce; background: rgba(168, 85, 247, 0.08);">
+            <span class="badge bg-purple-50 border px-3 py-1.5 rounded-pill small" style="color: #6b4eff; background: rgba(107, 78, 255, 0.08);">
                 Author: <strong><?= htmlspecialchars($current_user_name) ?></strong> (<?= htmlspecialchars($zone_code_display) ?> Admin)
             </span>
         </div>
@@ -164,23 +173,48 @@ include 'sidebar.php';
 
     <!-- Scrollable Messages Body -->
     <div class="resident-chat-container" id="chatContainer">
-        <!-- Messages loaded dynamically -->
-        <div class="d-flex align-items-center justify-content-center py-5 text-secondary">
-            <div class="spinner-border spinner-border-sm text-purple me-2" role="status" style="color: #7e22ce;"></div>
-            <span>Connecting to estate forum stream...</span>
-        </div>
+        <?php if (empty($initial_messages)): ?>
+            <div class="text-center py-5 my-auto text-secondary">
+                <div class="w-12 h-12 rounded-circle bg-light d-inline-flex align-items-center justify-content-center text-muted mb-3" style="width:54px; height:54px; font-size:1.5rem;">
+                    <i class="fa-solid fa-comments"></i>
+                </div>
+                <h6 class="font-bold text-slate-700 mb-1">No Messages Yet</h6>
+                <p class="text-secondary small mb-0">Start the conversation with estate residents and management!</p>
+            </div>
+        <?php else: ?>
+            <?php foreach ($initial_messages as $msg): ?>
+                <div class="resident-message-bubble <?= $msg['is_me'] ? 'resident-message-me' : 'resident-message-other' ?> position-relative">
+                    <?php if ($msg['can_delete']): ?>
+                        <div class="chat-bubble-actions">
+                            <button type="button" class="btn btn-sm btn-link text-danger p-0 px-1" onclick="deleteMessage(<?= $msg['id'] ?>)" title="Delete My Message">
+                                <i class="fa-solid fa-trash-can" style="font-size: 0.75rem;"></i>
+                            </button>
+                        </div>
+                    <?php endif; ?>
+                    <div class="sender-pill <?= $msg['is_me'] ? 'sender-pill-me' : 'sender-pill-other' ?>">
+                        <span><i class="fa-solid fa-circle-user"></i> <?= htmlspecialchars($msg['sender_name']) ?></span>
+                        <span class="<?= $msg['role_class'] ?>"><i class="<?= $msg['role_icon'] ?> me-1"></i><?= htmlspecialchars($msg['role_label']) ?></span>
+                    </div>
+                    <div class="message-content" style="white-space: pre-wrap; padding-right: 1.25rem;"><?= htmlspecialchars($msg['message']) ?></div>
+                    <div class="chat-time-stamp <?= $msg['is_me'] ? 'chat-time-me' : 'chat-time-other' ?>">
+                        <span><?= htmlspecialchars($msg['time']) ?></span>
+                        <?= $msg['is_me'] ? '<i class="fa-solid fa-check-double text-sky-200 ms-1" style="font-size:0.65rem;"></i>' : '' ?>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
     </div>
 
     <!-- Modern Chat Input Footer Bar -->
     <div class="chat-input-container p-3 border-top" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px);">
         <form id="chatForm" class="d-flex align-items-center gap-2.5 m-0">
             <div class="chat-capsule-wrapper d-flex align-items-center flex-grow-1">
-                <span class="chat-input-icon ps-3 pe-2" style="color: #7e22ce;">
+                <span class="chat-input-icon ps-3 pe-2" style="color: #6b4eff;">
                     <i class="fa-solid fa-layer-group"></i>
                 </span>
                 <input type="text" id="messageInput" class="chat-input-control flex-grow-1" placeholder="Write a message as <?= htmlspecialchars($zone_code_display) ?> Admin..." required autocomplete="off">
             </div>
-            <button type="submit" id="sendBtn" class="chat-send-btn d-flex align-items-center justify-content-center" title="Send message" style="background: linear-gradient(135deg, #7e22ce, #6b21a8); box-shadow: 0 4px 12px rgba(126, 34, 206, 0.35);">
+            <button type="submit" id="sendBtn" class="chat-send-btn d-flex align-items-center justify-content-center" title="Send message" style="background: linear-gradient(135deg, #6b4eff, #5a3fe6); box-shadow: 0 4px 12px rgba(107, 78, 255, 0.35);">
                 <i class="fa-solid fa-paper-plane"></i>
             </button>
         </form>
@@ -197,8 +231,8 @@ include 'sidebar.php';
 }
 .chat-capsule-wrapper:focus-within {
     background: #ffffff;
-    border-color: #7e22ce;
-    box-shadow: 0 0 0 3px rgba(126, 34, 206, 0.15);
+    border-color: #6b4eff;
+    box-shadow: 0 0 0 3px rgba(107, 78, 255, 0.15);
 }
 .chat-input-control {
     border: none;
@@ -229,7 +263,7 @@ include 'sidebar.php';
 }
 .chat-send-btn:hover {
     transform: scale(1.06);
-    box-shadow: 0 6px 16px rgba(126, 34, 206, 0.45);
+    box-shadow: 0 6px 16px rgba(107, 78, 255, 0.45);
 }
 .chat-send-btn:active {
     transform: scale(0.96);
@@ -248,8 +282,8 @@ body.dark-mode .chat-capsule-wrapper {
 [data-theme="dark"] .chat-capsule-wrapper:focus-within,
 body.dark-mode .chat-capsule-wrapper:focus-within {
     background: rgba(30, 41, 59, 1) !important;
-    border-color: #a855f7 !important;
-    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2) !important;
+    border-color: #6b4eff !important;
+    box-shadow: 0 0 0 3px rgba(107, 78, 255, 0.2) !important;
 }
 [data-theme="dark"] .chat-input-control,
 body.dark-mode .chat-input-control {
@@ -294,7 +328,7 @@ body.dark-mode .chat-input-control::placeholder {
     flex-wrap: wrap;
 }
 .sender-pill-other {
-    color: #7e22ce;
+    color: #6b4eff;
 }
 .sender-pill-me {
     color: rgba(255, 255, 255, 0.95);
@@ -311,7 +345,7 @@ body.dark-mode .chat-input-control::placeholder {
     font-weight: 600;
 }
 .badge-role-zone {
-    background: #7e22ce;
+    background: #6b4eff;
     color: #ffffff;
     font-size: 0.68rem;
     padding: 2px 7px;
@@ -392,7 +426,19 @@ body.dark-mode .p-3.border-top {
     const chatForm = document.getElementById('chatForm');
     const messageInput = document.getElementById('messageInput');
     const sendBtn = document.getElementById('sendBtn');
-    let lastMessageCount = 0;
+    let lastMessageCount = <?= count($initial_messages) ?>;
+
+    if (chatContainer) {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    const getChatApiUrl = () => {
+        let base = window.location.pathname.replace(/\/$/, '');
+        if (!base.endsWith('community_chat') && !base.endsWith('community_chat.php')) {
+            base = 'community_chat.php';
+        }
+        return base;
+    };
 
     function escapeHtml(text) {
         const div = document.createElement('div');
@@ -402,7 +448,9 @@ body.dark-mode .p-3.border-top {
 
     async function fetchMessages(forceScroll = false) {
         try {
-            const res = await fetch('community_chat?fetch_messages=1');
+            const apiUrl = getChatApiUrl() + '?fetch_messages=1';
+            const res = await fetch(apiUrl);
+            if (!res.ok) return;
             const data = await res.json();
             
             const isAtBottom = chatContainer.scrollHeight - chatContainer.clientHeight <= chatContainer.scrollTop + 120;
@@ -480,7 +528,7 @@ body.dark-mode .p-3.border-top {
         formData.append('ajax', '1');
 
         try {
-            await fetch('community_chat', {
+            await fetch(getChatApiUrl(), {
                 method: 'POST',
                 body: formData
             });
@@ -504,7 +552,7 @@ body.dark-mode .p-3.border-top {
         formData.append('ajax', '1');
 
         try {
-            await fetch('community_chat', {
+            await fetch(getChatApiUrl(), {
                 method: 'POST',
                 body: formData
             });

@@ -35,7 +35,7 @@ if (!Tenancy::hasTenant() && Tenancy::$mode !== 'legacy'
     exit;
 }
 
-define('ASSET_VER', (string)max(@filemtime(__DIR__ . '/css/style.css'), @filemtime(__DIR__ . '/css/landing.css'), @filemtime(__DIR__ . '/js/mobile_app.js')));
+define('ASSET_VER', (string)max(@filemtime(__DIR__ . '/css/style.css'), @filemtime(__DIR__ . '/css/landing.css'), @filemtime(__DIR__ . '/css/dashboard-theme.css'), @filemtime(__DIR__ . '/js/mobile_app.js')));
 
 // CSRF: reject unsafe requests without a valid token, and auto-inject tokens into rendered forms/AJAX.
 Csrf::enforce();
@@ -59,8 +59,9 @@ if (!headers_sent()) {
     }
 
     // Hardened Content Security Policy with strict controls
-    // Note: unsafe-inline in style-src is needed for legitimate styling but should be audited
-    header("Content-Security-Policy: default-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self' https://*.paystack.co; frame-ancestors 'self'; img-src 'self' data: https: blob:; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://js.paystack.co; connect-src 'self' https://api.paystack.co https://*.paystack.co; media-src 'self'; upgrade-insecure-requests;");
+    // unsafe-inline is required: the portals use inline onclick handlers, <script> and <style> blocks throughout.
+    // upgrade-insecure-requests only over HTTPS, otherwise plain-http (localhost/XAMPP) asset loads are rewritten to https and fail.
+    header("Content-Security-Policy: default-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self' https://*.paystack.co; frame-ancestors 'self'; img-src 'self' data: https: blob:; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://js.paystack.co; connect-src 'self' https://api.paystack.co https://*.paystack.co; media-src 'self';" . ($is_https ? " upgrade-insecure-requests;" : ""));
 }
 
 // Universal Flash Messaging Helpers
@@ -183,6 +184,14 @@ function isModuleEnabled($module_key, $estate_id = null) {
     if (!$estate_id) $estate_id = get_estate_id();
     if (!$estate_id) return false;
     return Entitlements::allowed($estate_id, $module_key);
+}
+
+// Feature (permission slug) entitlement: is this permission available on the estate's plan?
+function isFeatureEnabled($slug, $estate_id = null) {
+    if (Tenancy::$mode === 'legacy') return true;
+    if (!$estate_id) $estate_id = get_estate_id();
+    if (!$estate_id) return true;
+    try { return Entitlements::featureAllowed($estate_id, $slug); } catch (Throwable $e) { return true; }
 }
 
 // Require Module or redirect with an explanatory message

@@ -73,128 +73,165 @@ if ($s_uid) {
 }
 ?>
 
-<aside class="sidebar">
+<aside class="sidebar sidebar-named">
     <div class="sidebar-header">
-        <div class="logo d-flex align-items-center">
-            <?php if (!empty($app_company_logo_url)): ?>
-                <img src="<?php echo htmlspecialchars($app_company_logo_url); ?>" alt="<?php echo htmlspecialchars($app_company_name); ?>" style="height: 32px; width: auto; max-width: 140px; border-radius: 6px; object-fit: contain;">
-                <div class="d-flex flex-column ms-2 text-start">
-                    <span style="font-size: 1.02rem; font-weight: 800; letter-spacing: -0.01em; line-height: 1.2; color: inherit;"><?php echo htmlspecialchars($app_company_name); ?></span>
-                    <span style="font-size: 0.65rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Resident Portal</span>
-                </div>
-            <?php else: ?>
-                <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(var(--primary-rgb), 0.12); color: var(--primary-color); display: flex; align-items: center; justify-content: center; margin-right: 0.5rem;">
-                    <i class="fa-solid fa-house-user fs-6"></i>
-                </div>
-                <div class="d-flex flex-column text-start">
-                    <span style="font-size: 1.02rem; font-weight: 800; letter-spacing: -0.01em; line-height: 1.2; color: inherit;"><?php echo htmlspecialchars($app_company_name); ?></span>
-                    <span style="font-size: 0.65rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Resident Portal</span>
-                </div>
-            <?php endif; ?>
+        <a href="index" class="sidebar-brand-ring" title="<?php echo htmlspecialchars($estate_name); ?>">
+            <i class="fa-solid fa-circle-notch"></i>
+        </a>
+        <div class="d-flex flex-column" style="min-width: 0;">
+            <h5 class="sidebar-brand-title text-truncate"><?php echo htmlspecialchars($estate_name); ?></h5>
+            <div class="sidebar-brand-sub">
+                <span style="width: 6px; height: 6px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
+                <span>Resident Portal</span>
+            </div>
         </div>
     </div>
     
     <nav class="sidebar-nav">
         <ul>
-            <li class="nav-label">Resident Navigation</li>
+            <li class="nav-section-label">Core Operations</li>
             <li>
-                <a href="index" class="<?php echo ($current_page == 'index') ? 'active' : ''; ?>">
-                    <i class="fa-solid fa-chart-pie"></i> Overview Dashboard
+                <a href="index" class="<?php echo ($current_page == 'index') ? 'active' : ''; ?>" title="Overview Dashboard">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span class="nav-name-tag">Overview Dashboard</span>
                 </a>
             </li>
             <li>
-                <a href="notifications" class="<?php echo ($current_page == 'notifications') ? 'active' : ''; ?> d-flex align-items-center justify-content-between">
-                    <span><i class="fa-solid fa-bell"></i> Action &amp; Notifications</span>
+                <a href="notifications" class="<?php echo ($current_page == 'notifications') ? 'active' : ''; ?> d-flex align-items-center" title="Action & Notifications">
+                    <i class="fa-solid fa-bell"></i>
+                    <span class="nav-name-tag">Action &amp; Notifications</span>
                     <?php if ($unread_all_notifs_cnt > 0 || $res_pending_contact_req): ?>
-                        <span class="badge <?php echo ($res_pending_contact_req ? 'bg-warning text-dark' : 'bg-danger'); ?> rounded-pill" style="font-size: 0.68rem;">
+                        <span class="badge <?php echo ($res_pending_contact_req ? 'bg-warning text-dark' : 'bg-danger'); ?> rounded-pill ms-auto" style="font-size: 0.68rem;">
                             <?php echo $unread_all_notifs_cnt > 0 ? $unread_all_notifs_cnt : '1 req'; ?>
                         </span>
                     <?php endif; ?>
                 </a>
             </li>
             <li>
-                <a href="notices" class="<?php echo ($current_page == 'notices') ? 'active' : ''; ?> d-flex align-items-center justify-content-between">
-                    <span><i class="fa-solid fa-bullhorn"></i> Notices &amp; Broadcasts</span>
+                <a href="notices" class="<?php echo ($current_page == 'notices') ? 'active' : ''; ?> d-flex align-items-center" title="Notices & Broadcasts">
+                    <i class="fa-solid fa-bullhorn"></i>
+                    <span class="nav-name-tag">Notices &amp; Broadcasts</span>
                     <?php if ($unread_notices_cnt > 0): ?>
-                        <span class="badge bg-danger rounded-pill" style="font-size: 0.68rem;"><?php echo $unread_notices_cnt; ?></span>
+                        <span class="badge bg-danger rounded-pill ms-auto" style="font-size: 0.68rem;"><?php echo $unread_notices_cnt; ?></span>
                     <?php endif; ?>
                 </a>
             </li>
+
+            <li class="nav-section-label">Property &amp; Living</li>
             <li>
-                <a href="policies" class="<?php echo ($current_page == 'policies') ? 'active' : ''; ?>">
-                    <i class="fa-solid fa-book-bookmark text-primary"></i> Rules &amp; Penalties
+                <a href="property" class="<?php echo ($current_page == 'property') ? 'active' : ''; ?>" title="My Property Details">
+                    <i class="fa-solid fa-building-user"></i>
+                    <span class="nav-name-tag">My Property Details</span>
                 </a>
             </li>
             <li>
-                <a href="finance" class="<?php echo ($current_page == 'finance') ? 'active' : ''; ?>">
-                    <i class="fa-solid fa-file-invoice-dollar"></i> Bills & Invoices
+                <a href="household" class="<?php echo ($current_page == 'household') ? 'active' : ''; ?>" title="Vehicles, Pets &amp; Domestic Staff">
+                    <i class="fa-solid fa-car-side"></i>
+                    <span class="nav-name-tag">Vehicles, Pets &amp; Staff</span>
                 </a>
             </li>
             <li>
-                <a href="receipts" class="<?php echo ($current_page == 'receipts') ? 'active' : ''; ?>">
-                    <i class="fa-solid fa-receipt"></i> My Receipts
+                <a href="visitors" class="<?php echo ($current_page == 'visitors') ? 'active' : ''; ?>" title="Visitor Access Passes">
+                    <i class="fa-solid fa-id-card-clip"></i>
+                    <span class="nav-name-tag">Visitor Access Passes</span>
                 </a>
             </li>
             <li>
-                <a href="emergency" class="<?php echo ($current_page == 'emergency') ? 'active' : ''; ?> text-danger fw-bold">
-                    <i class="fa-solid fa-truck-medical text-danger"></i> Emergency &amp; Panic SOS
+                <a href="report_issue" class="<?php echo ($current_page == 'report_issue') ? 'active' : ''; ?>" title="Maintenance Requests">
+                    <i class="fa-solid fa-screwdriver-wrench"></i>
+                    <span class="nav-name-tag">Maintenance Requests</span>
                 </a>
             </li>
             <li>
-                <a href="visitors" class="<?php echo ($current_page == 'visitors') ? 'active' : ''; ?>">
-                    <i class="fa-solid fa-id-card-clip"></i> Visitor Access Passes
-                </a>
-            </li>
-            <li>
-                <a href="property" class="<?php echo ($current_page == 'property') ? 'active' : ''; ?>">
-                    <i class="fa-solid fa-building-user"></i> My Property Details
-                </a>
-            </li>
-            <li>
-                <a href="report_issue" class="<?php echo ($current_page == 'report_issue') ? 'active' : ''; ?>">
-                    <i class="fa-solid fa-screwdriver-wrench"></i> Maintenance Requests
-                </a>
-            </li>
-            <li>
-                <a href="artisans" class="<?php echo ($current_page == 'artisans') ? 'active' : ''; ?>">
-                    <i class="fa-solid fa-user-gear text-primary"></i> Verified Artisans
-                </a>
-            </li>
-            <li>
-                <a href="community_chat" class="<?php echo ($current_page == 'community_chat') ? 'active' : ''; ?>">
-                    <i class="fa-solid fa-comments"></i> Estate Forum
-                </a>
-            </li>
-            <li>
-                <a href="directory" class="<?php echo ($current_page == 'directory') ? 'active' : ''; ?>">
-                    <i class="fa-solid fa-address-book"></i> Estate Directory
+                <a href="artisans" class="<?php echo ($current_page == 'artisans') ? 'active' : ''; ?>" title="Verified Artisans">
+                    <i class="fa-solid fa-user-gear text-primary"></i>
+                    <span class="nav-name-tag">Verified Artisans</span>
                 </a>
             </li>
 
-            <li class="nav-label">Preferences</li>
+            <li class="nav-section-label">Finance &amp; Safety</li>
             <li>
-                <a href="settings" class="<?php echo ($current_page == 'settings') ? 'active' : ''; ?>">
-                    <i class="fa-solid fa-sliders"></i> Portal Settings
+                <a href="finance" class="<?php echo ($current_page == 'finance') ? 'active' : ''; ?>" title="Bills & Invoices">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                    <span class="nav-name-tag">Bills &amp; Invoices</span>
+                </a>
+            </li>
+            <li>
+                <a href="receipts" class="<?php echo ($current_page == 'receipts') ? 'active' : ''; ?>" title="My Receipts">
+                    <i class="fa-solid fa-receipt"></i>
+                    <span class="nav-name-tag">My Receipts</span>
+                </a>
+            </li>
+            <li>
+                <a href="emergency" class="<?php echo ($current_page == 'emergency') ? 'active' : ''; ?> text-danger fw-bold" title="Emergency & Panic SOS">
+                    <i class="fa-solid fa-truck-medical text-danger"></i>
+                    <span class="nav-name-tag text-danger">Emergency &amp; Panic SOS</span>
+                </a>
+            </li>
+
+            <li class="nav-section-label">Community &amp; Bylaws</li>
+            <li>
+                <a href="community_chat" class="<?php echo ($current_page == 'community_chat') ? 'active' : ''; ?>" title="Estate Forum">
+                    <i class="fa-solid fa-comments"></i>
+                    <span class="nav-name-tag">Estate Forum</span>
+                </a>
+            </li>
+            <li>
+                <a href="directory" class="<?php echo ($current_page == 'directory') ? 'active' : ''; ?>" title="Estate Directory">
+                    <i class="fa-solid fa-address-book"></i>
+                    <span class="nav-name-tag">Estate Directory</span>
+                </a>
+            </li>
+            <li>
+                <a href="policies" class="<?php echo ($current_page == 'policies') ? 'active' : ''; ?>" title="Rules & Penalties">
+                    <i class="fa-solid fa-book-bookmark text-primary"></i>
+                    <span class="nav-name-tag">Rules &amp; Penalties</span>
+                </a>
+            </li>
+            <li>
+                <a href="settings" class="<?php echo ($current_page == 'settings') ? 'active' : ''; ?>" title="Portal Settings">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span class="nav-name-tag">Portal Settings</span>
                 </a>
             </li>
 
             <?php if (in_array($_SESSION['role'] ?? '', ['admin', 'superadmin', 'manager'])): ?>
-            <li class="nav-label">Management</li>
+            <li class="nav-section-label text-primary">Management</li>
             <li>
-                <a href="../admin/index" class="text-primary fw-bold">
-                    <i class="fa-solid fa-arrow-left"></i> Return to Admin
+                <a href="../admin/index" class="text-primary fw-bold" title="Return to Admin">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span class="nav-name-tag">Return to Admin</span>
                 </a>
             </li>
             <?php endif; ?>
-
-            <li class="nav-label">Account</li>
-            <li>
-                <a href="../logout" class="text-danger">
-                    <i class="fa-solid fa-right-from-bracket"></i> Sign Out
-                </a>
-            </li>
         </ul>
     </nav>
+    <div class="sidebar-footer-actions">
+        <div class="sidebar-user-block">
+            <div class="sidebar-user-avatar">
+                <?php
+                $res_initials = 'RE';
+                if (!empty($user_name)) {
+                    $parts = explode(' ', trim($user_name));
+                    $res_initials = strtoupper(substr($parts[0], 0, 1) . (isset($parts[1]) ? substr($parts[1], 0, 1) : ''));
+                }
+                echo htmlspecialchars($res_initials);
+                ?>
+            </div>
+            <div class="sidebar-user-text">
+                <div class="sidebar-user-name"><?php echo htmlspecialchars($user_name); ?></div>
+                <div class="sidebar-user-role"><?php echo htmlspecialchars(!empty($res_unit_label) ? $res_unit_label : 'Resident'); ?></div>
+            </div>
+        </div>
+        <div class="sidebar-footer-links">
+            <a href="../change_password" class="sidebar-footer-link" title="Change Password">
+                <i class="fa-solid fa-key" style="font-size: 11px;"></i> Password
+            </a>
+            <a href="../logout" class="sidebar-footer-link text-danger" title="Sign Out">
+                <i class="fa-solid fa-right-from-bracket" style="font-size: 11px;"></i> Sign out
+            </a>
+        </div>
+    </div>
 </aside>
 
 <main class="main-content">
@@ -203,67 +240,32 @@ if ($s_uid) {
         renderMobileAppShell('resident', $current_page, $page_title ?? '');
     }
     ?>
-    <header class="top-header top-bar d-flex align-items-center justify-content-between px-4">
+    <header class="top-bar">
         <div class="d-flex align-items-center gap-3">
-            <button class="btn btn-light border-0 toggle-sidebar d-md-none" type="button" style="padding: 0.25rem 0.5rem;">
+            <div class="toggle-sidebar d-md-none" style="cursor: pointer;">
                 <i class="fa-solid fa-bars fs-5"></i>
-            </button>
-            <?php if (!empty($res_avatar)): ?>
-                <div style="position: relative;">
-                    <img src="<?php echo htmlspecialchars($res_avatar); ?>" alt="Profile" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-color); box-shadow: 0 0 10px rgba(var(--primary-rgb), 0.3);">
-                    <span style="position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; background: #10b981; border: 2px solid #ffffff; border-radius: 50%;"></span>
-                </div>
-            <?php else: ?>
-                <div style="position: relative;">
-                    <div style="width: 40px; height: 40px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; color: #64748b; font-weight: 600;">
-                        <i class="fa-solid fa-user"></i>
-                    </div>
-                    <span style="position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; background: #10b981; border: 2px solid #ffffff; border-radius: 50%;"></span>
-                </div>
-            <?php endif; ?>
-            <div class="d-flex flex-column justify-content-center">
-                <div class="d-flex align-items-center gap-2">
-                    <h5 class="m-0 fw-bold" style="font-size: 0.98rem; line-height: 1.2;">Resident Portal</h5>
-                    <span class="mature-badge mature-badge-emerald d-none d-sm-inline-flex" style="font-size: 0.65rem; padding: 0.15rem 0.45rem;">
-                        <i class="fa-solid fa-circle me-1" style="font-size: 0.4rem;"></i> Active
-                    </span>
-                </div>
-                <small class="text-secondary" style="font-size: 0.78rem; line-height: 1.2;">
-                    Welcome back, <strong><?php echo htmlspecialchars($user_name); ?></strong>
-                    <?php if (!empty($res_unit_label)): ?>
-                        <span class="d-none d-md-inline">&bull; <span class="text-primary font-monospace"><?php echo htmlspecialchars($res_unit_label); ?></span></span>
-                    <?php endif; ?>
-                </small>
             </div>
+
+            <!-- Modern Dribbble Search Bar with ⌘ K -->
+            <form action="artisans" method="GET" class="desktop-topbar-search topbar-search-box m-0" onsubmit="if(!this.q.value.trim()){return false;}">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" name="q" placeholder="Search..." autocomplete="off">
+                <span class="topbar-kbd-pill" title="Press Ctrl+K or ⌘K">⌘ K</span>
+            </form>
         </div>
 
-        <!-- Desktop Quick Search (Image 3 Style) -->
-        <form action="artisans" method="GET" class="desktop-topbar-search m-0" onsubmit="if(!this.q.value.trim()){return false;}">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" name="q" placeholder="Search artisans, passes, bills, rules..." autocomplete="off">
-        </form>
-
-        <div class="d-flex align-items-center gap-2 gap-sm-3">
-            <!-- Emergency Direct Hotlines Button (No Alarm) -->
-            <button type="button" class="estate-hotline-btn btn btn-outline-danger btn-sm rounded-pill px-2 px-sm-3 d-inline-flex align-items-center gap-2" title="Direct Emergency Hotlines (Call directly without triggering alarm)">
-                <i class="fa-solid fa-phone-volume text-danger hotline-pulse-icon"></i>
-                <span class="fw-semibold d-none d-sm-inline">Hotlines</span>
-            </button>
-
-            <!-- Day & Night Mode Theme Toggle Button -->
-            <button type="button" class="theme-toggle-btn" title="Toggle Day/Night Mode">
-                <i class="fa-solid fa-moon"></i>
-                <span class="theme-text d-none d-sm-inline">Dark Mode</span>
-            </button>
+        <div class="topbar-right-actions ms-auto">
+            <!-- Messages / Community Forum Chat Icon -->
+            <a href="chat" class="topbar-action-circle" title="Messages & Forum">
+                <i class="fa-regular fa-comment-dots"></i>
+            </a>
 
             <!-- Notification Bell with Quick Action Dropdown -->
             <div class="dropdown position-relative">
-                <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle position-relative d-inline-flex align-items-center justify-content-center" id="residentNotifBellBtn" data-bs-toggle="dropdown" aria-expanded="false" style="width: 36px; height: 36px; min-width: 36px; min-height: 36px; aspect-ratio: 1 / 1 !important; flex-shrink: 0 !important; padding: 0;" title="My Notifications &amp; Requests">
-                    <i class="fa-solid fa-bell text-secondary"></i>
+                <button type="button" class="topbar-action-circle border-0" id="residentNotifBellBtn" data-bs-toggle="dropdown" aria-expanded="false" title="My Notifications &amp; Requests">
+                    <i class="fa-regular fa-bell"></i>
                     <?php if ($unread_all_notifs_cnt > 0 || $res_pending_contact_req): ?>
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-white" style="font-size: 0.65rem; padding: 0.25em 0.5em;">
-                            <?php echo max(1, $unread_all_notifs_cnt); ?>
-                        </span>
+                        <span class="topbar-badge-dot"></span>
                     <?php endif; ?>
                 </button>
                 <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 p-0 mt-2" style="width: 330px; max-width: 90vw; z-index: 1055; overflow: hidden;">
@@ -292,7 +294,7 @@ if ($s_uid) {
                                 $is_unr = ($rn['is_read'] == 0);
                             ?>
                                 <a href="notifications" class="dropdown-item p-3 border-bottom d-flex align-items-start gap-2.5" style="white-space: normal; background: <?php echo $is_unr ? '#f8fafc' : '#ffffff'; ?>;">
-                                    <div style="width: 8px; height: 8px; border-radius: 50%; background: <?php echo $is_unr ? '#2563eb' : 'transparent'; ?>; margin-top: 6px; flex-shrink: 0;"></div>
+                                    <div style="width: 8px; height: 8px; border-radius: 50%; background: <?php echo $is_unr ? '#6b4eff' : 'transparent'; ?>; margin-top: 6px; flex-shrink: 0;"></div>
                                     <div style="flex: 1; min-width: 0;">
                                         <div class="fw-semibold text-dark text-truncate" style="font-size: 0.82rem;"><?php echo htmlspecialchars($rn['title']); ?></div>
                                         <div class="text-secondary small text-truncate" style="font-size: 0.75rem;"><?php echo htmlspecialchars($rn['message']); ?></div>
@@ -317,24 +319,24 @@ if ($s_uid) {
                 </div>
             </div>
 
-            <!-- User Profile Dropdown (Image 3 Style) -->
+            <!-- User Profile Dropdown (Welcome back [Name]) -->
             <div class="dropdown">
-                <button type="button" class="btn p-0 border-0 d-flex align-items-center gap-2 text-decoration-none" data-bs-toggle="dropdown" aria-expanded="false" style="background: transparent;">
-                    <div class="text-end d-none d-sm-block">
-                        <div class="user-name fw-bold" style="font-size: 0.84rem; line-height: 1.2;"><?php echo htmlspecialchars($user_name); ?></div>
-                        <small class="text-secondary text-uppercase" style="font-size: 0.68rem; letter-spacing: 0.04em;"><?php echo htmlspecialchars($res_unit_label ?: 'Resident'); ?></small>
-                    </div>
-                    <?php 
-                    $res_initials = 'R';
-                    if (!empty($user_name)) {
-                        $parts = explode(' ', trim($user_name));
-                        $res_initials = strtoupper(substr($parts[0], 0, 1) . (isset($parts[1]) ? substr($parts[1], 0, 1) : ''));
-                    }
-                    ?>
-                    <div class="user-avatar" style="width: 36px; height: 36px; border-radius: 8px; background: #2563eb; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; border: 1px solid rgba(255,255,255,0.15);">
+                <?php 
+                $res_initials = 'R';
+                if (!empty($user_name)) {
+                    $parts = explode(' ', trim($user_name));
+                    $res_initials = strtoupper(substr($parts[0], 0, 1) . (isset($parts[1]) ? substr($parts[1], 0, 1) : ''));
+                }
+                ?>
+                <button type="button" class="btn p-0 border-0 topbar-user-profile-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                    <div class="topbar-user-initials-avatar">
                         <?php echo $res_initials; ?>
                     </div>
-                    <i class="fa-solid fa-chevron-down text-muted" style="font-size: 0.65rem;"></i>
+                    <div class="topbar-user-details d-none d-sm-flex">
+                        <span class="topbar-user-welcome">Welcome back</span>
+                        <span class="topbar-user-fullname"><?php echo htmlspecialchars($user_name); ?></span>
+                    </div>
+                    <i class="fa-solid fa-chevron-down text-muted ms-1" style="font-size: 0.65rem;"></i>
                 </button>
                 <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 p-2 mt-2" style="min-width: 220px; z-index: 1055;">
                     <div class="px-3 py-2 border-bottom mb-1">

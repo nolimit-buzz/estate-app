@@ -21,11 +21,85 @@ class Support {
         return $id;
     }
 
-    public static function addMessage($ticketId, $authorType, $authorName, $message) {
-        $st = Tenancy::platform()->prepare("INSERT INTO ticket_messages (ticket_id, author_type, author_name, message) VALUES (?,?,?,?)");
-        $st->bind_param('isss', $ticketId, $authorType, $authorName, $message);
+    public static function addMessage($ticketId, $authorType, $authorName, $message, $internal = false) {
+        $int = $internal ? 1 : 0;
+        $st = Tenancy::platform()->prepare("INSERT INTO ticket_messages (ticket_id, author_type, author_name, message, is_internal) VALUES (?,?,?,?,?)");
+        $st->bind_param('isssi', $ticketId, $authorType, $authorName, $message, $int);
         $st->execute();
-        Tenancy::platform()->query("UPDATE support_tickets SET updated_at = NOW() WHERE id = " . intval($ticketId));
+        $id = intval($ticketId);
+        $extra = ($authorType === 'platform' && !$internal) ? ", first_response_at = COALESCE(first_response_at, NOW())" : '';
+        Tenancy::platform()->query("UPDATE support_tickets SET updated_at = NOW() $extra WHERE id = $id");
+    }
+
+    // ------------------------------------------------------------------ workflow (platform side)
+    const STATUSES = ['open', 'in_progress', 'awaiting_customer', 'resolved', 'closed'];
+    const PRIORITIES = ['low', 'normal', 'high', 'urgent'];
+    const CATEGORIES = ['onboarding', 'billing', 'technical', 'module_request', 'plan_change', 'other'];
+
+    /** Ticket joined with its estate (including the estate lifecycle status), or null. */
+    public static function find($id) {
+        $st = Tenancy::platform()->prepare("SELECT t.*, e.name estate_name, e.status estate_status, e.onboarding_status, e.db_name, au.name assignee_name
+            FROM support_tickets t JOIN estates e ON e.id = t.estate_id LEFT JOIN platform_users au ON au.id = t.assigned_to WHERE t.id = ? LIMIT 1");
+        $st->bind_param('i', $id);
+        $st->execute();
+        return $st->get_result()->fetch_assoc() ?: null;
+    }
+
+    /** Messages of a ticket. Estates only ever receive the public ones. */
+    public static function messages($ticketId, $includeInternal = false) {
+        $st = Tenancy::platform()->prepare("SELECT * FROM ticket_messages WHERE ticket_id = ?" . ($includeInternal ? '' : ' AND is_internal = 0') . " ORDER BY id");
+        $st->bind_param('i', $ticketId);
+        $st->execute();
+        return $st->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /** Tickets that need an operator (open + in progress) from estates that still exist. Single definition used by every badge. */
+    public static function queueCount() {
+        $r = Tenancy::platform()->query("SELECT COUNT(*) c FROM support_tickets t JOIN estates e ON e.id = t.estate_id WHERE t.status IN ('open','in_progress') AND e.status NOT IN ('deleted','archived')");
+        return $r ? intval($r->fetch_assoc()['c']) : 0;
+    }
+
+    public static function setStatus($ticketId, $status) {
+        if (!in_array($status, self::STATUSES, true)) throw new InvalidArgumentException('Invalid status.');
+        $closed = in_array($status, ['resolved', 'closed'], true);
+        $st = Tenancy::platform()->prepare("UPDATE support_tickets SET status = ?, closed_at = " . ($closed ? 'COALESCE(closed_at, NOW())' : 'NULL') . ", updated_at = NOW() WHERE id = ?");
+        $st->bind_param('si', $status, $ticketId);
+        $st->execute();
+    }
+
+    public static function setPriority($ticketId, $priority) {
+        if (!in_array($priority, self::PRIORITIES, true)) throw new InvalidArgumentException('Invalid priority.');
+        $st = Tenancy::platform()->prepare("UPDATE support_tickets SET priority = ?, updated_at = NOW() WHERE id = ?");
+        $st->bind_param('si', $priority, $ticketId);
+        $st->execute();
+    }
+
+    public static function setCategory($ticketId, $category) {
+        if (!in_array($category, self::CATEGORIES, true)) throw new InvalidArgumentException('Invalid category.');
+        $st = Tenancy::platform()->prepare("UPDATE support_tickets SET category = ?, updated_at = NOW() WHERE id = ?");
+        $st->bind_param('si', $category, $ticketId);
+        $st->execute();
+    }
+
+    /** Assign to an active platform user, or null to unassign. Returns the assignee's name (or null). */
+    public static function assign($ticketId, $platformUserId) {
+        $p = Tenancy::platform();
+        $name = null;
+        if ($platformUserId) {
+            $st = $p->prepare("SELECT name FROM platform_users WHERE id = ? AND status = 'active'");
+            $st->bind_param('i', $platformUserId);
+            $st->execute();
+            $row = $st->get_result()->fetch_assoc();
+            if (!$row) throw new InvalidArgumentException('Assignee must be an active platform user.');
+            $name = $row['name'];
+            $st = $p->prepare("UPDATE support_tickets SET assigned_to = ?, updated_at = NOW() WHERE id = ?");
+            $st->bind_param('ii', $platformUserId, $ticketId);
+        } else {
+            $st = $p->prepare("UPDATE support_tickets SET assigned_to = NULL, updated_at = NOW() WHERE id = ?");
+            $st->bind_param('i', $ticketId);
+        }
+        $st->execute();
+        return $name;
     }
 
     /** Opened automatically once the first Central Admin has verified their email. */
@@ -62,7 +136,7 @@ class Support {
 
     public static function forEstate($estateId) {
         $out = [];
-        $r = Tenancy::platform()->query("SELECT * FROM support_tickets WHERE estate_id = " . intval($estateId) . " ORDER BY updated_at DESC");
+        $r = Tenancy::platform()->query("SELECT t.*, au.name assignee_name FROM support_tickets t LEFT JOIN platform_users au ON au.id = t.assigned_to WHERE t.estate_id = " . intval($estateId) . " ORDER BY t.updated_at DESC");
         while ($r && $row = $r->fetch_assoc()) $out[] = $row;
         return $out;
     }

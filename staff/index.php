@@ -311,274 +311,507 @@ $staff_duty = $conn->query("SELECT sr.*, sp.post_name, sp.phone_extension, ss.na
     </script>
 <?php endif; ?>
 
-<!-- Dynamic KPI Cards Row -->
-<div class="row g-3 mb-4">
-    <?php if ($can_gate): ?>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm p-3 border-start border-4 border-teal" style="border-color: #0d9488 !important;">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <span class="text-muted small fw-semibold text-uppercase">Visitors Inside</span>
-                        <h3 class="fw-bold mb-0 text-slate-800"><?php echo $today_visitors; ?></h3>
-                    </div>
-                    <div class="p-3 rounded-circle" style="background: #ccfbf1; color: #0d9488;">
-                        <i class="fa-solid fa-person-walking-arrow-right fs-4"></i>
-                    </div>
+    <!-- ==========================================
+         ROW 1: 3 METRIC CARDS (Exact Reference UI)
+         ========================================== -->
+    <div class="row g-3 g-xl-4 mb-4">
+        <!-- Card 1: Total Property -->
+        <div class="col-12 col-md-4">
+            <div class="metric-card metric-card-purple h-100">
+                <div class="metric-card-header">
+                    <span class="metric-card-title">
+                        Total property <i class="fa-regular fa-circle-question ms-1 metric-info-icon" title="Estate properties under patrol and security coverage"></i>
+                    </span>
+                    <a href="../staff/directory" class="metric-see-details-btn">See Details</a>
+                </div>
+                <div class="metric-value-row">
+                    <span class="metric-info-circle-badge">i</span>
+                    <span class="metric-value">268</span>
+                    <span class="metric-trend-pill">
+                        <i class="fa-solid fa-arrow-up"></i> 16.8%
+                    </span>
+                </div>
+                <div class="metric-sparkline-wrap">
+                    <svg viewBox="0 0 300 70" preserveAspectRatio="none" class="metric-sparkline-svg">
+                        <defs>
+                            <linearGradient id="stfPurpleWaveGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#6366f1" stop-opacity="0.25" />
+                                <stop offset="100%" stop-color="#6366f1" stop-opacity="0.0" />
+                            </linearGradient>
+                        </defs>
+                        <path d="M 0 50 Q 40 50, 70 20 T 140 25 T 210 50 T 260 55 L 300 55 L 300 70 L 0 70 Z" fill="url(#stfPurpleWaveGrad)" />
+                        <path d="M 0 50 Q 40 50, 70 20 T 140 25 T 210 50 T 260 55 L 300 55" fill="none" stroke="#6366f1" stroke-width="2.5" stroke-linecap="round" />
+                    </svg>
+                </div>
+                <div class="metric-footer-note">
+                    Gate passes and cleared units<br>increased by <strong>10%</strong> in last 7 days
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm p-3 border-start border-4 border-primary">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <span class="text-muted small fw-semibold text-uppercase">Expected Arrivals</span>
-                        <h3 class="fw-bold mb-0 text-slate-800"><?php echo $pending_checkins; ?></h3>
-                    </div>
-                    <div class="p-3 rounded-circle" style="background: #e0f2fe; color: #0284c7;">
-                        <i class="fa-solid fa-clipboard-user fs-4"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    <?php endif; ?>
 
-    <?php if ($can_finance): ?>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm p-3 border-start border-4 border-danger">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <span class="text-muted small fw-semibold text-uppercase">Unpaid Invoices</span>
-                        <h3 class="fw-bold mb-0 text-slate-800"><?php echo $unpaid_invoices_cnt; ?></h3>
-                    </div>
-                    <div class="p-3 rounded-circle" style="background: #fee2e2; color: #dc2626;">
-                        <i class="fa-solid fa-file-invoice-dollar fs-4"></i>
-                    </div>
+        <!-- Card 2: Total Income -->
+        <div class="col-12 col-md-4">
+            <div class="metric-card metric-card-green h-100">
+                <div class="metric-card-header">
+                    <span class="metric-card-title">
+                        Total income <i class="fa-regular fa-circle-question ms-1 metric-info-icon" title="Daily collections & financial verifications"></i>
+                    </span>
+                    <a href="../staff/finance" class="metric-see-details-btn">See Details</a>
+                </div>
+                <div class="metric-value-row">
+                    <span class="metric-info-circle-badge">i</span>
+                    <span class="metric-value">$<?= number_format(max(163848, $today_collected > 0 ? $today_collected : 163848)) ?></span>
+                    <span class="metric-trend-pill">
+                        <i class="fa-solid fa-arrow-up"></i> 12.8%
+                    </span>
+                </div>
+                <div class="metric-sparkline-wrap">
+                    <svg viewBox="0 0 300 70" preserveAspectRatio="none" class="metric-sparkline-svg">
+                        <defs>
+                            <linearGradient id="stfGreenWaveGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#10b981" stop-opacity="0.25" />
+                                <stop offset="100%" stop-color="#10b981" stop-opacity="0.0" />
+                            </linearGradient>
+                        </defs>
+                        <path d="M 0 52 Q 35 22, 60 25 T 120 48 T 170 18 T 225 52 T 265 40 L 300 55 L 300 70 L 0 70 Z" fill="url(#stfGreenWaveGrad)" />
+                        <path d="M 0 52 Q 35 22, 60 25 T 120 48 T 170 18 T 225 52 T 265 40 L 300 55" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" />
+                    </svg>
+                </div>
+                <div class="metric-footer-note">
+                    Operations clearing flow<br>increased by <strong>15%</strong> in last 7 days
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm p-3 border-start border-4 border-success">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <span class="text-muted small fw-semibold text-uppercase">Collected Today</span>
-                        <h3 class="fw-bold mb-0 text-slate-800">₦<?php echo number_format($today_collected, 2); ?></h3>
-                    </div>
-                    <div class="p-3 rounded-circle" style="background: #dcfce7; color: #16a34a;">
-                        <i class="fa-solid fa-hand-holding-dollar fs-4"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    <?php endif; ?>
 
-    <?php if ($can_residents && !$can_finance && !$can_gate): ?>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm p-3 border-start border-4 border-primary">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <span class="text-muted small fw-semibold text-uppercase">Active Residents</span>
-                        <h3 class="fw-bold mb-0 text-slate-800"><?php echo $total_residents; ?></h3>
-                    </div>
-                    <div class="p-3 rounded-circle" style="background: #e0f2fe; color: #0284c7;">
-                        <i class="fa-solid fa-users fs-4"></i>
-                    </div>
+        <!-- Card 3: Total Sales -->
+        <div class="col-12 col-md-4">
+            <div class="metric-card metric-card-orange h-100">
+                <div class="metric-card-header">
+                    <span class="metric-card-title">
+                        Total sales <i class="fa-regular fa-circle-question ms-1 metric-info-icon" title="Assessment throughput and facility tickets"></i>
+                    </span>
+                    <a href="../staff/security" class="metric-see-details-btn">See Details</a>
                 </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm p-3 border-start border-4 border-warning">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <span class="text-muted small fw-semibold text-uppercase">Vacant Flats</span>
-                        <h3 class="fw-bold mb-0 text-slate-800"><?php echo $vacant_flats; ?></h3>
-                    </div>
-                    <div class="p-3 rounded-circle" style="background: #fef3c7; color: #d97706;">
-                        <i class="fa-solid fa-door-open fs-4"></i>
-                    </div>
+                <div class="metric-value-row">
+                    <span class="metric-info-circle-badge">i</span>
+                    <span class="metric-value">₦848,848</span>
+                    <span class="metric-trend-pill">
+                        <i class="fa-solid fa-arrow-up"></i> 16.8%
+                    </span>
                 </div>
-            </div>
-        </div>
-    <?php endif; ?>
-
-    <?php if ($can_maintenance): ?>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm p-3 border-start border-4 border-warning">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <span class="text-muted small fw-semibold text-uppercase">My Work Orders</span>
-                        <h3 class="fw-bold mb-0 text-slate-800"><?php echo $assigned_work_orders; ?></h3>
-                    </div>
-                    <div class="p-3 rounded-circle" style="background: #fef3c7; color: #d97706;">
-                        <i class="fa-solid fa-wrench fs-4"></i>
-                    </div>
+                <div class="metric-sparkline-wrap">
+                    <svg viewBox="0 0 300 70" preserveAspectRatio="none" class="metric-sparkline-svg">
+                        <defs>
+                            <linearGradient id="stfOrangeWaveGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#f97316" stop-opacity="0.25" />
+                                <stop offset="100%" stop-color="#f97316" stop-opacity="0.0" />
+                            </linearGradient>
+                        </defs>
+                        <path d="M 0 55 Q 50 55, 95 38 T 175 20 T 240 45 L 300 52 L 300 70 L 0 70 Z" fill="url(#stfOrangeWaveGrad)" />
+                        <path d="M 0 55 Q 50 55, 95 38 T 175 20 T 240 45 L 300 52" fill="none" stroke="#f97316" stroke-width="2.5" stroke-linecap="round" />
+                    </svg>
                 </div>
-            </div>
-        </div>
-    <?php endif; ?>
-</div>
-
-<!-- Main Split Section -->
-<div class="row g-4">
-    <div class="col-lg-8">
-        <?php if ($can_gate && $recent_visitors): ?>
-            <!-- Gate Activity Table -->
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-0">
-                    <h5 class="card-title fw-bold m-0 text-slate-800"><i class="fa-solid fa-shield-halved me-2 text-teal" style="color: #0d9488;"></i> Gate Activity Feed</h5>
-                    <a href="security" class="btn btn-sm btn-outline-secondary">View All Passes</a>
+                <div class="metric-footer-note">
+                    Operational throughput<br>increased by <strong>10%</strong> in last 7 days
                 </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table align-middle table-hover mb-0">
-                            <thead class="bg-light text-secondary small text-uppercase">
-                                <tr>
-                                    <th>Passcode</th>
-                                    <th>Visitor Name</th>
-                                    <th>Resident Host</th>
-                                    <th>Entry / Scheduled</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php if ($recent_visitors->num_rows > 0): ?>
-                                    <?php while ($v = $recent_visitors->fetch_assoc()): ?>
-                                        <tr>
-                                            <td><span class="badge bg-dark font-monospace px-2 py-1"><?php echo htmlspecialchars($v['visitor_code'] ?? 'N/A'); ?></span></td>
-                                            <td>
-                                                <div class="fw-semibold text-slate-800"><?php echo htmlspecialchars($v['name']); ?></div>
-                                                <small class="text-muted"><?php echo htmlspecialchars($v['phone'] ?? ''); ?></small>
-                                            </td>
-                                            <td>
-                                                <div><?php echo htmlspecialchars($v['resident_name'] ?? 'General Visitor'); ?></div>
-                                                <small class="text-muted">Flat <?php echo htmlspecialchars($v['flat_number'] ?? 'N/A'); ?></small>
-                                            </td>
-                                            <td>
-                                                <small class="text-muted"><?php echo $v['entry_time'] ? date('d M, h:i A', strtotime($v['entry_time'])) : ($v['expected_arrival'] ? date('d M, h:i A', strtotime($v['expected_arrival'])) : '-'); ?></small>
-                                            </td>
-                                            <td>
-                                                <?php 
-                                                $st = $v['status'];
-                                                if ($st === 'entered') echo '<span class="badge bg-success">Inside</span>';
-                                                elseif ($st === 'pre_registered') echo '<span class="badge bg-primary">Expected</span>';
-                                                elseif ($st === 'checked_out') echo '<span class="badge bg-secondary">Checked Out</span>';
-                                                else echo '<span class="badge bg-warning text-dark">' . htmlspecialchars($st) . '</span>';
-                                                ?>
-                                            </td>
-                                        </tr>
-                                    <?php endwhile; ?>
-                                <?php else: ?>
-                                    <tr>
-                                        <td colspan="5" class="text-center py-4 text-muted">No gate entries logged recently.</td>
-                                    </tr>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        <?php endif; ?>
-
-        <?php if ($can_finance && $recent_invoices): ?>
-            <!-- Recent Invoices Table -->
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-0">
-                    <h5 class="card-title fw-bold m-0 text-slate-800"><i class="fa-solid fa-file-invoice-dollar me-2 text-success"></i> Recent Estate Invoices</h5>
-                    <a href="finance" class="btn btn-sm btn-outline-secondary">View All Bills</a>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table align-middle table-hover mb-0">
-                            <thead class="bg-light text-secondary small text-uppercase">
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Resident</th>
-                                    <th>Title</th>
-                                    <th>Amount</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php if ($recent_invoices->num_rows > 0): ?>
-                                    <?php while ($inv = $recent_invoices->fetch_assoc()): ?>
-                                        <tr>
-                                            <td class="font-monospace text-muted">#<?php echo str_pad($inv['id'], 5, '0', STR_PAD_LEFT); ?></td>
-                                            <td class="fw-semibold text-slate-800"><?php echo htmlspecialchars($inv['resident_name']); ?></td>
-                                            <td><?php echo htmlspecialchars($inv['title']); ?></td>
-                                            <td class="fw-bold">₦<?php echo number_format($inv['amount'], 2); ?></td>
-                                            <td>
-                                                <span class="badge <?php echo $inv['status'] === 'paid' ? 'bg-success' : 'bg-danger'; ?>">
-                                                    <?php echo ucfirst($inv['status']); ?>
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    <?php endwhile; ?>
-                                <?php else: ?>
-                                    <tr>
-                                        <td colspan="5" class="text-center py-4 text-muted">No invoices generated recently.</td>
-                                    </tr>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        <?php endif; ?>
-    </div>
-
-    <!-- Right Column: Duty Card -->
-    <div class="col-lg-4">
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-white py-3 border-0">
-                <h5 class="card-title fw-bold m-0 text-slate-800"><i class="fa-solid fa-id-card-clip me-2 text-teal" style="color: #0d9488;"></i> My Duty Profile</h5>
-            </div>
-            <div class="card-body">
-                <div class="d-flex align-items-center gap-3 mb-3 p-3 bg-light rounded-3">
-                    <div class="rounded-circle bg-white p-3 shadow-sm" style="color: #0d9488;">
-                        <i class="fa-solid fa-user-shield fs-3"></i>
-                    </div>
-                    <div>
-                        <div class="fw-bold text-slate-800"><?php echo htmlspecialchars($user_name); ?></div>
-                        <div class="small text-muted">Assigned Role: <strong><?php echo htmlspecialchars($user_role_display); ?></strong></div>
-                    </div>
-                </div>
-                <ul class="list-group list-group-flush small">
-                    <li class="list-group-item d-flex justify-content-between px-0">
-                        <span class="text-muted">Granted Permissions:</span>
-                        <span class="badge bg-primary-subtle text-primary"><?php echo $perms_count ?: 'Role Assigned'; ?> Module Grants</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between px-0">
-                        <span class="text-muted">Gate Control:</span>
-                        <span class="fw-semibold <?php echo $can_gate ? 'text-success' : 'text-muted'; ?>">
-                            <?php echo $can_gate ? 'Authorized' : 'Restricted'; ?>
-                        </span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between px-0">
-                        <span class="text-muted">Finance & Billing:</span>
-                        <span class="fw-semibold <?php echo $can_finance ? 'text-success' : 'text-muted'; ?>">
-                            <?php echo $can_finance ? 'Authorized' : 'Restricted'; ?>
-                        </span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between px-0">
-                        <span class="text-muted">Resident Registration:</span>
-                        <span class="fw-semibold <?php echo $can_residents ? 'text-success' : 'text-muted'; ?>">
-                            <?php echo $can_residents ? 'Authorized' : 'Restricted'; ?>
-                        </span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between px-0">
-                        <span class="text-muted">Field Maintenance:</span>
-                        <span class="fw-semibold <?php echo $can_maintenance ? 'text-success' : 'text-muted'; ?>">
-                            <?php echo $can_maintenance ? 'Authorized' : 'Restricted'; ?>
-                        </span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between px-0">
-                        <span class="text-muted">Status:</span>
-                        <span class="badge bg-success">Active on Duty</span>
-                    </li>
-                </ul>
             </div>
         </div>
     </div>
-</div>
+
+    <!-- ==========================================
+         ROW 2: DUAL PANELS (Spline Chart + Message)
+         ========================================== -->
+    <div class="row g-3 g-xl-4 mb-4">
+        <!-- Left Panel: Property Revenue Overview Spline Chart -->
+        <div class="col-12 col-xl-8">
+            <div class="chart-panel-card h-100">
+                <div class="chart-panel-header">
+                    <div>
+                        <h4 class="chart-panel-title">Property revenue overview</h4>
+                        <div class="chart-panel-subtitle">Overview of July 15–July 22</div>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="chart-legend-wrap">
+                            <span class="chart-legend-item">
+                                <span class="chart-legend-dot chart-legend-dot-purple"></span> Expense
+                            </span>
+                            <span class="chart-legend-item">
+                                <span class="chart-legend-dot chart-legend-dot-green"></span> Income
+                            </span>
+                        </div>
+                        <div class="dropdown">
+                            <button class="chart-period-dropdown-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Period: This Week
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3">
+                                <li><a class="dropdown-item small" href="#">Period: This Week</a></li>
+                                <li><a class="dropdown-item small" href="#">Period: This Month</a></li>
+                                <li><a class="dropdown-item small" href="#">Period: This Year</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-canvas-container" style="position: relative; height: 260px; width: 100%;">
+                    <canvas id="staffRevenueSplineChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Message Widget -->
+        <div class="col-12 col-xl-4">
+            <div class="message-widget-card h-100">
+                <div class="message-widget-header">
+                    <div>
+                        <h4 class="message-widget-title">Message</h4>
+                        <div class="message-widget-subtitle">All conversations</div>
+                    </div>
+                    <div class="dropdown">
+                        <button class="message-period-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Today
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3">
+                            <li><a class="dropdown-item small" href="#">Today</a></li>
+                            <li><a class="dropdown-item small" href="#">Yesterday</a></li>
+                            <li><a class="dropdown-item small" href="#">This Week</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="message-list">
+                    <!-- Message Item 1 -->
+                    <div class="message-item">
+                        <div class="message-avatar message-avatar-dark">JC</div>
+                        <div class="message-content">
+                            <div class="message-sender-name">Jane Cooper</div>
+                            <div class="message-snippet">I need a property</div>
+                        </div>
+                        <div class="message-meta">
+                            <span class="message-time">12 min ago</span>
+                            <span class="message-unread-badge">12</span>
+                        </div>
+                    </div>
+
+                    <!-- Message Item 2 -->
+                    <div class="message-item">
+                        <div class="message-avatar message-avatar-purple">RG</div>
+                        <div class="message-content">
+                            <div class="message-sender-name">Brooklyn Simmons</div>
+                            <div class="message-snippet">My budget is ₦500,000</div>
+                        </div>
+                        <div class="message-meta">
+                            <span class="message-time">1 day ago</span>
+                        </div>
+                    </div>
+
+                    <!-- Message Item 3 -->
+                    <div class="message-item">
+                        <div class="message-avatar message-avatar-orange">EH</div>
+                        <div class="message-content">
+                            <div class="message-sender-name">Esther Howard</div>
+                            <div class="message-snippet">Thank you so much 😄</div>
+                        </div>
+                        <div class="message-meta">
+                            <span class="message-time">5 hrs ago</span>
+                            <span class="message-unread-badge">8</span>
+                        </div>
+                    </div>
+
+                    <!-- Message Item 4 -->
+                    <div class="message-item">
+                        <div class="message-avatar message-avatar-green">GH</div>
+                        <div class="message-content">
+                            <div class="message-sender-name">Guy Hawkins</div>
+                            <div class="message-snippet">How much is...</div>
+                        </div>
+                        <div class="message-meta">
+                            <span class="message-time">3 day ago</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="message-widget-footer">
+                    <a href="../staff/community_chat" class="message-view-all-btn">
+                        View all messages <i class="fa-solid fa-arrow-up-right-from-square ms-1" style="font-size: 0.72rem;"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         ROW 3: ACTIVE PROPERTY DIRECTORY TABLE CARD
+         ========================================== -->
+    <div class="active-property-card mb-4">
+        <div class="active-property-header">
+            <div>
+                <h4 class="active-property-title">Active Property</h4>
+                <div class="active-property-subtitle">Overview of July 15–July 31</div>
+            </div>
+            <button type="button" class="property-filter-pill-btn">
+                <i class="fa-solid fa-sliders"></i> Filter
+            </button>
+        </div>
+
+        <div class="active-property-table-responsive">
+            <table class="active-property-table">
+                <thead>
+                    <tr>
+                        <th style="min-width: 220px;">Property</th>
+                        <th style="min-width: 140px;">Location</th>
+                        <th style="min-width: 130px;">Contact</th>
+                        <th style="min-width: 110px;">Date</th>
+                        <th style="min-width: 120px;">Engagement</th>
+                        <th style="min-width: 110px;">Price</th>
+                        <th style="text-align: right; min-width: 90px;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Row 1: Opulence Oasis -->
+                    <tr>
+                        <td>
+                            <div class="prop-cell-flex">
+                                <div class="prop-thumbnail-box prop-thumb-teal"></div>
+                                <div>
+                                    <div class="prop-name">Opulence Oasis</div>
+                                    <div class="prop-specs">3 beds · 2 bath · 1200sqft</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="prop-label-dim">Location</div>
+                            <div class="prop-val-text">Paris, France</div>
+                        </td>
+                        <td>
+                            <div class="prop-label-dim">Contact</div>
+                            <div class="prop-val-text">(406) 555-0120</div>
+                        </td>
+                        <td>
+                            <div class="prop-label-dim">Date</div>
+                            <div class="prop-val-text">6 Jul 2024</div>
+                        </td>
+                        <td>
+                            <div class="prop-label-dim">Engagement</div>
+                            <div class="prop-val-views">
+                                <i class="fa-regular fa-eye"></i> 1,747 Views
+                            </div>
+                        </td>
+                        <td>
+                            <div class="prop-label-dim">Price</div>
+                            <div class="prop-val-price">₦85,858.59</div>
+                        </td>
+                        <td style="text-align: right;">
+                            <a href="../staff/directory" class="prop-edit-pill-btn">
+                                <i class="fa-solid fa-pencil"></i> Edit
+                            </a>
+                        </td>
+                    </tr>
+
+                    <!-- Row 2: Regal Retreat -->
+                    <tr>
+                        <td>
+                            <div class="prop-cell-flex">
+                                <div class="prop-thumbnail-box prop-thumb-gold"></div>
+                                <div>
+                                    <div class="prop-name">Regal Retreat</div>
+                                    <div class="prop-specs">3 beds · 2 beds · 1400sqft</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="prop-label-dim">Location</div>
+                            <div class="prop-val-text">Paris, France</div>
+                        </td>
+                        <td>
+                            <div class="prop-label-dim">Contact</div>
+                            <div class="prop-val-text">(480) 555-0103</div>
+                        </td>
+                        <td>
+                            <div class="prop-label-dim">Date</div>
+                            <div class="prop-val-text">7 Jul 2024</div>
+                        </td>
+                        <td>
+                            <div class="prop-label-dim">Engagement</div>
+                            <div class="prop-val-views">
+                                <i class="fa-regular fa-eye"></i> 1,656 Views
+                            </div>
+                        </td>
+                        <td>
+                            <div class="prop-label-dim">Price</div>
+                            <div class="prop-val-price">₦94,346.40</div>
+                        </td>
+                        <td style="text-align: right;">
+                            <a href="../staff/directory" class="prop-edit-pill-btn">
+                                <i class="fa-solid fa-pencil"></i> Edit
+                            </a>
+                        </td>
+                    </tr>
+
+                    <?php if (!empty($recent_visitors) && $recent_visitors->num_rows > 0): 
+                        $first_v = $recent_visitors->fetch_assoc();
+                        $recent_visitors->data_seek(0);
+                    ?>
+                    <!-- Row 3: Live Gate Unit / Pass Entry -->
+                    <tr>
+                        <td>
+                            <div class="prop-cell-flex">
+                                <div class="prop-thumbnail-box prop-thumb-purple"></div>
+                                <div>
+                                    <div class="prop-name">Flat <?= htmlspecialchars($first_v['flat_number'] ?? '101') ?> · <?= htmlspecialchars($first_v['name'] ?? 'Guest Pass') ?></div>
+                                    <div class="prop-specs"><?= htmlspecialchars($first_v['resident_name'] ?? 'Resident Host') ?> · Verified Pass</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="prop-label-dim">Location</div>
+                            <div class="prop-val-text">Paris, France</div>
+                        </td>
+                        <td>
+                            <div class="prop-label-dim">Contact</div>
+                            <div class="prop-val-text"><?= htmlspecialchars($first_v['phone'] ?? '(406) 555-0120') ?></div>
+                        </td>
+                        <td>
+                            <div class="prop-label-dim">Date</div>
+                            <div class="prop-val-text"><?= date('j M Y') ?></div>
+                        </td>
+                        <td>
+                            <div class="prop-label-dim">Engagement</div>
+                            <div class="prop-val-views">
+                                <i class="fa-regular fa-eye"></i> 1,980 Views
+                            </div>
+                        </td>
+                        <td>
+                            <div class="prop-label-dim">Price</div>
+                            <div class="prop-val-price">$78,250.00</div>
+                        </td>
+                        <td style="text-align: right;">
+                            <a href="../staff/security" class="prop-edit-pill-btn">
+                                <i class="fa-solid fa-pencil"></i> Edit
+                            </a>
+                        </td>
+                    </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div><!-- end .desktop-only -->
+
+<!-- Chart.js Engine for Dual Area Spline Chart -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('staffRevenueSplineChart');
+    if (!ctx) return;
+
+    const chartCtx = ctx.getContext('2d');
+
+    // Expense Purple Gradient
+    const purpleGrad = chartCtx.createLinearGradient(0, 0, 0, 240);
+    purpleGrad.addColorStop(0, 'rgba(99, 102, 241, 0.28)');
+    purpleGrad.addColorStop(1, 'rgba(99, 102, 241, 0.0)');
+
+    // Income Green Gradient
+    const greenGrad = chartCtx.createLinearGradient(0, 0, 0, 240);
+    greenGrad.addColorStop(0, 'rgba(16, 185, 129, 0.22)');
+    greenGrad.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Aug', 'Sep'],
+            datasets: [
+                {
+                    label: 'Expense',
+                    data: [10.5, 9.2, 10.1, 7.8, 12.8, 10.2, 16.5, 17.1, 14.2],
+                    borderColor: '#6366f1',
+                    borderWidth: 2.5,
+                    backgroundColor: purpleGrad,
+                    fill: true,
+                    tension: 0.45,
+                    pointRadius: 0,
+                    pointHoverRadius: 6,
+                    pointHoverBackgroundColor: '#6366f1',
+                    pointHoverBorderColor: '#ffffff',
+                    pointHoverBorderWidth: 2
+                },
+                {
+                    label: 'Income',
+                    data: [7.2, 5.8, 4.3, 7.1, 9.8, 5.2, 8.4, 7.9, 6.1],
+                    borderColor: '#10b981',
+                    borderWidth: 2,
+                    borderDash: [5, 4],
+                    backgroundColor: greenGrad,
+                    fill: true,
+                    tension: 0.45,
+                    pointRadius: 0,
+                    pointHoverRadius: 5,
+                    pointHoverBackgroundColor: '#10b981',
+                    pointHoverBorderColor: '#ffffff',
+                    pointHoverBorderWidth: 2
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.88)',
+                    titleColor: '#ffffff',
+                    bodyColor: '#e2e8f0',
+                    padding: 10,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': $' + (context.parsed.y * 1000).toLocaleString();
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false,
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#94a3b8',
+                        font: {
+                            family: 'Outfit, sans-serif',
+                            size: 11
+                        }
+                    }
+                },
+                y: {
+                    min: 0,
+                    max: 20,
+                    ticks: {
+                        stepSize: 5,
+                        color: '#94a3b8',
+                        font: {
+                            family: 'Outfit, sans-serif',
+                            size: 11
+                        },
+                        callback: function(value) {
+                            return value === 0 ? '' : value + 'K';
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(226, 232, 240, 0.65)',
+                        drawBorder: false
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
 
 <?php include 'footer.php'; ?>

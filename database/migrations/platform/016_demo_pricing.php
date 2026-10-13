@@ -19,7 +19,7 @@ return function ($db) {
     ];
 
     foreach ($settings as $s) {
-        $res = $db->query("SELECT id FROM platform_settings WHERE setting_key = '{$s[0]}' LIMIT 1");
+        $res = $db->query("SELECT setting_key FROM platform_settings WHERE setting_key = '{$s[0]}' LIMIT 1");
         if (!$res || $res->num_rows === 0) {
             $db->query("INSERT INTO platform_settings (setting_key, setting_value, value_type, group_name, label, description) VALUES ('{$s[0]}', '{$s[1]}', '{$s[2]}', '{$s[3]}', '{$s[4]}', '{$s[5]}')");
         }
@@ -28,9 +28,9 @@ return function ($db) {
     // Create demo_estates tracking table
     $db->query("CREATE TABLE IF NOT EXISTS demo_estates (
         id BIGINT PRIMARY KEY AUTO_INCREMENT,
-        estate_id BIGINT NOT NULL UNIQUE,
+        estate_id INT NOT NULL UNIQUE,
         demo_start_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        demo_expires_at TIMESTAMP,
+        demo_expires_at TIMESTAMP NULL DEFAULT NULL,
         conversion_status ENUM('pending', 'converted', 'expired') DEFAULT 'pending',
         converted_at TIMESTAMP NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

@@ -359,6 +359,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             font-size: 0.88rem;
         }
     </style>
+    <link rel="stylesheet" href="css/dashboard-theme-public.css?v=<?php echo time(); ?>">
 </head>
 <body>
 

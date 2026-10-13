@@ -6,9 +6,6 @@ require_once '../includes/Mailer.php';
 require_once '../includes/emergency_roster_init.php';
 requireAdminAccess();
 
-include '../includes/header.php';
-include '../includes/sidebar.php';
-
 // Helper to handle uploads
 if (!function_exists('handleUpload')) {
     function handleUpload($file) {
@@ -438,6 +435,9 @@ if (!function_exists('renderConfigTable')) {
         return $html;
     }
 }
+
+include '../includes/header.php';
+include '../includes/sidebar.php';
 ?>
 
 <style>

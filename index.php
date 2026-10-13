@@ -81,7 +81,6 @@ public_nav('full');
                 <ul class="checks"><?php foreach ($caps as $cap): ?><li><?php echo pl_e($cap); ?></li><?php endforeach; ?></ul>
                 <div class="foot">
                     <span class="muted" style="font-size:.82rem"><?php echo $m['in_plans'] ? 'In: ' . pl_e(implode(', ', $m['in_plans'])) : 'Add-on'; ?></span>
-                    <?php if ($showPrices): ?><span class="price"><?php echo floatval($m['default_price']) > 0 ? 'from ' . $fmt($m['default_price']) . '<small> /mo</small>' : 'Included'; ?></span><?php endif; ?>
                 </div>
             </article>
             <?php endforeach; ?>

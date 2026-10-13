@@ -173,10 +173,10 @@ include 'sidebar.php';
 <style>
 /* Executive Zonal Command Hero Board */
 .zonal-hero-board {
-    background: linear-gradient(135deg, #3b0764 0%, #6b21a8 50%, #7e22ce 100%) !important;
+    background: linear-gradient(135deg, #4a31cc 0%, #5a3fe6 50%, #6b4eff 100%) !important;
     border: 1px solid rgba(255, 255, 255, 0.25) !important;
     border-radius: 16px !important;
-    box-shadow: 0 10px 30px -5px rgba(107, 33, 168, 0.4) !important;
+    box-shadow: 0 10px 30px -5px rgba(107, 78, 255, 0.4) !important;
     color: #ffffff !important;
     position: relative;
     overflow: hidden;
@@ -190,7 +190,7 @@ include 'sidebar.php';
     right: -60px;
     width: 340px;
     height: 340px;
-    background: radial-gradient(circle, rgba(192, 132, 252, 0.25) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(169, 155, 255, 0.25) 0%, transparent 70%);
     pointer-events: none;
     border-radius: 50%;
 }
@@ -266,7 +266,7 @@ include 'sidebar.php';
 }
 .zonal-hero-btn-white:hover {
     background: #f8fafc !important;
-    color: #3b0764 !important;
+    color: #4a31cc !important;
     transform: translateY(-1px);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
 }
@@ -390,7 +390,7 @@ body.dark-mode .kpi-title {
             ?>
                 <div class="mobile-bar-col">
                     <div class="mobile-bar-track">
-                        <div class="mobile-bar-fill" style="height: <?php echo $pct; ?>%; background: linear-gradient(180deg, #9333ea 0%, #c084fc 100%);"></div>
+                        <div class="mobile-bar-fill" style="height: <?php echo $pct; ?>%; background: linear-gradient(180deg, #6b4eff 0%, #a99bff 100%);"></div>
                     </div>
                     <span class="mobile-bar-month"><?php echo $month_short; ?></span>
                 </div>
@@ -417,7 +417,7 @@ body.dark-mode .kpi-title {
         ?>
             <a href="residents" class="mobile-activity-item">
                 <div class="mobile-activity-left">
-                    <div class="mobile-activity-icon" style="background: rgba(147, 51, 234, 0.12); color: #9333ea;">
+                    <div class="mobile-activity-icon" style="background: rgba(107, 78, 255, 0.12); color: #6b4eff;">
                         <i class="fa-solid fa-user-check"></i>
                     </div>
                     <div class="mobile-activity-text">
@@ -474,14 +474,14 @@ body.dark-mode .kpi-title {
     </div>
     <div class="hero-actions-group">
         <div class="pill-timeframe-dropdown" title="Reporting Period">
-            <i class="fa-regular fa-calendar-days text-purple" style="color: #9333ea;"></i>
+            <i class="fa-regular fa-calendar-days text-purple" style="color: #6b4eff;"></i>
             <span><?php echo date('M Y'); ?></span>
             <i class="fa-solid fa-chevron-down" style="font-size: 0.65rem;"></i>
         </div>
         <a href="reports" class="btn-export-ghost" title="Zonal Financial & Resident Reports">
-            <i class="fa-solid fa-chart-pie text-purple" style="color: #7e22ce;"></i> Zonal Reports
+            <i class="fa-solid fa-chart-pie text-purple" style="color: #6b4eff;"></i> Zonal Reports
         </a>
-        <a href="residents" class="btn-primary-action-pill" style="background: linear-gradient(135deg, #7e22ce 0%, #6b21a8 100%); box-shadow: 0 4px 14px -2px rgba(126, 34, 206, 0.4);">
+        <a href="residents" class="btn-primary-action-pill" style="background: linear-gradient(135deg, #6b4eff 0%, #5a3fe6 100%); box-shadow: 0 4px 14px -2px rgba(107, 78, 255, 0.4);">
             <i class="fa-solid fa-user-plus"></i> Onboard Resident
         </a>
         <a href="broadcasts" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-2 fw-semibold">
@@ -491,10 +491,10 @@ body.dark-mode .kpi-title {
 </div>
 
 <!-- Zonal Autonomy & Security Privilege Ribbon -->
-<div class="card border-0 rounded-4 p-3 mb-4 shadow-sm" style="background: linear-gradient(135deg, rgba(168, 85, 247, 0.08) 0%, rgba(59, 130, 246, 0.05) 100%); border: 1px solid rgba(168, 85, 247, 0.2) !important;">
+<div class="card border-0 rounded-4 p-3 mb-4 shadow-sm" style="background: linear-gradient(135deg, rgba(107, 78, 255, 0.08) 0%, rgba(59, 130, 246, 0.05) 100%); border: 1px solid rgba(107, 78, 255, 0.2) !important;">
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
         <div class="d-flex align-items-center gap-2">
-            <span class="badge rounded-pill px-2.5 py-1" style="background: rgba(168, 85, 247, 0.2); color: #7e22ce; font-size: 0.72rem; font-weight: 700;">
+            <span class="badge rounded-pill px-2.5 py-1" style="background: rgba(107, 78, 255, 0.2); color: #6b4eff; font-size: 0.72rem; font-weight: 700;">
                 <i class="fa-solid fa-lock me-1"></i> ZONAL PRIVACY LOCK
             </span>
             <span class="text-secondary small fw-semibold">Strict Role-Based Scoping Active for <?= htmlspecialchars($zone_name) ?></span>
@@ -595,10 +595,10 @@ if ($z_pending_requests > 0):
 
 <?php if (!empty($zone['paystack_account_number'])): ?>
 <!-- Paystack Dedicated Virtual Account Card -->
-<div class="mature-card mb-4 p-3" style="border-left: 4px solid #0284c7 !important;">
+<div class="mature-card mb-4 p-3" style="border-left: 4px solid #6b4eff !important;">
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
         <div class="d-flex align-items-center gap-3">
-            <div class="kpi-icon-wrap" style="background: rgba(2, 132, 199, 0.1); color: #0284c7; border-color: rgba(2, 132, 199, 0.25);">
+            <div class="kpi-icon-wrap" style="background: rgba(107, 78, 255, 0.1); color: #6b4eff; border-color: rgba(107, 78, 255, 0.25);">
                 <i class="fa-solid fa-building-columns"></i>
             </div>
             <div>
@@ -627,628 +627,278 @@ if ($z_pending_requests > 0):
 </div>
 <?php endif; ?>
 
-<!-- ==========================================
-     EXECUTIVE KPI METRICS RIBBON (4 PILLARS)
-     ========================================== -->
-<div class="row g-3 mb-4">
-    <!-- Pillar 1: Financial Collections -->
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="kpi-card h-100">
-            <div class="d-flex justify-content-between align-items-start">
-                <div>
-                    <span class="kpi-title">Revenue (This Month)</span>
-                    <div class="kpi-value"><?php echo $currency_symbol . number_format($revenue_month, 2); ?></div>
+    <!-- ==========================================
+         ROW 1: 3 METRIC CARDS (live zonal data)
+         ========================================== -->
+    <div class="ds-metrics-grid">
+        <div class="ds-metric-card">
+            <div class="ds-metric-card-head">
+                <h3 class="ds-metric-title">Total property <i class="fa-regular fa-circle-question" title="Flats across your zone"></i></h3>
+                <a href="properties" class="ds-see-details-btn">See Details</a>
+            </div>
+            <div class="ds-metric-body">
+                <div class="ds-metric-info-circle">i</div>
+                <div class="ds-metric-value"><?= number_format($total_flats) ?></div>
+                <span class="ds-metric-trend-pill up"><i class="fa-solid fa-building"></i> <?= $occupancy_pct ?>% occupied</span>
+            </div>
+            <div class="ds-metric-chart-row">
+                <div class="ds-metric-sparkline">
+                    <svg viewBox="0 0 300 70" preserveAspectRatio="none">
+                        <defs><linearGradient id="zonePurpleWaveGrad" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#6366f1" stop-opacity="0.25"/><stop offset="100%" stop-color="#6366f1" stop-opacity="0"/></linearGradient></defs>
+                        <path d="M 0 50 Q 40 50, 70 20 T 140 25 T 210 50 T 260 55 L 300 55 L 300 70 L 0 70 Z" fill="url(#zonePurpleWaveGrad)"/>
+                        <path d="M 0 50 Q 40 50, 70 20 T 140 25 T 210 50 T 260 55 L 300 55" fill="none" stroke="#6366f1" stroke-width="2.5" stroke-linecap="round"/>
+                    </svg>
                 </div>
-                <div class="kpi-icon-wrap">
-                    <i class="fa-solid fa-coins"></i>
+                <div class="ds-metric-caption">
+                    <strong><?= $total_streets ?></strong> streets &bull; <strong><?= $total_buildings ?></strong> buildings<br>
+                    <strong><?= $vacant_flats ?></strong> vacant &bull; <strong><?= $maintenance_flats ?></strong> in maintenance
                 </div>
             </div>
-            <div class="kpi-meta justify-content-between mt-2">
-                <span>All-Time: <strong><?php echo $currency_symbol . number_format($revenue_total, 0); ?></strong></span>
-                <span class="mature-badge <?php echo ($outstanding_invoices > 0) ? 'mature-badge-amber' : 'mature-badge-emerald'; ?>">
-                    <?php echo $currency_symbol . number_format($outstanding_invoices, 0); ?> due
+        </div>
+
+        <div class="ds-metric-card">
+            <div class="ds-metric-card-head">
+                <h3 class="ds-metric-title">Collected this month <i class="fa-regular fa-circle-question" title="Realized zonal collections"></i></h3>
+                <a href="finance" class="ds-see-details-btn">See Details</a>
+            </div>
+            <div class="ds-metric-body">
+                <div class="ds-metric-info-circle">i</div>
+                <div class="ds-metric-value"><?= htmlspecialchars($currency_symbol) ?><?= number_format($revenue_month) ?></div>
+                <span class="ds-metric-trend-pill up"><i class="fa-solid fa-wallet"></i> <?= htmlspecialchars($currency_symbol) ?><?= number_format($revenue_total) ?> total</span>
+            </div>
+            <div class="ds-metric-chart-row">
+                <div class="ds-metric-sparkline">
+                    <svg viewBox="0 0 300 70" preserveAspectRatio="none">
+                        <defs><linearGradient id="zoneGreenWaveGrad" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#10b981" stop-opacity="0.25"/><stop offset="100%" stop-color="#10b981" stop-opacity="0"/></linearGradient></defs>
+                        <path d="M 0 52 Q 35 22, 60 25 T 120 48 T 170 18 T 225 52 T 265 40 L 300 55 L 300 70 L 0 70 Z" fill="url(#zoneGreenWaveGrad)"/>
+                        <path d="M 0 52 Q 35 22, 60 25 T 120 48 T 170 18 T 225 52 T 265 40 L 300 55" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div class="ds-metric-caption">Realized zonal<br>collections</div>
+            </div>
+        </div>
+
+        <div class="ds-metric-card">
+            <div class="ds-metric-card-head">
+                <h3 class="ds-metric-title">Outstanding <i class="fa-regular fa-circle-question" title="Unpaid zonal invoices"></i></h3>
+                <a href="finance" class="ds-see-details-btn">See Details</a>
+            </div>
+            <div class="ds-metric-body">
+                <div class="ds-metric-info-circle">i</div>
+                <div class="ds-metric-value"><?= htmlspecialchars($currency_symbol) ?><?= number_format($outstanding_invoices) ?></div>
+                <span class="ds-metric-trend-pill <?= $overdue_count > 0 ? 'down' : 'up' ?>">
+                    <i class="fa-solid <?= $overdue_count > 0 ? 'fa-triangle-exclamation' : 'fa-circle-check' ?>"></i>
+                    <?= $overdue_count > 0 ? $overdue_count . ' overdue' : 'None overdue' ?>
                 </span>
             </div>
-            <div class="kpi-progress-bar">
-                <?php 
-                $fin_pct = ($revenue_total > 0) ? min(100, round(($revenue_month / $revenue_total) * 100)) : 0;
-                ?>
-                <div class="kpi-progress-fill" style="width: <?php echo max(8, $fin_pct); ?>%; background: #7e22ce;"></div>
+            <div class="ds-metric-chart-row">
+                <div class="ds-metric-sparkline">
+                    <svg viewBox="0 0 300 70" preserveAspectRatio="none">
+                        <defs><linearGradient id="zoneOrangeWaveGrad" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#f97316" stop-opacity="0.25"/><stop offset="100%" stop-color="#f97316" stop-opacity="0"/></linearGradient></defs>
+                        <path d="M 0 55 Q 50 55, 95 38 T 175 20 T 240 45 L 300 52 L 300 70 L 0 70 Z" fill="url(#zoneOrangeWaveGrad)"/>
+                        <path d="M 0 55 Q 50 55, 95 38 T 175 20 T 240 45 L 300 52" fill="none" stroke="#f97316" stroke-width="2.5" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div class="ds-metric-caption">Unpaid invoices<br>across the zone</div>
             </div>
         </div>
     </div>
 
-    <!-- Pillar 2: Real Estate & Occupancy -->
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="kpi-card h-100">
-            <div class="d-flex justify-content-between align-items-start">
-                <div>
-                    <span class="kpi-title">Capacity & Occupancy</span>
-                    <div class="kpi-value"><?php echo $occupancy_pct; ?>% <span class="kpi-unit-label">Occupied</span></div>
+    <!-- ==========================================
+         ROW 2: REVENUE CHART + RECENT PAYMENTS
+         ========================================== -->
+    <div class="ds-overview-grid">
+        <div class="ds-card-panel">
+            <div class="ds-panel-header">
+                <div class="ds-panel-title-group">
+                    <h4>Revenue overview</h4>
+                    <p class="ds-panel-subtitle">Collections &bull; last 6 months</p>
                 </div>
-                <div class="kpi-icon-wrap">
-                    <i class="fa-solid fa-city"></i>
-                </div>
-            </div>
-            <div class="kpi-meta justify-content-between mt-2">
-                <span><strong><?php echo $occupied_flats; ?></strong> Occupied / <strong><?php echo $total_flats; ?></strong> Flats</span>
-                <span class="mature-badge mature-badge-purple"><?php echo $total_buildings; ?> Buildings</span>
-            </div>
-            <div class="kpi-progress-bar">
-                <div class="kpi-progress-fill" style="width: <?php echo $occupancy_pct; ?>%; background: #10b981;"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Pillar 3: Zone Population & Community -->
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="kpi-card h-100">
-            <div class="d-flex justify-content-between align-items-start">
-                <div>
-                    <span class="kpi-title">Zonal Population</span>
-                    <div class="kpi-value"><?php echo number_format($active_residents); ?> <span class="kpi-unit-label">Residents</span></div>
-                </div>
-                <div class="kpi-icon-wrap">
-                    <i class="fa-solid fa-users"></i>
-                </div>
-            </div>
-            <div class="kpi-meta justify-content-between mt-2">
-                <span>Total People: <strong><?php echo number_format($total_population); ?></strong></span>
-                <span class="mature-badge mature-badge-slate"><?php echo $total_owners; ?> Owners</span>
-            </div>
-            <div class="kpi-progress-bar">
-                <?php 
-                $pop_pct = ($total_population > 0) ? min(100, round(($active_residents / $total_population) * 100)) : 100;
-                ?>
-                <div class="kpi-progress-fill" style="width: <?php echo $pop_pct; ?>%; background: #3b82f6;"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Pillar 4: Sector Infrastructure -->
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="kpi-card h-100">
-            <div class="d-flex justify-content-between align-items-start">
-                <div>
-                    <span class="kpi-title">Sector Infrastructure</span>
-                    <div class="kpi-value"><?php echo $total_streets; ?> <span class="kpi-unit-label">Streets</span></div>
-                </div>
-                <div class="kpi-icon-wrap">
-                    <i class="fa-solid fa-road"></i>
-                </div>
-            </div>
-            <div class="kpi-meta justify-content-between mt-2">
-                <span>Across <strong><?php echo $total_buildings; ?></strong> Buildings</span>
-                <span class="mature-badge mature-badge-slate"><?php echo $total_flats; ?> Flats</span>
-            </div>
-            <div class="kpi-progress-bar">
-                <div class="kpi-progress-fill" style="width: <?php echo min(100, max(15, $total_streets * 20)); ?>%; background: #d97706;"></div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ==========================================
-     VISUAL ANALYTICS & TREND CHARTS
-     ========================================== -->
-<div class="row g-3 mb-4">
-    <!-- Left: 6-Month Zonal Collection Trend -->
-    <div class="col-12 col-lg-8">
-        <div class="mature-card">
-            <div class="mature-card-header">
-                <div>
-                    <h3 class="mature-card-title">
-                        <i class="fa-solid fa-chart-column text-secondary"></i> Zonal Collection Velocity
-                    </h3>
-                    <p class="text-secondary small mb-0">Monthly realized payments trend for <?= htmlspecialchars($zone_name) ?> over the last 6 months</p>
-                </div>
-                <a href="finance" class="btn btn-sm btn-outline-secondary">
-                    View Invoices <i class="fa-solid fa-arrow-right ms-1 small"></i>
-                </a>
-            </div>
-            <div class="mature-card-body">
-                <div style="position: relative; height: 250px; width: 100%;">
-                    <canvas id="zoneRevenueTrendChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Right: Flat Capacity Breakdown -->
-    <div class="col-12 col-lg-4">
-        <div class="mature-card">
-            <div class="mature-card-header">
-                <div>
-                    <h3 class="mature-card-title">
-                        <i class="fa-solid fa-chart-pie text-secondary"></i> Flat Occupancy
-                    </h3>
-                    <p class="text-secondary small mb-0">Flat status distribution</p>
-                </div>
-                <span class="mature-badge mature-badge-purple"><?php echo $total_flats; ?> Total Flats</span>
-            </div>
-            <div class="mature-card-body d-flex flex-column align-items-center justify-content-center">
-                <div style="position: relative; height: 180px; width: 100%; max-width: 220px;">
-                    <canvas id="zoneOccupancyChart"></canvas>
-                </div>
-                <div class="d-flex justify-content-around w-100 mt-3 pt-2 border-top border-light-subtle small text-center">
-                    <div>
-                        <div class="fw-bold text-slate-800"><?php echo $occupied_flats; ?></div>
-                        <span class="text-secondary">Occupied</span>
-                    </div>
-                    <div>
-                        <div class="fw-bold text-slate-800"><?php echo $vacant_flats; ?></div>
-                        <span class="text-secondary">Vacant</span>
-                    </div>
-                    <div>
-                        <div class="fw-bold text-slate-800"><?php echo $maintenance_flats; ?></div>
-                        <span class="text-secondary">Maintenance</span>
+                <div class="ds-panel-controls">
+                    <div class="ds-chart-legend">
+                        <span class="ds-chart-legend-item"><span class="ds-legend-dot green"></span> Collected</span>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
-
-<!-- ==========================================
-     OPERATIONAL COMMAND TABLES & FEEDS (2x2)
-     ========================================== -->
-<div class="row g-3 mb-4">
-    <!-- Panel 1: Recent Invoices in Zone -->
-    <div class="col-12 col-lg-6">
-        <div class="mature-card">
-            <div class="mature-card-header">
-                <h3 class="mature-card-title">
-                    <i class="fa-solid fa-file-invoice-dollar text-secondary"></i> Recent Invoices & Levies
-                </h3>
-                <a href="finance" class="btn btn-sm btn-outline-secondary">
-                    View Invoices <i class="fa-solid fa-arrow-right ms-1 small"></i>
-                </a>
+            <div class="ds-chart-container">
+                <canvas id="zoneRevenueSplineChart"></canvas>
             </div>
-            <div class="mature-card-body p-0">
-                <div class="table-responsive">
-                    <table class="table dashboard-table align-middle">
-                        <thead>
-                            <tr>
-                                <th>Invoice</th>
-                                <th>Resident & Flat</th>
-                                <th>Amount</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php if ($recent_invoices && $recent_invoices->num_rows > 0): ?>
-                                <?php while ($inv = $recent_invoices->fetch_assoc()): ?>
-                                    <tr>
-                                        <td>
-                                            <span class="mature-badge mature-badge-slate font-monospace" style="font-size: 0.725rem;">
-                                                <?php echo htmlspecialchars($inv['invoice_number'] ?: ('INV-' . $inv['id'])); ?>
-                                            </span>
-                                            <div class="small text-secondary text-truncate" style="max-width: 140px;">
-                                                <?php echo htmlspecialchars($inv['title']); ?>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="fw-semibold text-slate-900"><?php echo htmlspecialchars($inv['resident_name'] ?: 'Resident'); ?></div>
-                                            <div class="small text-secondary">
-                                                <?php echo htmlspecialchars(($inv['building_name'] ? $inv['building_name'] . ' - ' : '') . 'Flat ' . $inv['flat_number']); ?>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span class="fw-bold text-slate-900">
-                                                <?php echo $currency_symbol . number_format($inv['amount'], 2); ?>
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <?php 
-                                            $st = $inv['status'];
-                                            if ($st === 'paid') {
-                                                echo '<span class="mature-badge mature-badge-emerald"><i class="fa-solid fa-check me-1"></i>Paid</span>';
-                                            } elseif ($st === 'partially_paid') {
-                                                echo '<span class="mature-badge mature-badge-amber">Partial</span>';
-                                            } elseif ($st === 'overdue') {
-                                                echo '<span class="mature-badge mature-badge-crimson">Overdue</span>';
-                                            } else {
-                                                echo '<span class="mature-badge mature-badge-slate">' . ucfirst($st) . '</span>';
-                                            }
-                                            ?>
-                                        </td>
-                                    </tr>
-                                <?php endwhile; ?>
-                            <?php else: ?>
-                                <tr>
-                                    <td colspan="4" class="text-center py-4 text-secondary">
-                                        <i class="fa-solid fa-receipt d-block mb-1 opacity-50" style="font-size: 1.5rem;"></i>
-                                        No invoices generated in this zone yet.
-                                    </td>
-                                </tr>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
+        </div>
+
+        <div class="ds-card-panel">
+            <div class="ds-panel-header">
+                <div class="ds-panel-title-group">
+                    <h4>Recent payments</h4>
+                    <p class="ds-panel-subtitle">Latest settled in your zone</p>
                 </div>
             </div>
+            <div class="ds-messages-list">
+                <?php $pi = 0; $av = ['navy', 'purple', 'orange', 'green'];
+                if ($recent_payments && $recent_payments->num_rows > 0):
+                    while ($p = $recent_payments->fetch_assoc()):
+                        $pn = trim($p['resident_name'] ?? '') ?: 'Resident';
+                        $pp = preg_split('/\s+/', $pn);
+                        $pin = strtoupper(substr($pp[0], 0, 1) . (isset($pp[1]) ? substr($pp[1], 0, 1) : '')); ?>
+                    <a href="finance" class="ds-message-item">
+                        <div class="ds-message-avatar <?= $av[$pi++ % 4] ?>"><?= htmlspecialchars($pin) ?></div>
+                        <div class="ds-message-info">
+                            <div class="ds-message-name"><?= htmlspecialchars($pn) ?></div>
+                            <div class="ds-message-preview"><?= htmlspecialchars($p['invoice_number'] ?? '') ?></div>
+                        </div>
+                        <div class="ds-message-meta">
+                            <span class="ds-message-name"><?= htmlspecialchars($currency_symbol) ?><?= number_format($p['amount']) ?></span>
+                            <span class="ds-message-time"><?= date('M j', strtotime($p['paid_at'] ?? $p['created_at'])) ?></span>
+                        </div>
+                    </a>
+                <?php endwhile; else: ?>
+                    <div class="text-center text-muted small py-5">
+                        <i class="fa-solid fa-receipt fs-2 d-block mb-2"></i>No payments recorded yet.
+                    </div>
+                <?php endif; ?>
+            </div>
+            <a href="finance" class="ds-view-all-messages-btn">
+                View all payments <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.72rem;"></i>
+            </a>
         </div>
     </div>
 
-    <!-- Panel 2: Recent Resident Onboarding -->
-    <div class="col-12 col-lg-6">
-        <div class="mature-card">
-            <div class="mature-card-header">
-                <h3 class="mature-card-title">
-                    <i class="fa-solid fa-users text-secondary"></i> Recent Resident Onboarding
-                </h3>
-                <a href="residents" class="btn btn-sm btn-outline-secondary">
-                    Directory <i class="fa-solid fa-arrow-right ms-1 small"></i>
-                </a>
+    <!-- ==========================================
+         ROW 3: STREETS DIRECTORY
+         ========================================== -->
+    <div class="ds-property-table-card mb-4">
+        <div class="ds-panel-header mb-3">
+            <div class="ds-panel-title-group">
+                <h4>Streets overview</h4>
+                <p class="ds-panel-subtitle">Infrastructure and occupancy in your zone</p>
             </div>
-            <div class="mature-card-body p-0">
-                <div class="table-responsive">
-                    <table class="table dashboard-table align-middle">
-                        <thead>
-                            <tr>
-                                <th>Resident</th>
-                                <th>Flat Location</th>
-                                <th>Type</th>
-                                <th>Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php if ($recent_residents && $recent_residents->num_rows > 0): ?>
-                                <?php while ($res = $recent_residents->fetch_assoc()): ?>
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center gap-2.5">
-                                                <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(126, 34, 206, 0.12); color: #7e22ce; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.75rem;">
-                                                    <?php echo strtoupper(substr($res['resident_name'], 0, 2)); ?>
-                                                </div>
-                                                <div>
-                                                    <div class="fw-semibold text-slate-900"><?php echo htmlspecialchars($res['resident_name']); ?></div>
-                                                    <div class="small text-secondary"><?php echo htmlspecialchars($res['resident_phone'] ?? 'No phone'); ?></div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="small fw-medium text-slate-800"><?php echo htmlspecialchars($res['building_name']); ?></div>
-                                            <div class="small text-secondary"><?php echo htmlspecialchars($res['street_name'] . ' • Flat ' . $res['flat_number']); ?></div>
-                                        </td>
-                                        <td>
-                                            <span class="mature-badge mature-badge-slate">
-                                                <?php echo ucfirst($res['type']); ?>
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span class="text-secondary small">
-                                                <?php echo date('M d', strtotime($res['created_at'])); ?>
-                                            </span>
-                                        </td>
-                                    </tr>
-                                <?php endwhile; ?>
-                            <?php else: ?>
-                                <tr>
-                                    <td colspan="4" class="text-center py-4 text-secondary">
-                                        <i class="fa-solid fa-user-group d-block mb-1 opacity-50" style="font-size: 1.5rem;"></i>
-                                        No residents registered in this zone yet.
-                                    </td>
-                                </tr>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
+            <a href="properties" class="ds-pill-dropdown"><i class="fa-solid fa-arrow-right"></i> All properties</a>
+        </div>
+        <?php if ($street_overview && $street_overview->num_rows > 0):
+            $grads = ['linear-gradient(135deg,#6366f1,#8b5cf6)', 'linear-gradient(135deg,#10b981,#34d399)', 'linear-gradient(135deg,#f59e0b,#fbbf24)'];
+            $si = 0;
+            while ($st = $street_overview->fetch_assoc()):
+                $fl = intval($st['flats_count']); $oc = intval($st['occupied_count']);
+                $pct = $fl > 0 ? round($oc / $fl * 100) : 0; ?>
+            <div class="ds-property-row">
+                <div class="ds-property-info-cell">
+                    <div class="ds-property-thumb" style="background: <?= $grads[$si++ % 3] ?>; display: grid; place-items: center; color: #fff;"><i class="fa-solid fa-road"></i></div>
+                    <div class="ds-property-details">
+                        <h5><?= htmlspecialchars($st['street_name']) ?></h5>
+                        <span><?= htmlspecialchars($st['custom_id'] ?: ('ST-' . $st['id'])) ?></span>
+                    </div>
                 </div>
+                <div class="ds-property-col-cell"><small>Buildings</small><span><?= intval($st['buildings_count']) ?></span></div>
+                <div class="ds-property-col-cell"><small>Flats</small><span><?= $fl ?></span></div>
+                <div class="ds-property-col-cell"><small>Occupied</small><span><?= $oc ?></span></div>
+                <div class="ds-property-col-cell"><small>Occupancy</small><span><?= $pct ?>%</span></div>
+                <div></div>
+                <div><a href="properties" class="ds-edit-pill-btn"><i class="fa-solid fa-eye"></i> View</a></div>
             </div>
-        </div>
+        <?php endwhile; else: ?>
+            <div class="text-center py-5 text-muted"><i class="fa-solid fa-road fs-2 d-block mb-2"></i>No streets registered in this zone yet.</div>
+        <?php endif; ?>
     </div>
-
-    <!-- Panel 3: Recent Local Payments -->
-    <div class="col-12 col-lg-6">
-        <div class="mature-card">
-            <div class="mature-card-header">
-                <h3 class="mature-card-title">
-                    <i class="fa-solid fa-receipt text-secondary"></i> Recent Realized Payments
-                </h3>
-                <a href="finance" class="btn btn-sm btn-outline-secondary">
-                    Finance Hub <i class="fa-solid fa-arrow-right ms-1 small"></i>
-                </a>
-            </div>
-            <div class="mature-card-body p-0">
-                <div class="table-responsive">
-                    <table class="table dashboard-table align-middle">
-                        <thead>
-                            <tr>
-                                <th>Ref</th>
-                                <th>Resident</th>
-                                <th>Method</th>
-                                <th>Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php if ($recent_payments && $recent_payments->num_rows > 0): ?>
-                                <?php while ($p = $recent_payments->fetch_assoc()): ?>
-                                    <tr>
-                                        <td>
-                                            <span class="mature-badge mature-badge-slate font-monospace" style="font-size: 0.725rem;">
-                                                <?php echo htmlspecialchars($p['transaction_ref'] ?? ('TRX-' . $p['id'])); ?>
-                                            </span>
-                                            <div class="small text-secondary">
-                                                <?php echo date('M d, Y', strtotime($p['paid_at'] ?? $p['created_at'])); ?>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="small fw-medium"><?php echo htmlspecialchars($p['resident_name'] ?? 'Resident'); ?></div>
-                                            <?php if (!empty($p['invoice_number'])): ?>
-                                                <div class="small text-secondary"><?php echo htmlspecialchars($p['invoice_number']); ?></div>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td>
-                                            <span class="mature-badge mature-badge-slate">
-                                                <?php echo htmlspecialchars(ucfirst($p['payment_method'] ?? 'Transfer')); ?>
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span class="fw-bold text-slate-900">
-                                                <?php echo $currency_symbol . number_format($p['amount'], 2); ?>
-                                            </span>
-                                        </td>
-                                    </tr>
-                                <?php endwhile; ?>
-                            <?php else: ?>
-                                <tr>
-                                    <td colspan="4" class="text-center py-4 text-secondary">
-                                        <i class="fa-solid fa-coins d-block mb-1 opacity-50" style="font-size: 1.5rem;"></i>
-                                        No recent payments realized in this zone yet.
-                                    </td>
-                                </tr>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Panel 4: Sector Street Network -->
-    <div class="col-12 col-lg-6">
-        <div class="mature-card">
-            <div class="mature-card-header">
-                <h3 class="mature-card-title">
-                    <i class="fa-solid fa-road text-secondary"></i> Street Infrastructure Overview
-                </h3>
-                <a href="properties" class="btn btn-sm btn-outline-secondary">
-                    All Streets <i class="fa-solid fa-arrow-right ms-1 small"></i>
-                </a>
-            </div>
-            <div class="mature-card-body p-0">
-                <div class="table-responsive">
-                    <table class="table dashboard-table align-middle">
-                        <thead>
-                            <tr>
-                                <th>Street</th>
-                                <th>Buildings</th>
-                                <th>Total Flats</th>
-                                <th>Occupancy</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php if ($street_overview && $street_overview->num_rows > 0): ?>
-                                <?php while ($st = $street_overview->fetch_assoc()): 
-                                    $st_tot = intval($st['flats_count']);
-                                    $st_occ = intval($st['occupied_count']);
-                                    $st_pct = $st_tot > 0 ? round(($st_occ / $st_tot) * 100, 1) : 0;
-                                ?>
-                                    <tr>
-                                        <td>
-                                            <div class="fw-semibold text-slate-900"><?php echo htmlspecialchars($st['street_name']); ?></div>
-                                            <div class="small text-secondary font-monospace"><?php echo htmlspecialchars($st['custom_id'] ?? 'N/A'); ?></div>
-                                        </td>
-                                        <td>
-                                            <span class="fw-medium text-slate-800"><?php echo $st['buildings_count']; ?></span>
-                                        </td>
-                                        <td>
-                                            <span class="fw-medium text-slate-800"><?php echo $st['flats_count']; ?></span>
-                                        </td>
-                                        <td>
-                                            <div class="d-flex align-items-center gap-2">
-                                                <div class="kpi-progress-bar flex-grow-1" style="height: 5px; margin: 0;">
-                                                    <div class="kpi-progress-fill" style="width: <?php echo $st_pct; ?>%; background: #10b981;"></div>
-                                                </div>
-                                                <span class="small fw-bold text-slate-800"><?php echo $st_pct; ?>%</span>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <?php endwhile; ?>
-                            <?php else: ?>
-                                <tr>
-                                    <td colspan="4" class="text-center py-4 text-secondary">
-                                        <i class="fa-solid fa-road d-block mb-1 opacity-50" style="font-size: 1.5rem;"></i>
-                                        No streets registered in this zone yet.
-                                    </td>
-                                </tr>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ==========================================
-     OPERATIONAL QUICK-JUMP NAVIGATION DOCK
-     ========================================== -->
-<div class="mb-4">
-    <div class="d-flex align-items-center justify-content-between mb-2">
-        <h6 class="text-secondary fw-semibold text-uppercase small m-0" style="letter-spacing: 0.05em;">
-            Zonal Administrative Portals & Tools
-        </h6>
-    </div>
-    <div class="row g-2">
-        <div class="col-6 col-md-4 col-xl-2">
-            <a href="properties" class="quick-dock-btn">
-                <div class="quick-dock-icon"><i class="fa-solid fa-road"></i></div>
-                <span>Streets & Flats</span>
-            </a>
-        </div>
-        <div class="col-6 col-md-4 col-xl-2">
-            <a href="residents" class="quick-dock-btn">
-                <div class="quick-dock-icon"><i class="fa-solid fa-users"></i></div>
-                <span>Residents</span>
-            </a>
-        </div>
-        <div class="col-6 col-md-4 col-xl-2">
-            <a href="owners" class="quick-dock-btn">
-                <div class="quick-dock-icon"><i class="fa-solid fa-user-shield"></i></div>
-                <span>Property Owners</span>
-            </a>
-        </div>
-        <div class="col-6 col-md-4 col-xl-2">
-            <a href="charges" class="quick-dock-btn">
-                <div class="quick-dock-icon"><i class="fa-solid fa-list-check"></i></div>
-                <span>Local Levies</span>
-            </a>
-        </div>
-        <div class="col-6 col-md-4 col-xl-2">
-            <a href="billing_config" class="quick-dock-btn">
-                <div class="quick-dock-icon"><i class="fa-solid fa-sliders"></i></div>
-                <span>Billing Config</span>
-            </a>
-        </div>
-        <div class="col-6 col-md-4 col-xl-2">
-            <a href="reports" class="quick-dock-btn">
-                <div class="quick-dock-icon"><i class="fa-solid fa-chart-pie"></i></div>
-                <span>Zonal Reports</span>
-            </a>
-        </div>
-    </div>
-</div>
 </div><!-- end .desktop-only -->
 
-<!-- ==========================================
-     CHART.JS INTEGRATION & CONFIGURATION
-     ========================================== -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- Chart.js Engine for Dual Area Spline Chart -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    let revChartInstance = null;
-    let occChartInstance = null;
+    const ctx = document.getElementById('zoneRevenueSplineChart');
+    if (!ctx) return;
 
-    function initDashboardCharts() {
-        const isDark = document.documentElement.getAttribute('data-theme') === 'dark' || document.body.classList.contains('dark-mode');
-        const gridColor = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(15, 23, 42, 0.06)';
-        const textColor = isDark ? '#94a3b8' : '#64748b';
+    const chartCtx = ctx.getContext('2d');
 
-        // 1. Revenue Velocity Trend Chart (Zone Scoped)
-        const revCtx = document.getElementById('zoneRevenueTrendChart');
-        if (revCtx) {
-            if (revChartInstance) revChartInstance.destroy();
-            const revLabels = <?php echo json_encode($chart_revenue_labels); ?>;
-            const revData = <?php echo json_encode($chart_revenue_values); ?>;
-            const currency = <?php echo json_encode($currency_symbol); ?>;
+    // Expense Purple Gradient
+    const purpleGrad = chartCtx.createLinearGradient(0, 0, 0, 240);
+    purpleGrad.addColorStop(0, 'rgba(99, 102, 241, 0.28)');
+    purpleGrad.addColorStop(1, 'rgba(99, 102, 241, 0.0)');
 
-            revChartInstance = new Chart(revCtx, {
-                type: 'bar',
-                data: {
-                    labels: revLabels,
-                    datasets: [{
-                        label: 'Realized Revenue',
-                        data: revData,
-                        backgroundColor: isDark ? 'rgba(168, 85, 247, 0.55)' : 'rgba(126, 34, 206, 0.85)',
-                        borderRadius: 6,
-                        maxBarThickness: 38
-                    }]
+    // Income Green Gradient
+    const greenGrad = chartCtx.createLinearGradient(0, 0, 0, 240);
+    greenGrad.addColorStop(0, 'rgba(16, 185, 129, 0.22)');
+    greenGrad.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: <?= json_encode($chart_revenue_labels) ?>,
+            datasets: [
+                {
+                    label: 'Collected',
+                    data: <?= json_encode($chart_revenue_values) ?>,
+                    borderColor: '#10b981',
+                    borderWidth: 2,
+                    borderDash: [5, 4],
+                    backgroundColor: greenGrad,
+                    fill: true,
+                    tension: 0.45,
+                    pointRadius: 0,
+                    pointHoverRadius: 5,
+                    pointHoverBackgroundColor: '#10b981',
+                    pointHoverBorderColor: '#ffffff',
+                    pointHoverBorderWidth: 2
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            plugins: {
+                legend: {
+                    display: false
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: { duration: 400 },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: isDark ? '#0f172a' : '#1e293b',
-                            padding: 10,
-                            titleFont: { family: 'Outfit', size: 12 },
-                            bodyFont: { family: 'Outfit', size: 13, weight: 'bold' },
-                            cornerRadius: 8,
-                            callbacks: {
-                                label: function(context) {
-                                    return ' ' + currency + Number(context.raw).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                                }
-                            }
+                tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.88)',
+                    titleColor: '#ffffff',
+                    bodyColor: '#e2e8f0',
+                    padding: 10,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': $' + (context.parsed.y * 1000).toLocaleString();
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false,
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#94a3b8',
+                        font: {
+                            family: 'Outfit, sans-serif',
+                            size: 11
+                        }
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        maxTicksLimit: 5,
+                        color: '#94a3b8',
+                        font: {
+                            family: 'Outfit, sans-serif',
+                            size: 11
+                        },
+                        callback: function(value) {
+                            return value === 0 ? '' : (value >= 1000 ? (value / 1000) + 'K' : value);
                         }
                     },
-                    scales: {
-                        x: {
-                            grid: { display: false },
-                            ticks: { color: textColor, font: { family: 'Outfit', size: 11 } }
-                        },
-                        y: {
-                            grid: { color: gridColor },
-                            ticks: {
-                                color: textColor,
-                                font: { family: 'Outfit', size: 11 },
-                                callback: function(val) {
-                                    return currency + Number(val).toLocaleString();
-                                }
-                            }
-                        }
+                    grid: {
+                        color: 'rgba(226, 232, 240, 0.65)',
+                        drawBorder: false
                     }
                 }
-            });
+            }
         }
-
-        // 2. Unit Occupancy Capacity Breakdown Doughnut Chart
-        const occCtx = document.getElementById('zoneOccupancyChart');
-        if (occCtx) {
-            if (occChartInstance) occChartInstance.destroy();
-            const occData = [
-                <?php echo $occupied_flats; ?>, 
-                <?php echo $vacant_flats; ?>, 
-                <?php echo $maintenance_flats; ?>
-            ];
-            
-            const hasData = occData.some(v => v > 0);
-            const chartData = hasData ? occData : [0, 1, 0];
-
-            occChartInstance = new Chart(occCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Occupied', 'Vacant', 'Maintenance'],
-                    datasets: [{
-                        data: chartData,
-                        backgroundColor: [
-                            isDark ? '#a855f7' : '#7e22ce', // Primary purple
-                            isDark ? '#334155' : '#cbd5e1', // Slate light
-                            isDark ? '#f59e0b' : '#d97706'  // Amber maintenance
-                        ],
-                        borderWidth: 2,
-                        borderColor: isDark ? '#1e293b' : '#ffffff',
-                        hoverOffset: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '72%',
-                    animation: { duration: 400 },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: isDark ? '#0f172a' : '#1e293b',
-                            padding: 8,
-                            cornerRadius: 6,
-                            titleFont: { family: 'Outfit', size: 11 },
-                            bodyFont: { family: 'Outfit', size: 12 }
-                        }
-                    }
-                }
-            });
-        }
-    }
-
-    initDashboardCharts();
-
-    // Re-render charts smoothly when theme changes
-    document.querySelectorAll('.theme-toggle-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            setTimeout(initDashboardCharts, 120);
-        });
     });
 });
 </script>

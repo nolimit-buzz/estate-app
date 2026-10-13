@@ -150,7 +150,7 @@ include 'sidebar.php';
         <a href="finance" class="btn btn-sm btn-outline-secondary">
             <i class="fa-solid fa-receipt me-1"></i> Zonal Finance
         </a>
-        <a href="billing_config" class="btn btn-sm text-white" style="background: #7e22ce; border-color: #7e22ce;">
+        <a href="billing_config" class="btn btn-sm text-white" style="background: #6b4eff; border-color: #6b4eff;">
             <i class="fa-solid fa-sliders me-1"></i> Billing Policy
         </a>
     </div>
@@ -168,7 +168,7 @@ include 'sidebar.php';
                     <span class="kpi-title">Total Invoiced</span>
                     <div class="kpi-value"><?php echo $currency_symbol . number_format($total_invoiced, 2); ?></div>
                 </div>
-                <div class="kpi-icon-wrap" style="background: rgba(126, 34, 206, 0.08); color: #7e22ce; border-color: rgba(126, 34, 206, 0.2);">
+                <div class="kpi-icon-wrap" style="background: rgba(107, 78, 255, 0.08); color: #6b4eff; border-color: rgba(107, 78, 255, 0.2);">
                     <i class="fa-solid fa-file-invoice-dollar"></i>
                 </div>
             </div>
@@ -177,7 +177,7 @@ include 'sidebar.php';
                 <span class="mature-badge mature-badge-purple">Active Portfolio</span>
             </div>
             <div class="kpi-progress-bar">
-                <div class="kpi-progress-fill" style="width: 100%; background: #7e22ce;"></div>
+                <div class="kpi-progress-fill" style="width: 100%; background: #6b4eff;"></div>
             </div>
         </div>
     </div>
@@ -234,9 +234,9 @@ include 'sidebar.php';
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <span class="kpi-title">Collection Rate</span>
-                    <div class="kpi-value" style="color: #7e22ce;"><?php echo $collection_rate; ?>%</div>
+                    <div class="kpi-value" style="color: #6b4eff;"><?php echo $collection_rate; ?>%</div>
                 </div>
-                <div class="kpi-icon-wrap" style="background: rgba(59, 130, 246, 0.08); color: #2563eb; border-color: rgba(59, 130, 246, 0.2);">
+                <div class="kpi-icon-wrap" style="background: rgba(59, 130, 246, 0.08); color: #6b4eff; border-color: rgba(59, 130, 246, 0.2);">
                     <i class="fa-solid fa-chart-line"></i>
                 </div>
             </div>
@@ -251,7 +251,7 @@ include 'sidebar.php';
                 <?php endif; ?>
             </div>
             <div class="kpi-progress-bar">
-                <div class="kpi-progress-fill" style="width: <?php echo max(5, $collection_rate); ?>%; background: #7e22ce;"></div>
+                <div class="kpi-progress-fill" style="width: <?php echo max(5, $collection_rate); ?>%; background: #6b4eff;"></div>
             </div>
         </div>
     </div>
@@ -489,7 +489,7 @@ include 'sidebar.php';
                     <div class="col-6">
                         <div class="p-3 rounded-3 border" style="background: #f8fafc;">
                             <span class="text-secondary small text-uppercase fw-semibold" style="font-size: 0.725rem;">Zonal Population</span>
-                            <div class="h4 fw-bold text-purple mb-0 mt-1" style="color: #7e22ce;"><?php echo $total_zone_residents; ?></div>
+                            <div class="h4 fw-bold text-purple mb-0 mt-1" style="color: #6b4eff;"><?php echo $total_zone_residents; ?></div>
                             <small class="text-secondary">Active registered residents</small>
                         </div>
                     </div>
@@ -536,7 +536,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     datasets: [{
                         label: 'Street Realized Revenue',
                         data: streetRevenues.length ? streetRevenues : [0],
-                        backgroundColor: isDark ? 'rgba(168, 85, 247, 0.55)' : 'rgba(126, 34, 206, 0.85)',
+                        backgroundColor: isDark ? 'rgba(107, 78, 255, 0.55)' : 'rgba(107, 78, 255, 0.85)',
                         borderRadius: 6,
                         maxBarThickness: 42
                     }]
@@ -550,8 +550,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         tooltip: {
                             backgroundColor: isDark ? '#0f172a' : '#1e293b',
                             padding: 10,
-                            titleFont: { family: 'Outfit', size: 12 },
-                            bodyFont: { family: 'Outfit', size: 13, weight: 'bold' },
+                            titleFont: { family: 'Inter', size: 12 },
+                            bodyFont: { family: 'Inter', size: 13, weight: 'bold' },
                             cornerRadius: 8,
                             callbacks: {
                                 label: function(context) {
@@ -563,13 +563,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     scales: {
                         x: {
                             grid: { display: false },
-                            ticks: { color: textColor, font: { family: 'Outfit', size: 11 } }
+                            ticks: { color: textColor, font: { family: 'Inter', size: 11 } }
                         },
                         y: {
                             grid: { color: gridColor },
                             ticks: {
                                 color: textColor,
-                                font: { family: 'Outfit', size: 11 },
+                                font: { family: 'Inter', size: 11 },
                                 callback: function(val) {
                                     return currency + Number(val).toLocaleString();
                                 }
@@ -619,8 +619,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             backgroundColor: isDark ? '#0f172a' : '#1e293b',
                             padding: 8,
                             cornerRadius: 6,
-                            titleFont: { family: 'Outfit', size: 11 },
-                            bodyFont: { family: 'Outfit', size: 12 }
+                            titleFont: { family: 'Inter', size: 11 },
+                            bodyFont: { family: 'Inter', size: 12 }
                         }
                     }
                 }

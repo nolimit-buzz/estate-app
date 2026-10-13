@@ -173,10 +173,10 @@ include 'sidebar.php';
         transform: translateY(-1px);
     }
     .trade-pill-btn.active {
-        background: #2563eb;
-        border-color: #2563eb;
+        background: #6b4eff;
+        border-color: #6b4eff;
         color: #ffffff;
-        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
+        box-shadow: 0 4px 10px rgba(107, 78, 255, 0.25);
     }
     .artisan-card {
         background: #ffffff;
@@ -276,7 +276,7 @@ include 'sidebar.php';
         color: #ffffff;
     }
     .action-btn-book {
-        background: #2563eb;
+        background: #6b4eff;
         color: #ffffff;
         padding: 0.55rem 1rem;
         border-radius: 0.5rem;
@@ -291,7 +291,7 @@ include 'sidebar.php';
         transition: all 0.15s;
     }
     .action-btn-book:hover {
-        background: #1d4ed8;
+        background: #5a3fe6;
         color: #ffffff;
         transform: translateY(-1px);
     }

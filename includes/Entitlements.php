@@ -16,7 +16,7 @@ require_once __DIR__ . '/PlatformSettings.php';
 class Entitlements {
     private static $cache = [];
 
-    public static function flush($estateId = null) { if ($estateId === null) self::$cache = []; else unset(self::$cache[intval($estateId)]); }
+    public static function flush($estateId = null) { if ($estateId === null) self::$cache = []; else unset(self::$cache[intval($estateId)]); if (class_exists('FeatureCatalog', false)) FeatureCatalog::flush(); }
 
     /** The plan terms that apply to the estate: grandfathered subscription snapshot, else the live plan. */
     public static function planTerms($estateId) {
@@ -30,7 +30,7 @@ class Entitlements {
         if (!$snap) {
             $snap = Plans::snapshot($sub['plan_id']);
         }
-        return ['subscription' => $sub, 'plan' => $snap['plan'] ?? [], 'modules' => $snap['modules'] ?? []];
+        return ['subscription' => $sub, 'plan' => $snap['plan'] ?? [], 'modules' => $snap['modules'] ?? [], 'features' => $snap['features'] ?? null];
     }
 
     private static function load($estateId) {
@@ -99,11 +99,47 @@ class Entitlements {
         return $rows;
     }
 
+    // ------------------------------------------------------------------ feature (permission-slug) entitlements
+    /** @return array{allowed:bool,source:string} */
+    public static function featureDecide($estateId, $slug) {
+        $estateId = intval($estateId);
+        $cat = FeatureCatalog::all();
+        if (!isset($cat[$slug])) return ['allowed' => true, 'source' => 'unmanaged'];
+        $f = $cat[$slug];
+        $d = self::load($estateId);
+        $mod = $f['module_key'];
+        if ($mod && isset($d['catalog'][$mod]) && !intval($d['catalog'][$mod]['global_enabled'])) return ['allowed' => false, 'source' => 'global_off'];
+        $ov = FeatureCatalog::overrides($estateId);
+        if (isset($ov[$slug])) return ['allowed' => $ov[$slug] === 'on', 'source' => 'override_' . $ov[$slug]];
+        $status = $d['status'];
+        $supportView = !empty($_SESSION['platform_user_id']) && intval($_SESSION['impersonated_estate_id'] ?? 0) === $estateId;
+        if (!$supportView && in_array($status, ['suspended', 'retention', 'deletion_pending', 'deleted', 'archived'], true)) return ['allowed' => false, 'source' => 'estate_' . $status];
+        if (!$mod) return ['allowed' => true, 'source' => 'core'];
+        if (in_array($status, ['pending', 'onboarding'], true)) return ['allowed' => !empty($d['catalog'][$mod]['is_core']), 'source' => 'onboarding_core_only'];
+        if ($status === 'trial') {
+            $tp = Plans::bySlug(PlatformSettings::get('trial_plan_slug', 'professional'));
+            if ($tp && in_array($slug, FeatureCatalog::planFeatures($tp['id']), true)) return ['allowed' => true, 'source' => 'trial_plan'];
+            return ['allowed' => !empty($d['catalog'][$mod]['is_core']), 'source' => 'trial_plan'];
+        }
+        $terms = self::planTerms($estateId);
+        if ($terms) {
+            $feat = $terms['features'];
+            if ($feat === null) { // legacy snapshot: derive from the modules it included
+                $incl = [];
+                foreach ($terms['modules'] as $m) if (($m['inclusion'] ?? 'included') === 'included') $incl[$m['module_key']] = true;
+                if (!empty($incl[$mod])) return ['allowed' => true, 'source' => 'plan'];
+            } elseif (in_array($slug, $feat, true)) return ['allowed' => true, 'source' => 'plan'];
+        }
+        if (!empty($d['addons'][$mod])) return ['allowed' => true, 'source' => 'addon'];
+        return ['allowed' => false, 'source' => 'not_in_plan'];
+    }
+
+    public static function featureAllowed($estateId, $slug) { return self::featureDecide($estateId, $slug)['allowed']; }
     public static function sourceLabel($s) {
         return [
             'global_off' => 'Disabled globally', 'override_on' => 'Super Admin override: ON', 'override_off' => 'Super Admin override: OFF',
             'plan' => 'Included in plan', 'addon' => 'Purchased add-on', 'not_in_plan' => 'Not in plan', 'trial_plan' => 'Trial plan',
-            'onboarding_core_only' => 'Onboarding (core only)', 'unmanaged' => 'Unmanaged',
+            'onboarding_core_only' => 'Onboarding (core only)', 'unmanaged' => 'Unmanaged', 'core' => 'Core feature',
         ][$s] ?? ucfirst(str_replace('_', ' ', $s));
     }
 }
@@ -129,6 +165,62 @@ class Plans {
     }
     /** Frozen copy of the plan terms (stored on a subscription so later plan edits never silently change it). */
     public static function snapshot($planId) {
-        return ['plan' => self::get($planId), 'modules' => self::modules($planId)];
+        return ['plan' => self::get($planId), 'modules' => self::modules($planId), 'features' => FeatureCatalog::planFeatures($planId)];
+    }
+}
+
+/** Grouped feature catalogue (feature = tenant permission slug) shared by plans, estate overrides and the estate roles UI. */
+class FeatureCatalog {
+    private static $all = null, $overrides = [];
+
+    /** @return array slug => [slug,name,description,group_key,group_name,icon,module_key] */
+    public static function all() {
+        if (self::$all !== null) return self::$all;
+        self::$all = [];
+        try {
+            $r = Tenancy::platform()->query("SELECT f.slug, f.name, f.description, f.group_key, g.name AS group_name, g.icon, g.module_key
+                FROM features f JOIN feature_groups g ON g.group_key = f.group_key ORDER BY g.sort_order, f.sort_order");
+            while ($r && $row = $r->fetch_assoc()) self::$all[$row['slug']] = $row;
+        } catch (Throwable $e) { /* migration 018 not applied yet: nothing is feature-gated */ }
+        return self::$all;
+    }
+
+    /** Features grouped for rendering: group_name => ['icon'=>..., 'features'=>[...]] */
+    public static function grouped() {
+        $out = [];
+        foreach (self::all() as $f) {
+            $out[$f['group_name']]['icon'] = $f['icon'];
+            $out[$f['group_name']]['features'][] = $f;
+        }
+        return $out;
+    }
+
+    public static function planFeatures($planId) {
+        $planId = intval($planId); $out = [];
+        try {
+            $r = Tenancy::platform()->query("SELECT feature_slug FROM plan_features WHERE plan_id = $planId");
+            while ($r && $row = $r->fetch_assoc()) $out[] = $row['feature_slug'];
+        } catch (Throwable $e) {}
+        return $out;
+    }
+
+    public static function overrides($estateId) {
+        $estateId = intval($estateId);
+        if (isset(self::$overrides[$estateId])) return self::$overrides[$estateId];
+        $out = [];
+        try {
+            $r = Tenancy::platform()->query("SELECT feature_slug, state FROM estate_feature_overrides WHERE estate_id = $estateId");
+            while ($r && $row = $r->fetch_assoc()) $out[$row['feature_slug']] = $row['state'];
+        } catch (Throwable $e) {}
+        return self::$overrides[$estateId] = $out;
+    }
+
+    public static function flush() { self::$overrides = []; }
+
+    /** Module keys implied by a set of feature slugs (keeps route/sidebar module gating consistent with plan features). */
+    public static function modulesFor(array $slugs) {
+        $cat = self::all(); $out = [];
+        foreach ($slugs as $s) if (!empty($cat[$s]['module_key'])) $out[$cat[$s]['module_key']] = true;
+        return array_keys($out);
     }
 }
